@@ -638,16 +638,21 @@ async function createBarbershopRecord(barbershop) {
 }
 
 async function createAdminBarbershopProvision(payload) {
-  // Para criação de barbearias no portal admin público, não usar autenticação
   const executeInvoke = async () => {
     try {
+      const authContext = await getAuthHeaderContext()
+      const requestHeaders = {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY
+      }
+
+      if (authContext.accessToken) {
+        requestHeaders.Authorization = `Bearer ${authContext.accessToken}`
+      }
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/create-barbershop`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_ANON_KEY
-          // Não enviar Authorization header para permitir criação sem login
-        },
+        headers: requestHeaders,
         body: JSON.stringify(payload || {})
       })
 

@@ -1,11 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-export const supabaseUrl = "https://kgpsfbuurggwmpcxrfpa.supabase.co";
-export const supabaseAnonKey = "sb_publishable_gx503U6DBXQbwMujxj9Bog_vthPorxQ";
-export const supabaseServiceRoleKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncHNmYnV1cmd3bXBjeHJmcGEiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzA5NzAyNDAwLCJleHAiOjE4Njc0Njg0MDB9.5aCVplK1T5V1BsZl6p4z3eV-8YvmXIZK5NvGTlUZ5DY";
+export const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://kgpsfbuurggwmpcxrfpa.supabase.co";
+export const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncHNmYnV1cmdnd21wY3hyZnBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NzkxMDUsImV4cCI6MjA4OTM1NTEwNX0.FumQWyi14AOWPPRJZjQx3PUpfVh2Hj1TLTTKVDf8FVQ";
+export const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtncHNmYnV1cmdnd21wY3hyZnBhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzc3OTEwNSwiZXhwIjoyMDg5MzU1MTA1fQ.nGBuMecG0uy6X23a2lO4NzXllevBFURdWjkp6YXhcys";
 export const masterAdminEmail = "raphacom.web@gmail.com";
 
-// Valores hardcoded para teste
 console.log("=== SUPABASE CONFIG ===");
 console.log(`URL: ${supabaseUrl}`);
 console.log(`Anon Key presente: ${!!supabaseAnonKey}`);
@@ -29,6 +28,9 @@ export function createUserClient(authHeader: string) {
 }
 
 export function createServiceClient() {
+  if (!supabaseServiceRoleKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY nao configurada nas Edge Functions.");
+  }
   return createClient(supabaseUrl, supabaseServiceRoleKey);
 }
 

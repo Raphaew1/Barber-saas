@@ -22,45 +22,97 @@ function isMissingTableError(error: { message?: string } | null | undefined, tab
 }
 
 async function insertBarbershop(serviceClient: any, payload: Record<string, unknown>) {
-  const payloadWithAllFields = {
-    ...payload
-  };
+  const candidatePayloads = [
+    {
+      insert: { ...payload },
+      select: "id, name, owner_user_id, plan, plan_code, status, owner_password_defined_at"
+    },
+    {
+      insert: {
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        location: payload.location,
+        owner_id: payload.owner_user_id,
+        status: payload.status || "active",
+        plan: payload.plan || payload.plan_code || "free",
+        plan_code: payload.plan_code || payload.plan || "free",
+        owner_password_defined_at: payload.owner_password_defined_at ?? null
+      },
+      select: "id, name, owner_id, plan, plan_code, status, owner_password_defined_at"
+    },
+    {
+      insert: {
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        owner_id: payload.owner_user_id,
+        status: payload.status || "active",
+        plan: payload.plan || payload.plan_code || "free"
+      },
+      select: "id, name, owner_id"
+    },
+    {
+      insert: {
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        owner_user_id: payload.owner_user_id,
+        status: payload.status || "active",
+        plan: payload.plan || payload.plan_code || "free"
+      },
+      select: "id, name, owner_user_id"
+    },
+    {
+      insert: {
+        name: payload.name,
+        owner_id: payload.owner_user_id
+      },
+      select: "id, name, owner_id"
+    },
+    {
+      insert: {
+        name: payload.name,
+        owner_user_id: payload.owner_user_id
+      },
+      select: "id, name, owner_user_id"
+    },
+    {
+      insert: {
+        name: payload.name
+      },
+      select: "id, name"
+    }
+  ];
 
-  let result = await serviceClient!
-    .from("barbershops")
-    .insert([payloadWithAllFields])
-    .select("id, name, owner_user_id, plan, plan_code, status, owner_password_defined_at")
-    .single();
+  let lastError = null;
 
-  if (result.error && isMissingColumnError(result.error, ["location", "plan", "plan_code", "status", "owner_password_defined_at"])) {
-    const fallbackPayload = {
-      name: payload.name,
-      email: payload.email,
-      phone: payload.phone,
-      owner_user_id: payload.owner_user_id,
-      status: payload.status || "active",
-      plan: payload.plan || payload.plan_code || "free"
-    };
+  for (const candidate of candidatePayloads) {
+    const sanitizedInsert = Object.fromEntries(
+      Object.entries(candidate.insert).filter(([, value]) => value !== undefined)
+    );
 
-    result = await serviceClient!
+    const result = await serviceClient!
       .from("barbershops")
-      .insert([fallbackPayload])
-      .select("id, name, owner_user_id")
+      .insert([sanitizedInsert])
+      .select(candidate.select)
       .single();
 
-    if (result.error && isMissingColumnError(result.error, ["email", "phone"])) {
-      result = await serviceClient!
-        .from("barbershops")
-        .insert([{
-          name: payload.name,
-          owner_user_id: payload.owner_user_id
-        }])
-        .select("id, name, owner_user_id")
-        .single();
+    if (!result.error) {
+      return result;
+    }
+
+    lastError = result.error;
+
+    if (!isMissingColumnError(result.error, ["location", "plan", "plan_code", "status", "owner_password_defined_at", "owner_user_id", "owner_id", "email", "phone"])) {
+      return result;
     }
   }
 
-  return result;
+  return {
+    data: null,
+    error: lastError
+  };
 }
 
 Deno.serve(async (request) => {
