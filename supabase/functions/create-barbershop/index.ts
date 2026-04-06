@@ -1,4 +1,4 @@
-import { insertAuditLog, jsonResponse, methodNotAllowedResponse, preflightResponse, requireBarbershopAdmin } from "../_shared/supabase.ts";
+import { insertAuditLog, jsonResponse, methodNotAllowedResponse, preflightResponse, requireAuthenticatedUser, createServiceClient } from "../_shared/supabase.ts";
 
 async function hashToken(value: string) {
   const bytes = new TextEncoder().encode(value);
@@ -79,31 +79,16 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: "Authorization header ausente." }, 401);
     }
 
-    console.log("create-barbershop: Validando barbershop admin access");
-    const authResult = await requireBarbershopAdmin(authHeader);
+    console.log("create-barbershop: Validando usuario autenticado");
+    const authResult = await requireAuthenticatedUser(authHeader);
     
-    if (authResult.error) {
-      console.error("create-barbershop: authResult.error =", authResult.error);
+    if (authResult.error || !authResult.user) {
+      console.error("create-barbershop: Acesso negado - usuario nao autenticado", authResult.error);
+      return jsonResponse({ error: authResult.error || "Usuario nao autenticado." }, 401);
     }
-    if (!authResult.profile) {
-      console.error("create-barbershop: authResult.profile is null");
-    }
-    if (!authResult.serviceClient) {
-      console.error("create-barbershop: authResult.serviceClient is null");
-    }
-    if (!authResult.user) {
-      console.error("create-barbershop: authResult.user is null");
-    }
-    
-    if (authResult.error || !authResult.profile || !authResult.serviceClient) {
-      console.error("create-barbershop: Acesso negado - returning 403", {
-        error: authResult.error,
-        hasProfile: !!authResult.profile,
-        hasServiceClient: !!authResult.serviceClient,
-        user: authResult.user?.email
-      });
-      return jsonResponse({ error: authResult.error || "Acesso negado." }, 403);
-    }
+
+    console.log("create-barbershop: Usuario autenticado -", authResult.user.email);
+    const serviceClient = createServiceClient();
 
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -136,7 +121,7 @@ Deno.serve(async (request) => {
     let ownerWasCreated = false;
 
     const { data: ownerProfile } = ownerEmail
-      ? await authResult.serviceClient
+      ? await serviceClient
           .from("profiles")
           .select("id, email")
           .eq("email", ownerEmail)
@@ -147,7 +132,7 @@ Deno.serve(async (request) => {
       ownerUserId = ownerProfile.id;
 
       if (ownerPassword) {
-        const { error: updateOwnerError } = await authResult.serviceClient.auth.admin.updateUserById(ownerProfile.id, {
+        const { error: updateOwnerError } = await serviceClient.auth.admin.updateUserById(ownerProfile.id, {
           password: ownerPassword
         });
 
@@ -160,7 +145,7 @@ Deno.serve(async (request) => {
         return jsonResponse({ error: "Informe a senha inicial do responsavel." }, 400);
       }
 
-      const { data: createdOwner, error: createOwnerError } = await authResult.serviceClient.auth.admin.createUser({
+      const { data: createdOwner, error: createOwnerError } = await serviceClient.auth.admin.createUser({
         email: ownerEmail,
         password: ownerPassword,
         email_confirm: true
@@ -174,12 +159,12 @@ Deno.serve(async (request) => {
       ownerWasCreated = true;
     }
 
-    const { data: createdBarbershop, error: createError } = await insertBarbershop(authResult.serviceClient, {
+    const { data: createdBarbershop, error: createError } = await insertBarbershop(serviceClient, {
       name,
       email: email || null,
       phone: phone || null,
       location: location || null,
-      owner_user_id: ownerUserId,
+      owner_user_id: ownerUserId || authResult.user.id,
       plan: planCode,
       plan_code: planCode,
       status,
@@ -188,13 +173,13 @@ Deno.serve(async (request) => {
 
     if (createError) {
       if (ownerWasCreated && ownerUserId) {
-        await authResult.serviceClient.auth.admin.deleteUser(ownerUserId);
+        await serviceClient.auth.admin.deleteUser(ownerUserId);
       }
 
       return jsonResponse({ error: createError.message }, 400);
     }
 
-    const subscriptionResult = await authResult.serviceClient
+    const subscriptionResult = await serviceClient
       .from("saas_subscriptions")
       .upsert([{
         barbershop_id: createdBarbershop.id,
@@ -208,7 +193,7 @@ Deno.serve(async (request) => {
     }
 
     if (ownerUserId && ownerEmail) {
-      const profileUpsertResult = await authResult.serviceClient
+      const profileUpsertResult = await serviceClient
         .from("profiles")
         .upsert([{
           id: ownerUserId,
@@ -220,7 +205,7 @@ Deno.serve(async (request) => {
         }], { onConflict: "id" });
 
       if (profileUpsertResult.error && isMissingColumnError(profileUpsertResult.error, ["global_role", "status"])) {
-        await authResult.serviceClient
+        await serviceClient
           .from("profiles")
           .upsert([{
             id: ownerUserId,
@@ -230,27 +215,27 @@ Deno.serve(async (request) => {
           }], { onConflict: "id" });
       }
 
-      const userAccessResult = await authResult.serviceClient
+      const userAccessResult = await serviceClient
         .from("user_access")
         .upsert([{
           user_id: ownerUserId,
           barbershop_id: createdBarbershop.id,
           role: "admin",
           status: status === "blocked" ? "blocked" : "active",
-          invited_by: authResult.profile.id,
-          approved_by: authResult.profile.id
+          invited_by: authResult.user.id,
+          approved_by: authResult.user.id
         }], { onConflict: "user_id,barbershop_id" });
 
       if (userAccessResult.error && !isMissingTableError(userAccessResult.error, "user_access")) {
         console.error("create-barbershop user_access error:", userAccessResult.error.message);
       }
 
-      const barberAccessResult = await authResult.serviceClient
+      const barberAccessResult = await serviceClient
         .from("barber_access")
         .upsert([{
           email: ownerEmail,
           barbershop_id: createdBarbershop.id,
-          approved_by_email: authResult.profile.email,
+          approved_by_email: authResult.user.email,
           approved_at: new Date().toISOString(),
           is_active: status !== "blocked"
         }], { onConflict: "email" });
@@ -263,7 +248,7 @@ Deno.serve(async (request) => {
       const tokenHash = await hashToken(rawToken);
       ownerInviteToken = rawToken;
 
-      const invitationResult = await authResult.serviceClient
+      const invitationResult = await serviceClient
         .from("invitations")
         .insert([{
           email: ownerEmail,
@@ -271,7 +256,7 @@ Deno.serve(async (request) => {
           role: "admin",
           status: "pending",
           token_hash: tokenHash,
-          invited_by: authResult.profile.id,
+          invited_by: authResult.user.id,
           expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString()
         }]);
 
@@ -280,9 +265,9 @@ Deno.serve(async (request) => {
       }
     }
 
-    await insertAuditLog(authResult.serviceClient, {
+    await insertAuditLog(serviceClient, {
       action: "barbershop_created",
-      actor_id: authResult.profile.id,
+      actor_id: authResult.user.id,
       target_barbershop_id: createdBarbershop.id,
       target_user_id: ownerUserId,
       metadata: {
