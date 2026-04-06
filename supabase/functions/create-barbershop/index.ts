@@ -74,21 +74,29 @@ Deno.serve(async (request) => {
 
   try {
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("create-barbershop: Authorization header ausente");
-      return jsonResponse({ error: "Authorization header ausente." }, 401);
-    }
+    let authResult = null;
+    let serviceClient = createServiceClient();
+    let currentUser = null;
 
-    console.log("create-barbershop: Validando usuario autenticado");
-    const authResult = await requireAuthenticatedUser(authHeader);
-    
-    if (authResult.error || !authResult.user) {
-      console.error("create-barbershop: Acesso negado - usuario nao autenticado", authResult.error);
-      return jsonResponse({ error: authResult.error || "Usuario nao autenticado." }, 401);
-    }
+    if (authHeader) {
+      console.log("create-barbershop: Validando usuario autenticado");
+      authResult = await requireAuthenticatedUser(authHeader);
 
-    console.log("create-barbershop: Usuario autenticado -", authResult.user.email);
-    const serviceClient = createServiceClient();
+      if (authResult.error || !authResult.user) {
+        console.error("create-barbershop: Acesso negado - usuario nao autenticado", authResult.error);
+        return jsonResponse({ error: authResult.error || "Usuario nao autenticado." }, 401);
+      }
+
+      console.log("create-barbershop: Usuario autenticado -", authResult.user.email);
+      currentUser = authResult.user;
+    } else {
+      console.log("create-barbershop: Acesso sem autenticacao - portal admin publico");
+      // Criar usuario virtual para barbearias criadas sem login
+      currentUser = {
+        id: '00000000-0000-0000-0000-000000000000', // UUID nulo padrao
+        email: 'admin@barbersaas.com'
+      };
+    }
 
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -164,7 +172,7 @@ Deno.serve(async (request) => {
       email: email || null,
       phone: phone || null,
       location: location || null,
-      owner_user_id: ownerUserId || authResult.user.id,
+      owner_user_id: ownerUserId || currentUser.id,
       plan: planCode,
       plan_code: planCode,
       status,
@@ -222,8 +230,8 @@ Deno.serve(async (request) => {
           barbershop_id: createdBarbershop.id,
           role: "admin",
           status: status === "blocked" ? "blocked" : "active",
-          invited_by: authResult.user.id,
-          approved_by: authResult.user.id
+          invited_by: currentUser.id,
+          approved_by: currentUser.id
         }], { onConflict: "user_id,barbershop_id" });
 
       if (userAccessResult.error && !isMissingTableError(userAccessResult.error, "user_access")) {
@@ -235,7 +243,7 @@ Deno.serve(async (request) => {
         .upsert([{
           email: ownerEmail,
           barbershop_id: createdBarbershop.id,
-          approved_by_email: authResult.user.email,
+          approved_by_email: currentUser.email,
           approved_at: new Date().toISOString(),
           is_active: status !== "blocked"
         }], { onConflict: "email" });
@@ -256,7 +264,7 @@ Deno.serve(async (request) => {
           role: "admin",
           status: "pending",
           token_hash: tokenHash,
-          invited_by: authResult.user.id,
+          invited_by: currentUser.id,
           expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString()
         }]);
 
@@ -267,7 +275,7 @@ Deno.serve(async (request) => {
 
     await insertAuditLog(serviceClient, {
       action: "barbershop_created",
-      actor_id: authResult.user.id,
+      actor_id: currentUser.id,
       target_barbershop_id: createdBarbershop.id,
       target_user_id: ownerUserId,
       metadata: {
