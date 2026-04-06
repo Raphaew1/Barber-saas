@@ -3136,6 +3136,8 @@ window.carregarHistoricoCliente = async function () {
 
 // Carrega os dados administrativos da tela de cadastros.
 window.carregarCadastros = async function () {
+  await populateBarberBarbershopSelect()
+
   const barbershopId = await getBarbershop()
   if (!barbershopId) {
     renderAdminMessage('customers-admin-list', getTenantPortalMessage('Faca login para gerenciar clientes.'))
@@ -3151,6 +3153,44 @@ window.carregarCadastros = async function () {
     carregarServicosAdmin(barbershopId),
     carregarProdutosAdmin(barbershopId)
   ])
+}
+
+async function populateBarberBarbershopSelect() {
+  const select = document.getElementById('new-barber-barbershop')
+  if (!select) {
+    return
+  }
+
+  const currentContextBarbershopId = currentPortal === 'admin' ? getAdminBarbershopContext() : await getBarbershop()
+
+  let query = supabaseClient
+    .from('barbershops')
+    .select('id, name')
+    .order('name', { ascending: true })
+
+  if (currentPortal !== 'admin' && currentContextBarbershopId) {
+    query = query.eq('id', currentContextBarbershopId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    select.innerHTML = '<option value="">Erro ao carregar barbearias</option>'
+    select.disabled = true
+    return
+  }
+
+  const items = Array.isArray(data) ? data : []
+  select.innerHTML = [
+    '<option value="">Selecione a barbearia</option>',
+    ...items.map((item) => `<option value="${item.id}">${item.name}</option>`)
+  ].join('')
+
+  if (currentContextBarbershopId && items.some((item) => item.id === currentContextBarbershopId)) {
+    select.value = currentContextBarbershopId
+  }
+
+  select.disabled = items.length === 0
 }
 
 // Carrega a vitrine de produtos exibida no portal do cliente.
@@ -4208,6 +4248,7 @@ window.cadastrarCliente = async function () {
 // Cadastra um novo barbeiro na barbearia do usuario.
 window.cadastrarBarbeiro = async function () {
   const nameInput = document.getElementById('new-barber-name')
+  const barbershopSelect = document.getElementById('new-barber-barbershop')
   const name = nameInput.value.trim()
 
   if (!name) {
@@ -4215,9 +4256,9 @@ window.cadastrarBarbeiro = async function () {
     return
   }
 
-  const barbershopId = await getBarbershop()
+  const barbershopId = barbershopSelect?.value || await getBarbershop()
   if (!barbershopId) {
-    alert(getTenantPortalMessage('Usuario nao logado'))
+    alert('Selecione a barbearia para cadastrar o barbeiro.')
     return
   }
 
@@ -4237,6 +4278,9 @@ window.cadastrarBarbeiro = async function () {
   }
 
   nameInput.value = ''
+  if (barbershopSelect && currentPortal !== 'admin') {
+    barbershopSelect.value = barbershopId
+  }
   await carregarDados()
   await carregarBarbeirosAdmin(barbershopId)
 }
