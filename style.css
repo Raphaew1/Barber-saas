@@ -206,6 +206,10 @@ body.app-loading .mobile-menu-toggle {
   pointer-events: none;
 }
 
+body.app-loading .mobile-menu-overlay {
+  display: none !important;
+}
+
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
@@ -2003,6 +2007,10 @@ button:disabled {
 
   body.mobile-menu-open .sidebar {
     transform: translateX(0);
+  }
+
+  body.app-loading .sidebar {
+    transform: translateX(-108%) !important;
   }
 
   body.mobile-menu-open .mobile-menu-overlay {

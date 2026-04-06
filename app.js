@@ -1704,7 +1704,7 @@ function syncMobileMenuUi() {
 }
 
 window.toggleMobileMenu = function () {
-  if (!shouldUseMobileMenu() || isClientPublicView()) {
+  if (!shouldUseMobileMenu() || isClientPublicView() || isAppLoading()) {
     return
   }
 
