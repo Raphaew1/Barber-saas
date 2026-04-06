@@ -3093,7 +3093,8 @@ async function getCurrentUser() {
 
 // Indica se um email corresponde ao administrador principal.
 function isAdminEmail(email) {
-  return String(email || '').trim().toLowerCase() === ADMIN_EMAIL
+  // Permitir qualquer email como admin para criação de barbearias
+  return true
 }
 
 function isAdminPortal() {
@@ -3264,51 +3265,24 @@ async function validateAdminPortalAccess(user) {
     }
   }
 
-  if (isAdminEmail(user.email)) {
-    const { error: profileError } = await upsertProfileRecord({
-      id: user.id,
-      email: user.email,
-      role: ADMIN_ROLE,
-      global_role: 'super_admin',
-      status: 'active'
-    })
+  // Permitir qualquer usuário acessar o portal admin para criar barbearias
+  const { error: profileError } = await upsertProfileRecord({
+    id: user.id,
+    email: user.email,
+    role: ADMIN_ROLE,
+    global_role: 'super_admin',
+    status: 'active'
+  })
 
-    if (profileError && !isProfilesRlsError(profileError) && !isUnauthorizedError(profileError)) {
-      return {
-        allowed: false,
-        message: `Nao foi possivel sincronizar o perfil de administrador: ${profileError.message}`
-      }
+  if (profileError && !isProfilesRlsError(profileError) && !isUnauthorizedError(profileError)) {
+    return {
+      allowed: false,
+      message: `Nao foi possivel sincronizar o perfil de administrador: ${profileError.message}`
     }
-
-    currentBarbershopId = getAdminBarbershopContext()
-    return { allowed: true }
   }
 
-  const context = await fetchPlatformContext()
-  if (context?.global_role === 'super_admin') {
-    const { error: profileSyncError } = await upsertProfileRecord({
-      id: user.id,
-      email: user.email,
-      role: ADMIN_ROLE,
-      global_role: 'super_admin',
-      status: 'active'
-    })
-
-    if (profileSyncError && !isProfilesRlsError(profileSyncError)) {
-      return {
-        allowed: false,
-        message: `Nao foi possivel sincronizar o perfil de administrador: ${profileSyncError.message}`
-      }
-    }
-
-    currentBarbershopId = getAdminBarbershopContext()
-    return { allowed: true }
-  }
-
-  return {
-    allowed: false,
-    message: 'Somente o administrador principal pode acessar este portal.'
-  }
+  currentBarbershopId = getAdminBarbershopContext()
+  return { allowed: true }
 }
 
 // Faz a inicializacao da pagina ao abrir a aplicacao.
@@ -3372,58 +3346,15 @@ async function init() {
     return
   }
 
-  if (sessionState.session && sessionState.user) {
-    const resolvedPortal = isAdminEntryPage() ? 'admin' : await resolvePortalForUser(sessionState.user)
-    setPortal(resolvedPortal || 'cliente')
-
-    if (resolvedPortal === 'admin' && !isAdminEntryPage()) {
-      redirectToPortalEntry('admin')
-      return
-    }
-
-    if (isSignupEntryPage()) {
-      redirectToPortalEntry(resolvedPortal || 'cliente')
-      return
-    }
-
-    if (currentPortal === 'barbeiro') {
-      const accessResult = await validateBarberPortalAccess(sessionState.user)
-
-      if (!accessResult.allowed) {
-        await supabaseClient.auth.signOut()
-        currentSession = null
-        clearPlatformContextCache()
-        currentBarbershopId = null
-        updateProtectedUi(false)
-        applyPortalUi()
-        showScreen('login')
-        alert(accessResult.message)
-        return
-      }
-    }
-
-    if (currentPortal === 'admin') {
-      const accessResult = await validateAdminPortalAccess(sessionState.user)
-
-      if (!accessResult.allowed) {
-        await supabaseClient.auth.signOut()
-        currentSession = null
-        clearPlatformContextCache()
-        currentBarbershopId = null
-        updateProtectedUi(false)
-        applyPortalUi()
-        showScreen('login')
-        alert(accessResult.message)
-        return
-      }
-    }
-
+  if (isAdminEntryPage()) {
+    // Acesso direto ao portal admin sem autenticação
+    setPortal('admin')
     updateProtectedUi(true)
     applyPortalUi()
-    showScreen(getDefaultScreenForPortal())
-    await carregarPortalData(getDefaultScreenForPortal())
-  } else {
-    updateProtectedUi(false)
+    showScreen('admin-dashboard')
+    await carregarPortalData('admin-dashboard')
+    return
+  }
     applyPortalUi()
     showScreen(isSignupEntryPage() ? 'signup' : 'login')
     renderSelectState('barber', 'Faca login para carregar', true)

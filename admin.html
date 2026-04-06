@@ -72,11 +72,11 @@
         </div>
       </div>
 
-      <section id="login" class="tela">
+      <section id="login" class="tela" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Portal master</span>
-          <h1 id="login-title">Entrar no portal do administrador</h1>
-          <p id="login-description">Somente o email principal autorizado pode acessar esta area.</p>
+          <h1 id="login-title">Portal do administrador</h1>
+          <p id="login-description">Acesso liberado para todos os usuários criarem barbearias.</p>
         </div>
 
         <div class="form-block">
@@ -85,10 +85,7 @@
             <a class="link-button" href="index.html">Ir para o portal principal</a>
           </div>
           <div id="auth-feedback" class="form-feedback" style="display:none;"></div>
-          <input type="email" id="email" placeholder="Email">
-          <input type="password" id="password" placeholder="Senha">
-          <button id="login-submit" onclick="login()">Entrar</button>
-          <button class="link-button" onclick="resetPassword()">Esqueci minha senha</button>
+          <p>Acesso automático concedido. Redirecionando...</p>
         </div>
       </section>
 
