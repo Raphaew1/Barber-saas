@@ -440,6 +440,27 @@ function setAuthFeedback(message = '', type = 'info') {
   feedback.style.display = 'block'
 }
 
+function showFormFeedback(message = '', type = 'info', feedbackId = 'admin-user-create-feedback') {
+  const feedback = document.getElementById(feedbackId)
+  if (!feedback) {
+    if (message) {
+      showAppToast(message, type)
+    }
+    return
+  }
+
+  if (!message) {
+    feedback.textContent = ''
+    feedback.className = 'form-feedback'
+    feedback.style.display = 'none'
+    return
+  }
+
+  feedback.textContent = message
+  feedback.className = `form-feedback form-feedback-${type}`
+  feedback.style.display = 'block'
+}
+
 function setAuthLoading(isLoading) {
   const loginButton = document.getElementById('login-submit')
   const signupButton = document.getElementById('signup-submit')
@@ -513,6 +534,10 @@ async function upsertProfileRecord(profile) {
 
   if (profile.barbershop_id) {
     minimalPayload.barbershop_id = profile.barbershop_id
+  }
+
+  if (profile.plan_code) {
+    minimalPayload.plan_code = normalizePlanCode(profile.plan_code)
   }
 
   const basePayload = {
@@ -3638,6 +3663,130 @@ window.cadastrarBarbeiro = async function () {
   await carregarBarbeirosAdmin(barbershopId)
 }
 
+window.handleAdminUserPhotoChange = function () {
+  const photoInput = document.getElementById('admin-user-photo')
+  const feedback = document.getElementById('admin-user-create-feedback')
+
+  if (!photoInput || !feedback) {
+    return
+  }
+
+  if (photoInput.files && photoInput.files.length > 0) {
+    showFormFeedback(`Foto selecionada: ${photoInput.files[0].name}`, 'info', 'admin-user-create-feedback')
+  } else {
+    showFormFeedback('', 'info', 'admin-user-create-feedback')
+  }
+}
+
+window.cadastrarUsuarioAdmin = async function () {
+  const nameInput = document.getElementById('admin-user-name')
+  const emailInput = document.getElementById('admin-user-email')
+  const phoneInput = document.getElementById('admin-user-phone')
+  const barbershopSelect = document.getElementById('admin-user-barbershop')
+  const passwordInput = document.getElementById('admin-user-password')
+  const confirmPasswordInput = document.getElementById('admin-user-password-confirm')
+  const roleSelect = document.getElementById('admin-user-role')
+  const planSelect = document.getElementById('admin-user-plan')
+  const feedbackId = 'admin-user-create-feedback'
+
+  const name = nameInput?.value.trim() || ''
+  const email = emailInput?.value.trim().toLowerCase() || ''
+  const phone = phoneInput?.value.trim() || ''
+  const barbershopId = barbershopSelect?.value || null
+  const password = passwordInput?.value || ''
+  const confirmPassword = confirmPasswordInput?.value || ''
+  const role = roleSelect?.value || 'client'
+  const planCode = planSelect?.value || 'free'
+
+  if (!name) {
+    showFormFeedback('Informe o nome completo.', 'error', feedbackId)
+    return
+  }
+
+  if (!email) {
+    showFormFeedback('Informe o email.', 'error', feedbackId)
+    return
+  }
+
+  if (!phone) {
+    showFormFeedback('Informe o telefone.', 'error', feedbackId)
+    return
+  }
+
+  if (!password) {
+    showFormFeedback('Informe a senha.', 'error', feedbackId)
+    return
+  }
+
+  if (password.length < 6) {
+    showFormFeedback('A senha deve ter pelo menos 6 caracteres.', 'error', feedbackId)
+    return
+  }
+
+  if (password !== confirmPassword) {
+    showFormFeedback('As senhas precisam ser iguais.', 'error', feedbackId)
+    return
+  }
+
+  if (role === 'barber' && !barbershopId) {
+    showFormFeedback('Selecione a barbearia para o barbeiro.', 'error', feedbackId)
+    return
+  }
+
+  showFormFeedback('Criando usuario...', 'info', feedbackId)
+
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: getAppUrl('admin.html')
+      }
+    })
+
+    if (error) {
+      showFormFeedback(`Erro ao criar conta: ${error.message}`, 'error', feedbackId)
+      return
+    }
+
+    const userId = data?.user?.id
+
+    if (userId) {
+      const { error: profileError } = await upsertProfileRecord({
+        id: userId,
+        email,
+        name,
+        phone,
+        role,
+        barbershop_id: barbershopId,
+        plan_code: planCode,
+        status: 'active'
+      })
+
+      if (profileError) {
+        showFormFeedback(`Conta criada, mas falha ao salvar perfil: ${profileError.message}`, 'warning', feedbackId)
+        return
+      }
+    }
+
+    showFormFeedback('Usuario criado com sucesso. Verifique o email para confirmar o acesso.', 'success', feedbackId)
+
+    if (nameInput) nameInput.value = ''
+    if (emailInput) emailInput.value = ''
+    if (phoneInput) phoneInput.value = ''
+    if (barbershopSelect) barbershopSelect.value = ''
+    if (passwordInput) passwordInput.value = ''
+    if (confirmPasswordInput) confirmPasswordInput.value = ''
+    if (roleSelect) roleSelect.value = 'client'
+    if (planSelect) planSelect.value = 'free'
+    if (document.getElementById('admin-user-photo')) {
+      document.getElementById('admin-user-photo').value = ''
+    }
+  } catch (err) {
+    showFormFeedback(`Erro ao criar usuario: ${err.message || 'Tente novamente.'}`, 'error', feedbackId)
+  }
+}
+
 // Cadastra um novo servico na barbearia do usuario.
 window.cadastrarServico = async function () {
   const nameInput = document.getElementById('new-service-name')
@@ -6430,6 +6579,15 @@ async function carregarAdminUsuarios() {
   }
 
   const barbershopNameById = new Map((barbershopsResult.data || []).map((item) => [item.id, item.name]))
+  const barbershopSelect = document.getElementById('admin-user-barbershop')
+
+  if (barbershopSelect) {
+    barbershopSelect.innerHTML = [
+      '<option value="">Selecione a barbearia</option>',
+      ...(barbershopsResult.data || []).map((item) => `<option value="${item.id}">${item.name}</option>`)
+    ].join('')
+  }
+
   const usersByEmail = new Map()
 
   ;(profilesResult.data || []).forEach((item) => {

@@ -526,6 +526,41 @@
           <p>Gerencie os usuarios por portal. O admin pode editar telefone, redefinir senha e alterar o proprio email de acesso.</p>
         </div>
 
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Criar novo usuario</span>
+              <h2>Novo usuario do sistema</h2>
+            </div>
+          </div>
+          <div class="management-form">
+            <input type="text" id="admin-user-name" placeholder="Nome completo">
+            <input type="email" id="admin-user-email" placeholder="Email">
+            <input type="tel" id="admin-user-phone" placeholder="Telefone">
+            <select id="admin-user-barbershop">
+              <option value="">Selecione a barbearia</option>
+            </select>
+            <input type="password" id="admin-user-password" placeholder="Senha" autocomplete="new-password">
+            <input type="password" id="admin-user-password-confirm" placeholder="Confirmar senha" autocomplete="new-password">
+            <label class="field-label" for="admin-user-photo">Foto do usuario (opcional)</label>
+            <input type="file" id="admin-user-photo" accept="image/*" onchange="handleAdminUserPhotoChange()">
+            <select id="admin-user-role">
+              <option value="client">Perfil do usuario</option>
+              <option value="client">Cliente</option>
+              <option value="barber">Barbeiro</option>
+              <option value="admin">Administrador</option>
+            </select>
+            <select id="admin-user-plan">
+              <option value="free">Plano contratado</option>
+              <option value="free">Free</option>
+              <option value="pro">Pro</option>
+              <option value="premium">Premium</option>
+            </select>
+            <div id="admin-user-create-feedback" class="form-feedback" style="display:none;"></div>
+            <button type="button" data-protected="true" onclick="cadastrarUsuarioAdmin()">Cadastrar o usuario</button>
+          </div>
+        </section>
+
         <div class="management-grid">
           <section class="management-card">
             <div class="management-card-header">
