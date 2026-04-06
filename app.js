@@ -651,29 +651,54 @@ async function createBarbershopRecord(barbershop) {
 }
 
 async function createAdminBarbershopProvision(payload) {
-  const { data, error } = await invokeProtectedFunction('create-barbershop', payload, {
-    authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente antes de criar a barbearia.'
-  })
+  // Para criação de barbearias no portal admin público, não usar autenticação
+  const executeInvoke = async () => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/create-barbershop`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_ANON_KEY
+          // Não enviar Authorization header para permitir criação sem login
+        },
+        body: JSON.stringify(payload || {})
+      })
 
-  if (error) {
-    const message = await extractFunctionErrorMessage(error, 'Nao foi possivel criar a barbearia.')
-    return {
-      data: null,
-      error: new Error(message)
+      const responseText = await response.text()
+      let data = null
+
+      try {
+        data = responseText ? JSON.parse(responseText) : null
+      } catch (_parseError) {
+        data = null
+      }
+
+      if (!response.ok) {
+        const functionError = new Error(
+          String(data?.error || data?.message || response.statusText || 'Erro na criação da barbearia')
+        )
+        functionError.status = response.status
+        functionError.payload = data
+        functionError.responseText = responseText
+        return {
+          data: null,
+          error: functionError
+        }
+      }
+
+      return {
+        data: data,
+        error: null
+      }
+    } catch (networkError) {
+      return {
+        data: null,
+        error: networkError
+      }
     }
   }
 
-  if (data?.error) {
-    return {
-      data: null,
-      error: new Error(data.error)
-    }
-  }
-
-  return {
-    data: data?.barbershop || null,
-    error: null
-  }
+  return await executeInvoke()
 }
 
 async function fetchAdminAppointmentsSummary() {
