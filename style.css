@@ -993,6 +993,48 @@ body:not(.dark-mode) .topbar-screen-description {
   font-size: 12px;
 }
 
+.portal-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.portal-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 164px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.portal-shortcut:hover {
+  transform: translateY(-1px);
+  border-color: rgba(245, 208, 137, 0.18);
+  background: rgba(245, 208, 137, 0.08);
+  color: #fff4d6;
+}
+
+body:not(.dark-mode) .portal-shortcut {
+  border-color: rgba(15, 23, 42, 0.08);
+  background: rgba(248, 250, 252, 0.96);
+  color: #344767;
+}
+
+body:not(.dark-mode) .portal-shortcut:hover {
+  border-color: rgba(255, 122, 0, 0.14);
+  background: rgba(255, 122, 0, 0.08);
+  color: #ff6a00;
+}
+
 .form-feedback {
   margin: 8px 0 10px;
   padding: 12px 14px;

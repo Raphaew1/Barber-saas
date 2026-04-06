@@ -248,6 +248,17 @@ function getAppUrl(fileName = 'index.html') {
   return new URL(fileName, window.location.href).href
 }
 
+function getPortalHintFromUrl() {
+  const portalHint = new URLSearchParams(window.location.search).get('portal')
+  const normalized = normalizePortalRole(portalHint)
+
+  if (normalized === CUSTOMER_ROLE || normalized === BARBER_ROLE || normalized === ADMIN_ROLE) {
+    return normalized
+  }
+
+  return null
+}
+
 function getSlugFromUrl() {
   const path = String(window.location.pathname || '').replace(/^\/+|\/+$/g, '')
   if (!path || ['index.html', 'admin.html', 'signup.html'].includes(path.toLowerCase())) {
@@ -6213,6 +6224,12 @@ function restorePortalSelection() {
     return
   }
 
+  const portalHint = getPortalHintFromUrl()
+  if (portalHint) {
+    currentPortal = portalHint
+    return
+  }
+
   currentPortal = currentBarbershopContext ? 'cliente' : null
 }
 
@@ -6229,6 +6246,10 @@ function updateLoginPortalUi() {
         ? `Agendamento direto para ${currentBarbershopContext?.name || 'esta barbearia'}.`
       : isSignupEntryPage()
         ? 'Seu cadastro sera criado no portal do cliente.'
+        : currentPortal === BARBER_ROLE
+          ? 'Entre com o email liberado pela barbearia para acessar o portal operacional.'
+          : currentPortal === CUSTOMER_ROLE
+            ? 'Entre como cliente para agendar, acompanhar historico e comprar produtos.'
         : 'Entre com seu email e o sistema identifica automaticamente seu portal.'
   }
 
@@ -6237,6 +6258,10 @@ function updateLoginPortalUi() {
       ? 'Entrar no portal do administrador'
       : isClientPublicView()
         ? `Agende com ${currentBarbershopContext?.name || 'a barbearia'}`
+        : currentPortal === BARBER_ROLE
+          ? 'Entrar no portal da barbearia'
+          : currentPortal === CUSTOMER_ROLE
+            ? 'Entrar no portal do cliente'
       : 'Entrar na sua conta'
   }
 
@@ -6247,6 +6272,10 @@ function updateLoginPortalUi() {
         ? 'Escolha barbeiro, servicos e horario. O contexto da barbearia ja foi identificado pela URL.'
       : isSignupEntryPage()
         ? 'Crie sua conta de cliente e confirme seu email antes de entrar.'
+        : currentPortal === BARBER_ROLE
+          ? 'Use o email com acesso ativo ao portal da barbearia. O sistema validara sua unidade automaticamente.'
+          : currentPortal === CUSTOMER_ROLE
+            ? 'Use seu email e senha para acessar agendamentos, compras e historico como cliente.'
       : 'Use seu email e senha. O sistema redireciona automaticamente para cliente, barbearia ou administrador.'
   }
 }
