@@ -3233,6 +3233,14 @@ body.admin-premium button {
   transition: var(--admin-transition);
 }
 
+body.admin-premium button:not(.nav-button):not(.sidebar-brand-button):not(.nav-button-ghost) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: 100%;
+}
+
 body.admin-premium button:hover {
   transform: translateY(-1px);
   background: #4f46e5;
