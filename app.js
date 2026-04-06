@@ -789,7 +789,7 @@ async function upsertProfileRecord(profile) {
     .from('profiles')
     .upsert([payloadWithOptionalFields], { onConflict: 'id' })
 
-  if (result.error && isMissingColumnError(result.error, ['name', 'phone', 'global_role', 'status', 'role', 'barbershop_id'])) {
+  if (result.error && isMissingColumnError(result.error, ['name', 'phone', 'global_role', 'status', 'role', 'barbershop_id', 'plan_code'])) {
     const fallbackPayload = {
       id: profile.id,
       email: profile.email
