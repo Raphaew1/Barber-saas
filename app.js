@@ -107,6 +107,7 @@ let currentVisibleScreenId = ''
 let platformContextCache = null
 let adminPasswordModalTarget = null
 let adminEditingBarbershopId = null
+let isMobileMenuOpen = false
 let adminContextStatsCache = {
   usersByBarbershop: new Map(),
   appointmentsByBarbershop: new Map()
@@ -1532,6 +1533,10 @@ function updateTopbarUserIdentity() {
   const label = document.querySelector('#topbar-user-identity .topbar-user-label')
   const value = document.getElementById('topbar-user-value')
   const meta = document.getElementById('topbar-user-meta')
+  const sidebarWrapper = document.getElementById('sidebar-user-identity')
+  const sidebarValue = document.getElementById('sidebar-user-value')
+  const sidebarMeta = document.getElementById('sidebar-user-meta')
+  const sidebarAvatar = document.querySelector('#sidebar-user-identity .sidebar-user-avatar')
 
   if (!wrapper || !value) {
     return
@@ -1544,12 +1549,23 @@ function updateTopbarUserIdentity() {
     if (meta) {
       meta.textContent = ''
     }
+    if (sidebarWrapper) {
+      sidebarWrapper.style.display = 'none'
+    }
+    if (sidebarValue) {
+      sidebarValue.textContent = 'Conta'
+    }
+    if (sidebarMeta) {
+      sidebarMeta.textContent = 'Sem sessao'
+    }
     return
   }
 
   const portalLabel = getCurrentPortalLabel()
   const displayValue = user.email || user.id || 'Usuario autenticado'
   const shortId = user.id ? String(user.id).slice(0, 8) : ''
+  const displayName = user.user_metadata?.name || user.email || 'Usuario autenticado'
+  const avatarText = String(displayName).trim().slice(0, 2).toUpperCase()
 
   wrapper.style.display = 'inline-flex'
   if (label) {
@@ -1560,6 +1576,19 @@ function updateTopbarUserIdentity() {
     meta.textContent = user.email && shortId ? `ID: ${shortId}` : (user.id || '')
   }
   wrapper.title = user.id && user.email ? `Email: ${user.email}\nID: ${user.id}` : displayValue
+
+  if (sidebarWrapper) {
+    sidebarWrapper.style.display = 'flex'
+  }
+  if (sidebarValue) {
+    sidebarValue.textContent = displayName
+  }
+  if (sidebarMeta) {
+    sidebarMeta.textContent = `${portalLabel}${user.email ? ` · ${user.email}` : ''}`
+  }
+  if (sidebarAvatar) {
+    sidebarAvatar.textContent = avatarText || 'CF'
+  }
 }
 
 function getCurrentPortalLabel() {
@@ -1638,6 +1667,52 @@ function updateTopbarScreenContext(screenId = '') {
   if (contextBadge) {
     contextBadge.textContent = getCurrentTopbarContextLabel()
   }
+}
+
+function shouldUseMobileMenu() {
+  return window.innerWidth <= 980
+}
+
+function syncMobileMenuUi() {
+  const toggle = document.getElementById('mobile-menu-toggle')
+  const overlay = document.getElementById('mobile-menu-overlay')
+  const isAvailable = shouldUseMobileMenu() && !isClientPublicView()
+
+  if (toggle) {
+    toggle.style.display = isAvailable ? 'inline-flex' : 'none'
+    toggle.setAttribute('aria-expanded', isAvailable && isMobileMenuOpen ? 'true' : 'false')
+  }
+
+  if (overlay) {
+    overlay.style.display = isAvailable && isMobileMenuOpen ? 'block' : 'none'
+  }
+
+  if (!isAvailable) {
+    isMobileMenuOpen = false
+    document.body.classList.remove('mobile-menu-open')
+    return
+  }
+
+  document.body.classList.toggle('mobile-menu-open', isMobileMenuOpen)
+}
+
+window.toggleMobileMenu = function () {
+  if (!shouldUseMobileMenu() || isClientPublicView()) {
+    return
+  }
+
+  isMobileMenuOpen = !isMobileMenuOpen
+  syncMobileMenuUi()
+}
+
+window.closeMobileMenu = function () {
+  if (!isMobileMenuOpen) {
+    syncMobileMenuUi()
+    return
+  }
+
+  isMobileMenuOpen = false
+  syncMobileMenuUi()
 }
 
 async function fetchPlatformContext(forceRefresh = false) {
@@ -4622,6 +4697,7 @@ function getDefaultServices(barbershopId) {
 function showScreen(screenId) {
   const screenIds = ['login', 'signup', 'agendar', 'agenda', 'cadastros', 'produtos', 'gestao', 'aprovacoes', 'admin-dashboard', 'admin-barbershops', 'admin-access', 'admin-users', 'reset-password']
   currentVisibleScreenId = screenId
+  closeMobileMenu()
 
   screenIds.forEach((id) => {
     const screen = document.getElementById(id)
@@ -6091,6 +6167,7 @@ function applyPortalUi() {
   updateAdminContextUi()
   updateClientPublicViewUi()
   updateTopbarScreenContext(currentVisibleScreenId || getDefaultScreenForPortal())
+  syncMobileMenuUi()
 }
 
 // Persiste o portal para manter a experiencia apos recarregar.
@@ -6297,6 +6374,19 @@ function updateThemeToggleLabel(isDarkMode) {
 
   toggleButton.textContent = isDarkMode ? 'Light' : 'Dark'
 }
+
+window.addEventListener('resize', () => {
+  if (!shouldUseMobileMenu()) {
+    isMobileMenuOpen = false
+  }
+  syncMobileMenuUi()
+})
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeMobileMenu()
+  }
+})
 
 function warnIfRunningFromFileProtocol() {
   if (window.location.protocol !== 'file:') {

@@ -19,6 +19,12 @@
 </button>
 
 <div class="app-shell">
+  <button id="mobile-menu-toggle" class="mobile-menu-toggle" type="button" onclick="toggleMobileMenu()" aria-label="Abrir menu" aria-expanded="false">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <div id="mobile-menu-overlay" class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
   <div class="app">
 
     <!-- Sidebar -->
@@ -34,29 +40,34 @@
       <nav class="sidebar-nav">
         <div class="nav-group" data-nav-group>
           <span class="nav-group-label">Cliente</span>
-          <button id="nav-agendar" class="nav-button" data-screen="agendar" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('agendar')">Agendar</button>
-          <button id="nav-produtos" class="nav-button" data-screen="produtos" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('produtos')">Produtos</button>
+          <button id="nav-agendar" class="nav-button" data-icon="◫" data-screen="agendar" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('agendar')">Agendar</button>
+          <button id="nav-produtos" class="nav-button" data-icon="◧" data-screen="produtos" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('produtos')">Produtos</button>
         </div>
         <div class="nav-group" data-nav-group>
           <span class="nav-group-label">Operacao</span>
-          <button id="nav-gestao" class="nav-button" data-screen="gestao" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('gestao')">Gestao</button>
-          <button id="nav-agenda" class="nav-button" data-screen="agenda" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('agenda')">Minha Agenda</button>
-          <button id="nav-cadastros" class="nav-button" data-screen="cadastros" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('cadastros')">Cadastros</button>
-          <button id="nav-aprovacoes" class="nav-button" data-screen="aprovacoes" data-protected="true" data-portal="barbeiro,admin" data-admin-only="true" onclick="mostrarTela('aprovacoes')">Aprovacoes</button>
+          <button id="nav-gestao" class="nav-button" data-icon="▤" data-screen="gestao" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('gestao')">Gestao</button>
+          <button id="nav-agenda" class="nav-button" data-icon="◷" data-screen="agenda" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('agenda')">Minha Agenda</button>
+          <button id="nav-cadastros" class="nav-button" data-icon="□" data-screen="cadastros" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('cadastros')">Cadastros</button>
+          <button id="nav-aprovacoes" class="nav-button" data-icon="✓" data-screen="aprovacoes" data-protected="true" data-portal="barbeiro,admin" data-admin-only="true" onclick="mostrarTela('aprovacoes')">Aprovacoes</button>
         </div>
         <div class="nav-group" data-nav-group>
           <span class="nav-group-label">Plataforma</span>
-          <button id="nav-admin-dashboard" class="nav-button" data-screen="admin-dashboard" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-dashboard')">Dashboard Admin</button>
-          <button id="nav-admin-barbershops" class="nav-button" data-screen="admin-barbershops" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-barbershops')">Barbearias</button>
-          <button id="nav-admin-access" class="nav-button" data-screen="admin-access" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-access')">Acessos</button>
-          <button id="nav-admin-users" class="nav-button" data-screen="admin-users" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-users')">Usuarios</button>
+          <button id="nav-admin-dashboard" class="nav-button" data-icon="◰" data-screen="admin-dashboard" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-dashboard')">Dashboard Admin</button>
+          <button id="nav-admin-barbershops" class="nav-button" data-icon="⌂" data-screen="admin-barbershops" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-barbershops')">Barbearias</button>
+          <button id="nav-admin-access" class="nav-button" data-icon="◎" data-screen="admin-access" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-access')">Acessos</button>
+          <button id="nav-admin-users" class="nav-button" data-icon="◌" data-screen="admin-users" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-users')">Usuarios</button>
         </div>
-        <button id="nav-sair" class="nav-button nav-button-ghost" data-protected="true" onclick="logout()">Sair</button>
       </nav>
 
       <div class="sidebar-footer">
-        <span class="sidebar-kicker">Experiencia premium</span>
-        <p>Agenda, gestao, servicos e barbeiros com acesso separado por portal.</p>
+        <div id="sidebar-user-identity" class="sidebar-user-identity" style="display:none;">
+          <span class="sidebar-user-avatar">CF</span>
+          <div class="sidebar-user-content">
+            <strong id="sidebar-user-value">Conta</strong>
+            <small id="sidebar-user-meta">Sem sessao</small>
+          </div>
+        </div>
+        <button id="nav-sair" class="sidebar-logout-button" data-protected="true" onclick="logout()">Sair</button>
       </div>
     </aside>
 
