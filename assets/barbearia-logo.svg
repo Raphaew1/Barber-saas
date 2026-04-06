@@ -1,0 +1,44 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="poleBody" x1="118" y1="24" x2="118" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="0.35" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#4C1D95"/>
+    </linearGradient>
+    <linearGradient id="poleStripe" x1="86" y1="48" x2="156" y2="198" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="44" y1="54" x2="154" y2="170" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDE68A"/>
+      <stop offset="0.45" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="goldDark" x1="72" y1="88" x2="144" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="shadow" x="18" y="16" width="168" height="224" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#020617" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="92" y="30" width="52" height="196" rx="26" fill="url(#poleBody)"/>
+    <rect x="88" y="58" width="60" height="16" rx="8" fill="#7C3AED"/>
+    <rect x="88" y="180" width="60" height="16" rx="8" fill="#7C3AED"/>
+    <path d="M96 78L96 118L144 82L144 42L96 78Z" fill="url(#poleStripe)" fill-opacity="0.9"/>
+    <path d="M96 154L96 194L144 158L144 118L96 154Z" fill="url(#poleStripe)" fill-opacity="0.9"/>
+    <circle cx="114" cy="50" r="10" fill="#C4B5FD" fill-opacity="0.72"/>
+    <circle cx="112" cy="204" r="6" fill="#8B5CF6" fill-opacity="0.55"/>
+
+    <path d="M46 64C60 69 76 84 78 96C80 108 72 122 64 126C54 130 45 126 39 118C31 108 32 94 39 85C44 78 43 70 36 64C33 61 33 57 36 55C39 53 42 54 46 64Z" fill="url(#gold)"/>
+    <path d="M40 172C54 167 70 152 72 140C74 128 66 114 58 110C48 106 39 110 33 118C25 128 26 142 33 151C38 158 37 166 30 172C27 175 27 179 30 181C33 183 36 182 40 172Z" fill="url(#gold)"/>
+    <circle cx="56" cy="106" r="21" stroke="#FCD34D" stroke-width="9"/>
+    <circle cx="50" cy="160" r="21" stroke="#FBBF24" stroke-width="9"/>
+
+    <path d="M58 187L168 61L132 146L58 187Z" fill="url(#gold)"/>
+    <path d="M54 72L172 184L112 118L54 72Z" fill="url(#goldDark)"/>
+    <circle cx="106" cy="138" r="9" fill="#111827" stroke="#FDE68A" stroke-width="4"/>
+  </g>
+</svg>
