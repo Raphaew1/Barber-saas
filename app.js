@@ -498,7 +498,8 @@ function isMissingTableError(error, tableName) {
     status === 404 ||
     message.includes(`relation "public.${normalizedTableName}" does not exist`) ||
     message.includes(`relation "${normalizedTableName}" does not exist`) ||
-    message.includes(`could not find the table '${normalizedTableName}'`)
+    message.includes(`could not find the table '${normalizedTableName}'`) ||
+    message.includes(`could not find the table 'public.${normalizedTableName}'`)
   )
 }
 
@@ -7855,7 +7856,7 @@ window.criarAcessoAdmin = async function () {
 
   const profileResult = await supabaseClient
     .from('profiles')
-    .select('id, role, status')
+    .select('id, role, status, global_role')
     .eq('email', email)
     .maybeSingle()
 
@@ -7902,7 +7903,7 @@ window.criarAcessoAdmin = async function () {
           approved_at: new Date().toISOString()
         }], { onConflict: 'user_id' })
 
-      if (error) {
+      if (error && !isMissingTableError(error, 'user_access')) {
         showFormFeedback(`Erro ao liberar acesso: ${error.message}`, 'error', feedbackId)
         return
       }
@@ -7911,7 +7912,8 @@ window.criarAcessoAdmin = async function () {
     if (profileId) {
       const profileUpdate = {
         role: normalizedPortal,
-        status: signaledStatus === 'pending' ? 'inactive' : signaledStatus
+        global_role: getGlobalRoleForPortalRole(normalizedPortal, profileResult.data?.global_role || ''),
+        status: signaledStatus === 'pending' ? 'pending' : signaledStatus
       }
 
       const { error: profileUpdateError } = await supabaseClient
