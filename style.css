@@ -2924,7 +2924,7 @@ body.admin-premium .sidebar-logout-button {
   justify-content: flex-start;
   margin-top: 8px;
   padding: 9px 12px;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid rgba(239, 68, 68, 0.18);
   background: rgba(239, 68, 68, 0.08);
   color: #fecaca;
@@ -3221,7 +3221,7 @@ body.admin-premium .field-label {
 
 body.admin-premium button {
   padding: 10px 16px;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid rgba(99, 102, 241, 0.24);
   background: #6366f1;
   color: #ffffff;
