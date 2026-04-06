@@ -32,16 +32,25 @@
       </button>
 
       <nav class="sidebar-nav">
-        <button id="nav-agendar" class="nav-button" data-screen="agendar" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('agendar')">Agendar</button>
-        <button id="nav-produtos" class="nav-button" data-screen="produtos" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('produtos')">Produtos</button>
-        <button id="nav-gestao" class="nav-button" data-screen="gestao" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('gestao')">Gestao</button>
-        <button id="nav-agenda" class="nav-button" data-screen="agenda" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('agenda')">Minha Agenda</button>
-        <button id="nav-cadastros" class="nav-button" data-screen="cadastros" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('cadastros')">Cadastros</button>
-        <button id="nav-admin-dashboard" class="nav-button" data-screen="admin-dashboard" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-dashboard')">Dashboard Admin</button>
-        <button id="nav-admin-barbershops" class="nav-button" data-screen="admin-barbershops" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-barbershops')">Barbearias</button>
-        <button id="nav-admin-access" class="nav-button" data-screen="admin-access" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-access')">Acessos</button>
-        <button id="nav-admin-users" class="nav-button" data-screen="admin-users" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-users')">Usuarios</button>
-        <button id="nav-aprovacoes" class="nav-button" data-screen="aprovacoes" data-protected="true" data-portal="barbeiro,admin" data-admin-only="true" onclick="mostrarTela('aprovacoes')">Aprovacoes</button>
+        <div class="nav-group" data-nav-group>
+          <span class="nav-group-label">Cliente</span>
+          <button id="nav-agendar" class="nav-button" data-screen="agendar" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('agendar')">Agendar</button>
+          <button id="nav-produtos" class="nav-button" data-screen="produtos" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('produtos')">Produtos</button>
+        </div>
+        <div class="nav-group" data-nav-group>
+          <span class="nav-group-label">Operacao</span>
+          <button id="nav-gestao" class="nav-button" data-screen="gestao" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('gestao')">Gestao</button>
+          <button id="nav-agenda" class="nav-button" data-screen="agenda" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('agenda')">Minha Agenda</button>
+          <button id="nav-cadastros" class="nav-button" data-screen="cadastros" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('cadastros')">Cadastros</button>
+          <button id="nav-aprovacoes" class="nav-button" data-screen="aprovacoes" data-protected="true" data-portal="barbeiro,admin" data-admin-only="true" onclick="mostrarTela('aprovacoes')">Aprovacoes</button>
+        </div>
+        <div class="nav-group" data-nav-group>
+          <span class="nav-group-label">Plataforma</span>
+          <button id="nav-admin-dashboard" class="nav-button" data-screen="admin-dashboard" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-dashboard')">Dashboard Admin</button>
+          <button id="nav-admin-barbershops" class="nav-button" data-screen="admin-barbershops" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-barbershops')">Barbearias</button>
+          <button id="nav-admin-access" class="nav-button" data-screen="admin-access" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-access')">Acessos</button>
+          <button id="nav-admin-users" class="nav-button" data-screen="admin-users" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-users')">Usuarios</button>
+        </div>
         <button id="nav-sair" class="nav-button nav-button-ghost" data-protected="true" onclick="logout()">Sair</button>
       </nav>
 
@@ -54,7 +63,7 @@
     <!-- Conteudo -->
     <main class="content">
       <div class="content-topbar">
-        <div>
+        <div class="topbar-main">
           <div id="topbar-user-identity" class="topbar-user-identity" style="display:none;">
             <span class="topbar-user-label">User</span>
             <div class="topbar-user-content">
@@ -62,8 +71,13 @@
               <small id="topbar-user-meta" class="topbar-user-meta"></small>
             </div>
           </div>
-          <span class="screen-kicker">Studio dashboard</span>
-          <h3>Gestao elegante para sua barbearia</h3>
+          <span id="topbar-screen-kicker" class="screen-kicker">Studio dashboard</span>
+          <h3 id="topbar-screen-title">Gestao elegante para sua barbearia</h3>
+          <p id="topbar-screen-description" class="topbar-screen-description">Navegacao organizada por portal, contexto e etapa de operacao.</p>
+          <div class="topbar-status-pills">
+            <span id="topbar-portal-badge" class="topbar-status-pill">Portal publico</span>
+            <span id="topbar-context-badge" class="topbar-status-pill">Sem contexto</span>
+          </div>
         </div>
         <div id="admin-context-switcher" class="admin-context-switcher" style="display:none;">
           <span class="screen-kicker">Contexto admin</span>
@@ -443,6 +457,33 @@
               <option value="premium">Plano Premium</option>
             </select>
             <button type="button" onclick="criarBarbeariaAdmin()">Criar barbearia</button>
+          </div>
+        </section>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Edicao</span>
+              <h2>Alterar informacoes da barbearia</h2>
+            </div>
+          </div>
+          <div class="management-form">
+            <input type="text" id="admin-edit-barbershop-id" placeholder="ID da barbearia" readonly>
+            <input type="text" id="admin-edit-barbershop-name" placeholder="Nome da barbearia">
+            <input type="tel" id="admin-edit-barbershop-phone" placeholder="Telefone da barbearia">
+            <input type="email" id="admin-edit-barbershop-email" placeholder="Email da barbearia">
+            <input type="text" id="admin-edit-barbershop-slug" placeholder="Slug publico da barbearia">
+            <input type="url" id="admin-edit-barbershop-logo-url" placeholder="URL do logo da barbearia">
+            <input type="color" id="admin-edit-barbershop-primary-color" value="#ffffff" title="Cor primaria">
+            <input type="color" id="admin-edit-barbershop-secondary-color" value="#000000" title="Cor secundaria">
+            <select id="admin-edit-barbershop-plan">
+              <option value="free">Plano Free</option>
+              <option value="pro">Plano Pro</option>
+              <option value="premium">Plano Premium</option>
+            </select>
+            <div id="admin-barbershop-edit-feedback" class="form-feedback" style="display:none;"></div>
+            <button type="button" onclick="salvarBarbeariaAdmin()">Salvar alteracoes</button>
+            <button type="button" class="edit-button" onclick="cancelarEdicaoBarbeariaAdmin()">Limpar edicao</button>
           </div>
         </section>
 

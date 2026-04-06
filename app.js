@@ -103,8 +103,10 @@ let currentSubscriptionCache = null
 let adminAccessDirectoryCache = []
 let adminAccessAuditCache = []
 let selectedAdminAccessKey = null
+let currentVisibleScreenId = ''
 let platformContextCache = null
 let adminPasswordModalTarget = null
+let adminEditingBarbershopId = null
 let adminContextStatsCache = {
   usersByBarbershop: new Map(),
   appointmentsByBarbershop: new Map()
@@ -149,6 +151,73 @@ const SAAS_PLAN_DEFINITIONS = {
     maxAppointmentsPerMonth: 2000,
     maxBarbers: 30,
     multiBarbershop: true
+  }
+}
+const SCREEN_CONTEXT_MAP = {
+  login: {
+    kicker: 'Acesso',
+    title: 'Entrar na plataforma',
+    description: 'Autenticacao com roteamento inteligente entre cliente, barbearia e administracao.'
+  },
+  signup: {
+    kicker: 'Cadastro',
+    title: 'Criar conta de cliente',
+    description: 'Cadastro simplificado para entrar e acompanhar seus agendamentos.'
+  },
+  'reset-password': {
+    kicker: 'Seguranca',
+    title: 'Redefinir senha',
+    description: 'Atualize sua senha e retome o acesso com seguranca.'
+  },
+  agendar: {
+    kicker: 'Atendimento',
+    title: 'Novo agendamento',
+    description: 'Escolha barbeiro, servicos e horario com o contexto da unidade ja aplicado.'
+  },
+  produtos: {
+    kicker: 'Vitrine',
+    title: 'Produtos da barbearia',
+    description: 'Catalogo com itens disponiveis para venda no contexto da unidade ativa.'
+  },
+  gestao: {
+    kicker: 'Operacao',
+    title: 'Indicadores da barbearia',
+    description: 'Visao executiva da unidade com vendas, estoque, servicos e saude do plano.'
+  },
+  agenda: {
+    kicker: 'Agenda',
+    title: 'Agenda operacional',
+    description: 'Acompanhe os atendimentos da barbearia em uma visualizacao clara por horario.'
+  },
+  cadastros: {
+    kicker: 'Configuracao',
+    title: 'Cadastros da barbearia',
+    description: 'Gerencie clientes, barbeiros, servicos e produtos da unidade selecionada.'
+  },
+  aprovacoes: {
+    kicker: 'Acesso',
+    title: 'Aprovacoes do portal',
+    description: 'Autorize acessos sensiveis com o contexto correto da barbearia.'
+  },
+  'admin-dashboard': {
+    kicker: 'Master control',
+    title: 'Dashboard do administrador',
+    description: 'Acompanhe a saude da plataforma, faturamento e operacao das barbearias.'
+  },
+  'admin-barbershops': {
+    kicker: 'Provisionamento',
+    title: 'Gerenciar barbearias',
+    description: 'Crie unidades, edite identidade da marca e acompanhe o plano de cada operacao.'
+  },
+  'admin-access': {
+    kicker: 'Seguranca',
+    title: 'Controle global de acessos',
+    description: 'Centralize governanca, aprovacoes e status de usuarios da plataforma.'
+  },
+  'admin-users': {
+    kicker: 'Usuarios',
+    title: 'Diretorio global de usuarios',
+    description: 'Consulte clientes, barbeiros e administradores com filtros e contexto por unidade.'
   }
 }
 
@@ -407,6 +476,10 @@ function getBarbershopConflictMessage(error) {
     return 'Ja existe uma barbearia cadastrada com este email.'
   }
 
+  if (combined.includes('slug')) {
+    return 'Ja existe uma barbearia cadastrada com este slug.'
+  }
+
   if (combined.includes('name')) {
     return 'Ja existe uma barbearia cadastrada com este nome.'
   }
@@ -433,6 +506,16 @@ function normalizePlanCode(planCode) {
 
 function getPlanDefinition(planCode) {
   return SAAS_PLAN_DEFINITIONS[normalizePlanCode(planCode)]
+}
+
+function normalizeBarbershopSlugInput(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 function buildPlanBadge(planCode) {
@@ -1201,6 +1284,35 @@ async function ensureSaasSubscription(barbershopId, planCode = 'free') {
   }
 }
 
+async function saveSaasSubscriptionPlan(barbershopId, planCode = 'free') {
+  const normalizedPlanCode = normalizePlanCode(planCode)
+  const existing = await fetchSaasSubscription(barbershopId)
+
+  if (existing.error || existing.missingTable) {
+    return existing
+  }
+
+  if (!existing.data?.id) {
+    return ensureSaasSubscription(barbershopId, normalizedPlanCode)
+  }
+
+  const { data, error } = await supabaseClient
+    .from('saas_subscriptions')
+    .update({
+      plan_code: normalizedPlanCode,
+      status: 'active',
+      billing_provider: existing.data.billing_provider || 'manual'
+    })
+    .eq('id', existing.data.id)
+    .select('id, barbershop_id, plan_code, status, billing_provider, created_at')
+    .maybeSingle()
+
+  return {
+    data: data || existing.data,
+    error
+  }
+}
+
 async function getPlanUsage(barbershopId) {
   const subscriptionResult = await fetchSaasSubscription(barbershopId)
   const plan = getPlanDefinition(subscriptionResult.data?.plan_code || 'free')
@@ -1435,13 +1547,7 @@ function updateTopbarUserIdentity() {
     return
   }
 
-  const portalLabel = currentPortal === ADMIN_ROLE
-    ? 'Administrador'
-    : currentPortal === BARBER_ROLE
-      ? 'Barbearia'
-      : currentPortal === CUSTOMER_ROLE
-        ? 'Cliente'
-        : 'Usuario'
+  const portalLabel = getCurrentPortalLabel()
   const displayValue = user.email || user.id || 'Usuario autenticado'
   const shortId = user.id ? String(user.id).slice(0, 8) : ''
 
@@ -1454,6 +1560,84 @@ function updateTopbarUserIdentity() {
     meta.textContent = user.email && shortId ? `ID: ${shortId}` : (user.id || '')
   }
   wrapper.title = user.id && user.email ? `Email: ${user.email}\nID: ${user.id}` : displayValue
+}
+
+function getCurrentPortalLabel() {
+  if (isClientPublicView()) {
+    return 'Cliente'
+  }
+
+  if (currentPortal === ADMIN_ROLE) {
+    return 'Administrador'
+  }
+
+  if (currentPortal === BARBER_ROLE) {
+    return 'Barbearia'
+  }
+
+  if (currentPortal === CUSTOMER_ROLE) {
+    return 'Cliente'
+  }
+
+  return 'Usuario'
+}
+
+function getCurrentTopbarContextLabel() {
+  if (currentBarbershopContext?.name) {
+    return currentBarbershopContext.name
+  }
+
+  const adminContextSelect = document.getElementById('admin-active-barbershop')
+  const selectedOption = adminContextSelect?.selectedOptions?.[0]
+  if (selectedOption?.value) {
+    return selectedOption.textContent.split('·')[0].trim()
+  }
+
+  if (currentPortal === ADMIN_ROLE) {
+    return 'Visao global'
+  }
+
+  if (currentPortal === BARBER_ROLE) {
+    return 'Barbearia vinculada'
+  }
+
+  if (currentPortal === CUSTOMER_ROLE && currentSession?.user) {
+    return 'Conta do cliente'
+  }
+
+  return 'Sem contexto'
+}
+
+function updateTopbarScreenContext(screenId = '') {
+  const kicker = document.getElementById('topbar-screen-kicker')
+  const title = document.getElementById('topbar-screen-title')
+  const description = document.getElementById('topbar-screen-description')
+  const portalBadge = document.getElementById('topbar-portal-badge')
+  const contextBadge = document.getElementById('topbar-context-badge')
+  const meta = SCREEN_CONTEXT_MAP[screenId] || SCREEN_CONTEXT_MAP[getDefaultScreenForPortal()] || SCREEN_CONTEXT_MAP.login
+
+  if (kicker) {
+    kicker.textContent = meta.kicker
+  }
+
+  if (title) {
+    title.textContent = meta.title
+  }
+
+  if (description) {
+    description.textContent = meta.description
+  }
+
+  if (portalBadge) {
+    const portalLabel = isClientPublicView()
+      ? 'Agendamento publico'
+      : `Portal ${getCurrentPortalLabel().toLowerCase()}`
+    portalBadge.textContent = portalLabel
+  }
+
+  if (contextBadge) {
+    contextBadge.textContent = getCurrentTopbarContextLabel()
+  }
 }
 
 async function fetchPlatformContext(forceRefresh = false) {
@@ -1688,6 +1872,8 @@ function updateAdminContextUi(barbershops = null) {
       details.textContent = 'Sem contexto ativo. Escolha uma barbearia para abrir agenda, gestao, produtos e cadastros.'
     }
   }
+
+  updateTopbarScreenContext(currentVisibleScreenId)
 }
 
 // Processo de login do usuario e carregamento inicial da tela.
@@ -4435,6 +4621,7 @@ function getDefaultServices(barbershopId) {
 // Mostra apenas a tela solicitada e oculta as demais.
 function showScreen(screenId) {
   const screenIds = ['login', 'signup', 'agendar', 'agenda', 'cadastros', 'produtos', 'gestao', 'aprovacoes', 'admin-dashboard', 'admin-barbershops', 'admin-access', 'admin-users', 'reset-password']
+  currentVisibleScreenId = screenId
 
   screenIds.forEach((id) => {
     const screen = document.getElementById(id)
@@ -4450,6 +4637,14 @@ function showScreen(screenId) {
     const isActive = button.dataset.screen === screenId
     button.classList.toggle('is-active', isActive)
   })
+
+  document.body.dataset.activeScreen = screenId
+  updateTopbarScreenContext(screenId)
+
+  const content = document.querySelector('.content')
+  if (content) {
+    content.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 }
 
 // Verifica se existe uma sessao ativa antes de abrir telas protegidas.
@@ -5895,6 +6090,7 @@ function applyPortalUi() {
   updatePortalNavigation()
   updateAdminContextUi()
   updateClientPublicViewUi()
+  updateTopbarScreenContext(currentVisibleScreenId || getDefaultScreenForPortal())
 }
 
 // Persiste o portal para manter a experiencia apos recarregar.
@@ -5966,6 +6162,12 @@ function updatePortalNavigation() {
       ? allowedPortals.includes(currentPortal) && (!requiresAdmin || isAdminEmail(currentSession?.user?.email))
       : false
     button.style.display = shouldShow ? 'inline-flex' : 'none'
+  })
+
+  document.querySelectorAll('[data-nav-group]').forEach((group) => {
+    const visibleButtons = Array.from(group.querySelectorAll('.nav-button[data-portal]'))
+      .some((button) => button.style.display !== 'none')
+    group.style.display = visibleButtons ? '' : 'none'
   })
 }
 
@@ -6241,6 +6443,158 @@ async function ensureAdminAccess() {
   return null
 }
 
+function resetAdminBarbershopEditor() {
+  adminEditingBarbershopId = null
+
+  const fields = {
+    'admin-edit-barbershop-id': '',
+    'admin-edit-barbershop-name': '',
+    'admin-edit-barbershop-phone': '',
+    'admin-edit-barbershop-email': '',
+    'admin-edit-barbershop-slug': '',
+    'admin-edit-barbershop-logo-url': '',
+    'admin-edit-barbershop-primary-color': '#ffffff',
+    'admin-edit-barbershop-secondary-color': '#000000',
+    'admin-edit-barbershop-plan': 'free'
+  }
+
+  Object.entries(fields).forEach(([fieldId, value]) => {
+    const element = document.getElementById(fieldId)
+    if (element) {
+      element.value = value
+    }
+  })
+
+  showFormFeedback('', 'info', 'admin-barbershop-edit-feedback')
+}
+
+function fillAdminBarbershopEditor(barbershop, subscription = null) {
+  adminEditingBarbershopId = barbershop?.id || null
+
+  const values = {
+    'admin-edit-barbershop-id': barbershop?.id || '',
+    'admin-edit-barbershop-name': barbershop?.name || '',
+    'admin-edit-barbershop-phone': barbershop?.phone || '',
+    'admin-edit-barbershop-email': barbershop?.email || '',
+    'admin-edit-barbershop-slug': barbershop?.slug || '',
+    'admin-edit-barbershop-logo-url': barbershop?.logo_url || '',
+    'admin-edit-barbershop-primary-color': barbershop?.primary_color || '#ffffff',
+    'admin-edit-barbershop-secondary-color': barbershop?.secondary_color || '#000000',
+    'admin-edit-barbershop-plan': normalizePlanCode(subscription?.plan_code || 'free')
+  }
+
+  Object.entries(values).forEach(([fieldId, value]) => {
+    const element = document.getElementById(fieldId)
+    if (element) {
+      element.value = value
+    }
+  })
+
+  showFormFeedback(`Editando a barbearia ${barbershop?.name || ''}.`, 'info', 'admin-barbershop-edit-feedback')
+}
+
+window.cancelarEdicaoBarbeariaAdmin = function () {
+  resetAdminBarbershopEditor()
+}
+
+window.editarBarbeariaAdmin = async function (barbershopId) {
+  const currentUser = await ensureAdminAccess()
+  if (!currentUser || !barbershopId) {
+    return
+  }
+
+  showFormFeedback('Carregando dados da barbearia...', 'info', 'admin-barbershop-edit-feedback')
+
+  const [{ data: barbershop, error }, subscriptionResult] = await Promise.all([
+    supabaseClient
+      .from('barbershops')
+      .select('id, name, phone, email, slug, logo_url, primary_color, secondary_color')
+      .eq('id', barbershopId)
+      .maybeSingle(),
+    fetchSaasSubscription(barbershopId)
+  ])
+
+  if (error || !barbershop) {
+    showFormFeedback(`Erro ao carregar barbearia: ${error?.message || 'registro nao encontrado.'}`, 'error', 'admin-barbershop-edit-feedback')
+    return
+  }
+
+  if (subscriptionResult.error) {
+    showFormFeedback(`Barbearia carregada, mas houve erro ao consultar o plano: ${subscriptionResult.error.message}`, 'error', 'admin-barbershop-edit-feedback')
+  }
+
+  fillAdminBarbershopEditor(barbershop, subscriptionResult.data || null)
+  document.getElementById('admin-edit-barbershop-name')?.focus()
+}
+
+window.salvarBarbeariaAdmin = async function () {
+  const currentUser = await ensureAdminAccess()
+  if (!currentUser) {
+    return
+  }
+
+  const barbershopId = adminEditingBarbershopId || document.getElementById('admin-edit-barbershop-id')?.value || ''
+  const name = document.getElementById('admin-edit-barbershop-name')?.value.trim() || ''
+  const phone = document.getElementById('admin-edit-barbershop-phone')?.value.trim() || ''
+  const email = document.getElementById('admin-edit-barbershop-email')?.value.trim().toLowerCase() || ''
+  const slug = normalizeBarbershopSlugInput(document.getElementById('admin-edit-barbershop-slug')?.value || '')
+  const logoUrl = document.getElementById('admin-edit-barbershop-logo-url')?.value.trim() || ''
+  const primaryColor = document.getElementById('admin-edit-barbershop-primary-color')?.value || '#ffffff'
+  const secondaryColor = document.getElementById('admin-edit-barbershop-secondary-color')?.value || '#000000'
+  const planCode = normalizePlanCode(document.getElementById('admin-edit-barbershop-plan')?.value || 'free')
+
+  if (!barbershopId) {
+    showFormFeedback('Selecione uma barbearia para editar.', 'error', 'admin-barbershop-edit-feedback')
+    return
+  }
+
+  if (!name) {
+    showFormFeedback('Informe o nome da barbearia.', 'error', 'admin-barbershop-edit-feedback')
+    return
+  }
+
+  showFormFeedback('Salvando alteracoes da barbearia...', 'info', 'admin-barbershop-edit-feedback')
+
+  const updatePayload = {
+    name,
+    phone: phone || null,
+    email: email || null,
+    slug: slug || null,
+    logo_url: logoUrl || null,
+    primary_color: primaryColor || '#ffffff',
+    secondary_color: secondaryColor || '#000000'
+  }
+
+  const { data: updatedBarbershop, error } = await supabaseClient
+    .from('barbershops')
+    .update(updatePayload)
+    .eq('id', barbershopId)
+    .select('id, name, phone, email, slug, logo_url, primary_color, secondary_color')
+    .maybeSingle()
+
+  if (error) {
+    if (isConflictError(error)) {
+      showFormFeedback(getBarbershopConflictMessage(error), 'error', 'admin-barbershop-edit-feedback')
+      return
+    }
+
+    showFormFeedback(`Erro ao atualizar barbearia: ${error.message}`, 'error', 'admin-barbershop-edit-feedback')
+    return
+  }
+
+  const subscriptionResult = await saveSaasSubscriptionPlan(barbershopId, planCode)
+  if (subscriptionResult.error) {
+    showFormFeedback(`Barbearia salva, mas houve erro ao atualizar o plano: ${subscriptionResult.error.message}`, 'error', 'admin-barbershop-edit-feedback')
+  } else {
+    showFormFeedback('Informacoes da barbearia atualizadas com sucesso.', 'success', 'admin-barbershop-edit-feedback')
+  }
+
+  fillAdminBarbershopEditor(updatedBarbershop || updatePayload, subscriptionResult.data || { plan_code: planCode })
+  await carregarAdminBarbearias()
+  await carregarAdminDashboard()
+  await carregarAdminAcessos()
+}
+
 window.criarBarbeariaAdmin = async function () {
   const currentUser = await ensureAdminAccess()
   if (!currentUser) {
@@ -6408,7 +6762,8 @@ async function carregarAdminBarbearias() {
       name,
       owner_id,
       phone,
-      email
+      email,
+      slug
     `)
     .order('name', { ascending: true })
 
@@ -6419,6 +6774,10 @@ async function carregarAdminBarbearias() {
 
   const subscriptionsResult = await fetchAdminSubscriptionsSummary()
   const normalizedSubscriptions = subscriptionsResult.data || []
+
+  if (!adminEditingBarbershopId) {
+    resetAdminBarbershopEditor()
+  }
 
   updateAdminContextUi(data || [])
   renderAdminBarbershopsList(data || [], normalizedSubscriptions)
@@ -7240,12 +7599,14 @@ function renderAdminBarbershopsList(items, subscriptions = []) {
           <span class="management-meta">${[
             `ID da unidade: ${item.id}`,
             `Plano: ${plan.label}`,
+            item.slug ? `Slug: ${item.slug}` : null,
             formatOptionalContactLine('Telefone', item.phone),
             formatOptionalContactLine('Email', item.email)
           ].filter(Boolean).join(' | ')}</span>
         </div>
         <div class="admin-actions">
           <span class="management-badge">${item.owner_id ? buildPlanBadge(plan.code) : 'Aguardando responsavel'}</span>
+          <button type="button" class="edit-button" onclick="editarBarbeariaAdmin('${item.id}')">Editar</button>
           <button type="button" class="edit-button" onclick="selecionarContextoAdminDaBarbearia('${item.id}')">Abrir operacao</button>
         </div>
       </div>
