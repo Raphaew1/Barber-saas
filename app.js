@@ -244,6 +244,14 @@ function isSignupEntryPage() {
   return APP_ENTRY_MODE === 'signup'
 }
 
+function isMainPortalLanding() {
+  return !isAdminEntryPage()
+    && !isSignupEntryPage()
+    && !getPortalHintFromUrl()
+    && !currentSession
+    && !currentBarbershopContext
+}
+
 function getAppUrl(fileName = 'index.html') {
   return new URL(fileName, window.location.href).href
 }
@@ -4750,6 +4758,7 @@ function showScreen(screenId) {
 
   document.body.dataset.activeScreen = screenId
   updateTopbarScreenContext(screenId)
+  updatePortalLandingUi()
 
   const content = document.querySelector('.content')
   if (content) {
@@ -6201,6 +6210,7 @@ function applyPortalUi() {
   updateAdminContextUi()
   updateClientPublicViewUi()
   updateTopbarScreenContext(currentVisibleScreenId || getDefaultScreenForPortal())
+  updatePortalLandingUi()
   syncMobileMenuUi()
 }
 
@@ -6235,12 +6245,43 @@ function restorePortalSelection() {
 
 // Atualiza a area de login com o portal selecionado.
 function updateLoginPortalUi() {
+  const loginKicker = document.getElementById('login-kicker')
   const selectedPortalLabel = document.getElementById('selected-portal-label')
   const loginTitle = document.getElementById('login-title')
   const loginDescription = document.getElementById('login-description')
+  const portalEntryActions = document.getElementById('portal-entry-actions')
+  const loginFormPanel = document.getElementById('login-form-panel')
+  const loginModeChip = document.getElementById('login-mode-chip')
+  const isPortalLanding = isMainPortalLanding()
+
+  if (loginKicker) {
+    loginKicker.textContent = isPortalLanding
+      ? 'Portal'
+      : isAdminEntryPage()
+        ? 'Portal master'
+        : isSignupEntryPage()
+          ? 'Cadastro'
+          : isClientPublicView()
+            ? 'Agendamento'
+            : 'Acesso'
+  }
+
+  if (portalEntryActions) {
+    portalEntryActions.style.display = isPortalLanding ? 'grid' : 'none'
+  }
+
+  if (loginFormPanel) {
+    loginFormPanel.style.display = isPortalLanding ? 'none' : 'block'
+  }
+
+  if (loginModeChip) {
+    loginModeChip.style.display = isPortalLanding ? 'none' : 'flex'
+  }
 
   if (selectedPortalLabel) {
-    selectedPortalLabel.textContent = isAdminEntryPage()
+    selectedPortalLabel.textContent = isPortalLanding
+      ? ''
+      : isAdminEntryPage()
       ? 'Acesso restrito ao administrador principal.'
       : isClientPublicView()
         ? `Agendamento direto para ${currentBarbershopContext?.name || 'esta barbearia'}.`
@@ -6254,7 +6295,9 @@ function updateLoginPortalUi() {
   }
 
   if (loginTitle) {
-    loginTitle.textContent = isAdminEntryPage()
+    loginTitle.textContent = isPortalLanding
+      ? 'Entrar no portal'
+      : isAdminEntryPage()
       ? 'Entrar no portal do administrador'
       : isClientPublicView()
         ? `Agende com ${currentBarbershopContext?.name || 'a barbearia'}`
@@ -6266,7 +6309,9 @@ function updateLoginPortalUi() {
   }
 
   if (loginDescription) {
-    loginDescription.textContent = isAdminEntryPage()
+    loginDescription.textContent = isPortalLanding
+      ? ''
+      : isAdminEntryPage()
       ? 'Somente o email master autorizado pode acessar esta area.'
       : isClientPublicView()
         ? 'Escolha barbeiro, servicos e horario. O contexto da barbearia ja foi identificado pela URL.'
@@ -6274,10 +6319,17 @@ function updateLoginPortalUi() {
         ? 'Crie sua conta de cliente e confirme seu email antes de entrar.'
         : currentPortal === BARBER_ROLE
           ? 'Use o email com acesso ativo ao portal da barbearia. O sistema validara sua unidade automaticamente.'
-          : currentPortal === CUSTOMER_ROLE
+        : currentPortal === CUSTOMER_ROLE
             ? 'Use seu email e senha para acessar agendamentos, compras e historico como cliente.'
       : 'Use seu email e senha. O sistema redireciona automaticamente para cliente, barbearia ou administrador.'
+
+    loginDescription.style.display = isPortalLanding ? 'none' : 'block'
   }
+}
+
+function updatePortalLandingUi() {
+  const shouldUseLandingLayout = isMainPortalLanding() && currentVisibleScreenId === 'login'
+  document.body.classList.toggle('portal-landing', shouldUseLandingLayout)
 }
 
 // Exibe apenas os botoes de menu permitidos para o portal atual.

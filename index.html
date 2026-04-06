@@ -102,14 +102,35 @@
 
       <!-- Login -->
       <section id="login" class="tela">
+        <div class="portal-entry-brand">
+          <span class="brand-badge">CF</span>
+          <div class="portal-entry-brand-copy">
+            <strong class="brand-name">CorteFacil</strong>
+          </div>
+        </div>
         <div class="screen-header">
-          <span class="screen-kicker">Acesso</span>
-          <h1 id="login-title">Entrar na sua conta</h1>
-          <p id="login-description">Use seu email e senha. O sistema redireciona automaticamente para cliente, barbearia ou administrador.</p>
+          <span id="login-kicker" class="screen-kicker">Portal</span>
+          <h1 id="login-title">Entrar no portal</h1>
+          <p id="login-description">Escolha como deseja acessar a plataforma.</p>
         </div>
 
-        <div class="form-block">
-          <div class="login-mode-chip">
+        <div id="portal-entry-actions" class="portal-entry-actions">
+          <a class="portal-entry-button" href="index.html?portal=cliente">
+            <span class="portal-entry-button-label">Portal cliente</span>
+            <strong>Entrar no portal</strong>
+          </a>
+          <a class="portal-entry-button" href="index.html?portal=barbeiro">
+            <span class="portal-entry-button-label">Portal barbearia</span>
+            <strong>Entrar no portal</strong>
+          </a>
+          <a class="portal-entry-button" href="admin.html">
+            <span class="portal-entry-button-label">Portal admin</span>
+            <strong>Entrar no portal</strong>
+          </a>
+        </div>
+
+        <div id="login-form-panel" class="form-block" style="display:none;">
+          <div id="login-mode-chip" class="login-mode-chip">
             <span id="selected-portal-label">Entre com seu email e o sistema identifica automaticamente seu portal.</span>
           </div>
           <div id="auth-feedback" class="form-feedback" style="display:none;"></div>
