@@ -63,3 +63,6 @@ access-token.txt
 # Test results
 *-result.json
 test-*.json
+
+.vercel
+.env*.local
