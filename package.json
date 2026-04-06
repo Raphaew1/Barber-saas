@@ -3,7 +3,8 @@
     "start": "powershell -ExecutionPolicy Bypass -File .\\scripts\\start-localhost.ps1"
   },
   "devDependencies": {
-    "supabase": "^2.84.6"
+    "supabase": "^2.84.6",
+    "vercel": "^50.39.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1"

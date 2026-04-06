@@ -6500,9 +6500,34 @@ function populateAdminAccessFilters(barbershops) {
       .join('')
     editorBarbershop.value = currentEditorValue
   }
+
+  const newBarbershop = document.getElementById('admin-access-new-barbershop')
+  const currentNewValue = newBarbershop?.value || ''
+  if (newBarbershop) {
+    newBarbershop.innerHTML = ['<option value="">Selecione a barbearia</option>']
+      .concat((barbershops || []).map((item) => `<option value="${item.id}">${item.name}</option>`))
+      .join('')
+    newBarbershop.value = currentNewValue
+  }
 }
 
-function renderAdminAccessKpis(items) {
+window.handleAdminAccessPortalChange = function () {
+  const portal = document.getElementById('admin-access-new-portal')?.value
+  const newBarbershop = document.getElementById('admin-access-new-barbershop')
+
+  if (!newBarbershop) {
+    return
+  }
+
+  if (portal === BARBER_ROLE) {
+    newBarbershop.style.display = 'block'
+  } else {
+    newBarbershop.style.display = 'none'
+    newBarbershop.value = ''
+  }
+}
+
+async function fetchAdminAccessAuditLogs() {
   const container = document.getElementById('admin-access-kpis')
   if (!container) {
     return
@@ -6549,6 +6574,125 @@ function renderAdminAccessAuditLog() {
       </div>
     `)
     .join('')
+}
+
+window.criarAcessoAdmin = async function () {
+  const currentUser = await ensureAdminAccess()
+  if (!currentUser) {
+    return
+  }
+
+  const emailInput = document.getElementById('admin-access-new-email')
+  const portalSelect = document.getElementById('admin-access-new-portal')
+  const statusSelect = document.getElementById('admin-access-new-status')
+  const barbershopSelect = document.getElementById('admin-access-new-barbershop')
+  const feedbackId = 'admin-access-new-feedback'
+
+  const email = emailInput?.value.trim().toLowerCase() || ''
+  const portal = portalSelect?.value || CUSTOMER_ROLE
+  const status = statusSelect?.value || 'active'
+  const barbershopId = barbershopSelect?.value || ''
+
+  if (!email) {
+    showFormFeedback('Informe o email do usuario.', 'error', feedbackId)
+    return
+  }
+
+  if (portal === BARBER_ROLE && !barbershopId) {
+    showFormFeedback('Selecione a barbearia para o acesso do portal.', 'error', feedbackId)
+    return
+  }
+
+  showFormFeedback('Registrando acesso...', 'info', feedbackId)
+
+  const profileResult = await supabaseClient
+    .from('profiles')
+    .select('id, role, status')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (profileResult.error) {
+    showFormFeedback(`Erro ao buscar perfil: ${profileResult.error.message}`, 'error', feedbackId)
+    return
+  }
+
+  const profileId = profileResult.data?.id || null
+
+  if (portal !== BARBER_ROLE && !profileId) {
+    showFormFeedback('Email sem perfil cadastrado. Crie primeiro o usuario no portal de usuarios.', 'error', feedbackId)
+    return
+  }
+
+  const normalizedPortal = normalizePortalRole(portal)
+  const normalizedAccessRole = normalizeAccessRole(normalizedPortal)
+  const signaledStatus = status === 'blocked' ? 'blocked' : status === 'pending' ? 'pending' : 'active'
+
+  try {
+    if (normalizedPortal === BARBER_ROLE) {
+      const { error } = await supabaseClient
+        .from('barber_access')
+        .upsert([{
+          email,
+          barbershop_id: barbershopId,
+          approved_by_email: currentUser.email,
+          approved_at: new Date().toISOString(),
+          is_active: signaledStatus === 'active'
+        }], { onConflict: 'email' })
+
+      if (error) {
+        showFormFeedback(`Erro ao liberar acesso: ${error.message}`, 'error', feedbackId)
+        return
+      }
+    } else {
+      const { error } = await supabaseClient
+        .from('user_access')
+        .upsert([{
+          user_id: profileId,
+          role: normalizedAccessRole,
+          status: signaledStatus,
+          approved_by: currentUser.email,
+          approved_at: new Date().toISOString()
+        }], { onConflict: 'user_id' })
+
+      if (error) {
+        showFormFeedback(`Erro ao liberar acesso: ${error.message}`, 'error', feedbackId)
+        return
+      }
+    }
+
+    if (profileId) {
+      const profileUpdate = {
+        role: normalizedPortal,
+        status: signaledStatus === 'pending' ? 'inactive' : signaledStatus
+      }
+
+      const { error: profileUpdateError } = await supabaseClient
+        .from('profiles')
+        .update(profileUpdate)
+        .eq('id', profileId)
+
+      if (profileUpdateError && !isMissingColumnError(profileUpdateError, ['status'])) {
+        showFormFeedback(`Acesso liberado, mas falha ao atualizar perfil: ${profileUpdateError.message}`, 'warning', feedbackId)
+        return
+      }
+    }
+
+    addAdminAccessAuditEntry({
+      action: 'Acesso concedido',
+      target_email: email,
+      performed_by_email: currentUser.email,
+      details: `Portal: ${portal} | Status: ${signaledStatus}`
+    })
+
+    showFormFeedback('Acesso registrado com sucesso.', 'success', feedbackId)
+    if (emailInput) emailInput.value = ''
+    if (statusSelect) statusSelect.value = 'active'
+    if (barbershopSelect) barbershopSelect.value = ''
+    handleAdminAccessPortalChange()
+    await carregarAdminAcessos()
+  } catch (error) {
+    showFormFeedback(`Erro ao registrar acesso: ${error.message || 'Tente novamente.'}`, 'error', feedbackId)
+  }
 }
 
 async function carregarAdminUsuarios() {
@@ -6930,6 +7074,7 @@ function renderAdminAccessList(items) {
                   <div class="access-user-badges">
                     <span class="role-badge ${roleMeta.className}">${roleMeta.label}</span>
                     <span class="status-badge ${statusMeta.className}">${statusMeta.label}</span>
+                    ${item.profileStatus ? `<span class="status-badge ${getAccessStatusMeta(item.profileStatus).className}">Perfil: ${getAccessStatusMeta(item.profileStatus).label}</span>` : ''}
                   </div>
                 </div>
                 <div class="access-user-details">

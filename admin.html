@@ -445,6 +445,33 @@
         <section class="management-card">
           <div class="management-card-header">
             <div>
+              <span class="management-kicker">Novo acesso</span>
+              <h2>Conceder acesso ao portal</h2>
+            </div>
+          </div>
+          <div class="management-form">
+            <input type="email" id="admin-access-new-email" placeholder="Email para liberar acesso">
+            <select id="admin-access-new-portal" onchange="handleAdminAccessPortalChange()">
+              <option value="cliente">Portal Cliente</option>
+              <option value="barbeiro">Portal Barbearia</option>
+              <option value="admin">Portal Admin</option>
+            </select>
+            <select id="admin-access-new-status">
+              <option value="active">Ativo</option>
+              <option value="pending">Pendente</option>
+              <option value="blocked">Bloqueado</option>
+            </select>
+            <select id="admin-access-new-barbershop" style="display:none;">
+              <option value="">Selecione a barbearia</option>
+            </select>
+            <div id="admin-access-new-feedback" class="form-feedback" style="display:none;"></div>
+            <button type="button" onclick="criarAcessoAdmin()">Adicionar acesso</button>
+          </div>
+        </section>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
               <span class="management-kicker">Filtros</span>
               <h2>Busca e segmentacao</h2>
             </div>
