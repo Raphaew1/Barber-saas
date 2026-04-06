@@ -3379,7 +3379,7 @@ async function init() {
     showScreen('admin-dashboard')
     await carregarPortalData('admin-dashboard')
     return
-  }
+  } else {
     applyPortalUi()
     showScreen(isSignupEntryPage() ? 'signup' : 'login')
     renderSelectState('barber', 'Faca login para carregar', true)
@@ -5922,7 +5922,7 @@ document.addEventListener('click', (event) => {
   trigger.setAttribute('aria-expanded', 'false')
 })
 
-init()
+document.addEventListener('DOMContentLoaded', init)
 
 window.onAdminBarbershopContextChange = async function () {
   const select = document.getElementById('admin-active-barbershop')
