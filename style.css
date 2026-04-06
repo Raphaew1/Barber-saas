@@ -3340,6 +3340,14 @@ body.admin-premium .admin-actions button {
   padding-inline: 14px;
 }
 
+body.admin-premium .admin-actions button:last-child {
+  color: #e5e7eb;
+}
+
+body.admin-premium .admin-actions button:last-child:hover {
+  color: #f9fafb;
+}
+
 body.admin-premium #admin-barbershops-list .management-row,
 body.admin-premium #admin-access-list .access-user-card,
 body.admin-premium #admin-users-customers-list .management-row,
