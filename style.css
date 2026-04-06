@@ -2728,14 +2728,14 @@ body.admin-premium .mobile-menu-toggle span {
 }
 
 body.admin-premium .sidebar {
-  width: 292px;
-  padding: 24px 18px 18px;
+  width: 268px;
+  padding: 18px 14px 14px;
   background: #0f172a;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 body.admin-premium .sidebar-brand {
-  padding: 4px 4px 18px;
+  padding: 2px 4px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -2792,23 +2792,23 @@ body.admin-premium .inline-history-header h2 {
 }
 
 body.admin-premium .sidebar-nav {
-  gap: 20px;
-  margin-top: 4px;
+  gap: 14px;
+  margin-top: 2px;
 }
 
 body.admin-premium .nav-group {
-  gap: 6px;
+  gap: 4px;
 }
 
 body.admin-premium .nav-group-label {
-  padding: 0 14px 6px;
+  padding: 0 12px 4px;
 }
 
 body.admin-premium .nav-button {
   position: relative;
   justify-content: flex-start;
-  min-height: 50px;
-  padding: 14px 14px 14px 18px;
+  min-height: 44px;
+  padding: 10px 12px 10px 16px;
   border: 1px solid transparent;
   border-radius: 14px;
   background: transparent;
@@ -2872,16 +2872,16 @@ body.admin-premium .nav-button.is-active::after {
 
 body.admin-premium .sidebar-footer {
   margin-top: auto;
-  padding: 18px 14px 6px;
-  border-radius: 18px;
+  padding: 12px 10px 4px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 body.admin-premium .sidebar-user-identity {
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: rgba(148, 163, 184, 0.05);
   border: 1px solid rgba(148, 163, 184, 0.08);
 }
@@ -2922,8 +2922,8 @@ body.admin-premium .admin-empty {
 
 body.admin-premium .sidebar-logout-button {
   justify-content: flex-start;
-  margin-top: 10px;
-  padding: 10px 14px;
+  margin-top: 8px;
+  padding: 9px 12px;
   border-radius: 999px;
   border: 1px solid rgba(239, 68, 68, 0.18);
   background: rgba(239, 68, 68, 0.08);
@@ -2938,13 +2938,13 @@ body.admin-premium .sidebar-logout-button:hover {
 }
 
 body.admin-premium .content {
-  padding: 28px;
+  padding: 20px;
   background: transparent;
 }
 
 body.admin-premium .content-topbar {
-  gap: 18px;
-  margin-bottom: 32px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 body.admin-premium .topbar-main,
@@ -2967,8 +2967,8 @@ body.admin-premium .modal-card {
 }
 
 body.admin-premium .topbar-main {
-  gap: 16px;
-  padding: 24px 26px;
+  gap: 10px;
+  padding: 18px 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
 }
 
@@ -2977,9 +2977,9 @@ body.admin-premium .content-topbar h3 {
 }
 
 body.admin-premium .topbar-screen-description {
-  max-width: 680px;
+  max-width: 620px;
   font-size: 14px;
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 body.admin-premium .topbar-user-identity,
@@ -2991,40 +2991,40 @@ body.admin-premium .topbar-status-pill {
 }
 
 body.admin-premium .topbar-status-pill {
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-size: 11px;
   color: #cbd5e1;
 }
 
 body.admin-premium .admin-context-switcher {
   min-width: 300px;
-  padding: 20px 22px;
+  padding: 16px 18px;
 }
 
 body.admin-premium .tela {
   max-width: 760px;
-  padding: 28px;
+  padding: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
 
 body.admin-premium .tela-larga {
-  max-width: 1200px;
+  max-width: 1280px;
 }
 
 body.admin-premium .screen-header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 body.admin-premium .screen-header h1 {
   font-size: 28px;
   line-height: 1.08;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 body.admin-premium .screen-header p {
   max-width: 620px;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.45;
 }
 
 body.admin-premium .form-block,
@@ -3033,29 +3033,29 @@ body.admin-premium .cadastro-card,
 body.admin-premium .catalog-card,
 body.admin-premium .metric-card,
 body.admin-premium .agenda-card {
-  padding: 20px 24px;
+  padding: 16px 18px;
 }
 
 body.admin-premium .management-summary,
 body.admin-premium .management-grid,
 body.admin-premium .cadastro-grid,
 body.admin-premium .catalog-grid {
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 body.admin-premium .management-card-header,
 body.admin-premium .inline-history-header,
 body.admin-premium .agenda-visual-day-header,
 body.admin-premium .modal-header {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 body.admin-premium .management-stack,
 body.admin-premium .admin-list,
 body.admin-premium .catalog-grid,
 body.admin-premium .payment-summary {
-  gap: 16px;
+  gap: 12px;
 }
 
 body.admin-premium .management-row,
@@ -3072,6 +3072,52 @@ body.admin-premium .topbar-user-identity {
   background: #0f172a;
   box-shadow: none;
   transition: var(--admin-transition);
+}
+
+body.admin-premium .management-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+body.admin-premium .management-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+body.admin-premium .management-form-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+body.admin-premium .management-form-compact {
+  gap: 10px 12px;
+}
+
+body.admin-premium .management-form-span-2 {
+  grid-column: span 2;
+}
+
+body.admin-premium .management-form-span-full {
+  grid-column: 1 / -1;
+}
+
+body.admin-premium .management-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+body.admin-premium .management-form-actions button {
+  width: auto;
+  min-width: 0;
+  margin-top: 0;
+}
+
+body.admin-premium .management-form-file {
+  display: grid;
+  gap: 6px;
 }
 
 body.admin-premium .management-row,
@@ -3111,7 +3157,7 @@ body.admin-premium .management-card::before {
 }
 
 body.admin-premium .metric-label {
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   font-size: 12px;
   font-weight: 500;
   color: var(--admin-muted);
@@ -3131,13 +3177,24 @@ body.admin-premium input,
 body.admin-premium textarea,
 body.admin-premium select,
 body.admin-premium .service-trigger {
-  padding: 12px 14px;
+  padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #0f172a;
   color: #f9fafb;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   transition: var(--admin-transition);
+}
+
+body.admin-premium input,
+body.admin-premium select,
+body.admin-premium .service-trigger,
+body.admin-premium button {
+  min-height: 44px;
+}
+
+body.admin-premium textarea {
+  min-height: 88px;
 }
 
 body.admin-premium input::placeholder,
@@ -3163,7 +3220,7 @@ body.admin-premium .field-label {
 }
 
 body.admin-premium button {
-  padding: 12px 18px;
+  padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid rgba(99, 102, 241, 0.24);
   background: #6366f1;
@@ -3206,7 +3263,7 @@ body.admin-premium .portal-shortcut:hover {
 }
 
 body.admin-premium .link-button {
-  padding: 10px 14px;
+  padding: 8px 12px;
 }
 
 body.admin-premium .danger-action {
@@ -3248,6 +3305,48 @@ body.admin-premium .purchase-summary {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: #0f172a;
+}
+
+body.admin-premium .management-row,
+body.admin-premium .admin-item {
+  padding: 12px 14px;
+  align-items: center;
+}
+
+body.admin-premium .management-row {
+  min-height: 0;
+}
+
+body.admin-premium .admin-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+body.admin-premium .admin-actions,
+body.admin-premium .management-actions {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+body.admin-premium .admin-item button,
+body.admin-premium .management-actions button,
+body.admin-premium .admin-actions button {
+  width: auto;
+  min-width: 0;
+  white-space: nowrap;
+  padding-inline: 14px;
+}
+
+body.admin-premium #admin-barbershops-list .management-row,
+body.admin-premium #admin-access-list .access-user-card,
+body.admin-premium #admin-users-customers-list .management-row,
+body.admin-premium #admin-users-barbershops-list .management-row,
+body.admin-premium #admin-users-admins-list .management-row {
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
 body.admin-premium .access-user-card.is-selected {
@@ -3305,17 +3404,27 @@ body.admin-premium .admin-context-switcher {
   }
 
   body.admin-premium .content {
-    padding: 20px;
+    padding: 16px;
   }
 
   body.admin-premium .content-topbar {
-    margin-bottom: 22px;
+    margin-bottom: 18px;
+  }
+
+  body.admin-premium .management-form-grid,
+  body.admin-premium .management-form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  body.admin-premium .management-form-span-2,
+  body.admin-premium .management-form-span-full {
+    grid-column: auto;
   }
 }
 
 @media (max-width: 760px) {
   body.admin-premium .content {
-    padding: 16px 16px 104px;
+    padding: 14px 14px 104px;
   }
 
   body.admin-premium .topbar-main,
@@ -3325,7 +3434,7 @@ body.admin-premium .admin-context-switcher {
   body.admin-premium .cadastro-card,
   body.admin-premium .catalog-card,
   body.admin-premium .form-block {
-    padding: 18px;
+    padding: 16px;
   }
 
   body.admin-premium .screen-header h1,
@@ -3338,6 +3447,23 @@ body.admin-premium .admin-context-switcher {
   body.admin-premium .cadastro-grid,
   body.admin-premium .catalog-grid {
     gap: 16px;
+  }
+
+  body.admin-premium .admin-item {
+    grid-template-columns: 1fr;
+  }
+
+  body.admin-premium .admin-actions,
+  body.admin-premium .management-actions,
+  body.admin-premium .management-form-actions {
+    justify-content: stretch;
+  }
+
+  body.admin-premium .admin-item button,
+  body.admin-premium .management-actions button,
+  body.admin-premium .admin-actions button,
+  body.admin-premium .management-form-actions button {
+    width: 100%;
   }
 }
 

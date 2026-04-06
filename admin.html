@@ -436,7 +436,7 @@
               <h2>Criar barbearia</h2>
             </div>
           </div>
-          <div class="management-form">
+          <div class="management-form management-form-grid management-form-compact">
             <input type="text" id="admin-new-barbershop-name" placeholder="Nome da barbearia">
             <input type="tel" id="admin-new-barbershop-phone" placeholder="Telefone da barbearia">
             <input type="email" id="admin-new-barbershop-email" placeholder="Email da barbearia">
@@ -447,7 +447,9 @@
               <option value="pro">Plano Pro</option>
               <option value="premium">Plano Premium</option>
             </select>
-            <button type="button" onclick="criarBarbeariaAdmin()">Criar barbearia</button>
+            <div class="management-form-actions management-form-span-2">
+              <button type="button" onclick="criarBarbeariaAdmin()">Criar barbearia</button>
+            </div>
           </div>
         </section>
 
@@ -458,7 +460,7 @@
               <h2>Alterar informacoes da barbearia</h2>
             </div>
           </div>
-          <div class="management-form">
+          <div class="management-form management-form-grid management-form-compact management-form-grid-3">
             <input type="text" id="admin-edit-barbershop-id" placeholder="ID da barbearia" readonly>
             <input type="text" id="admin-edit-barbershop-name" placeholder="Nome da barbearia">
             <input type="tel" id="admin-edit-barbershop-phone" placeholder="Telefone da barbearia">
@@ -472,9 +474,11 @@
               <option value="pro">Plano Pro</option>
               <option value="premium">Plano Premium</option>
             </select>
-            <div id="admin-barbershop-edit-feedback" class="form-feedback" style="display:none;"></div>
-            <button type="button" onclick="salvarBarbeariaAdmin()">Salvar alteracoes</button>
-            <button type="button" class="edit-button" onclick="cancelarEdicaoBarbeariaAdmin()">Limpar edicao</button>
+            <div id="admin-barbershop-edit-feedback" class="form-feedback management-form-span-full" style="display:none;"></div>
+            <div class="management-form-actions management-form-span-full">
+              <button type="button" onclick="salvarBarbeariaAdmin()">Salvar alteracoes</button>
+              <button type="button" class="edit-button" onclick="cancelarEdicaoBarbeariaAdmin()">Limpar edicao</button>
+            </div>
           </div>
         </section>
 
@@ -505,7 +509,7 @@
               <h2>Conceder acesso ao portal</h2>
             </div>
           </div>
-          <div class="management-form">
+          <div class="management-form management-form-grid management-form-compact">
             <input type="email" id="admin-access-new-email" placeholder="Email para liberar acesso">
             <select id="admin-access-new-portal" onchange="handleAdminAccessPortalChange()">
               <option value="cliente">Portal Cliente</option>
@@ -520,8 +524,10 @@
             <select id="admin-access-new-barbershop" style="display:none;">
               <option value="">Selecione a barbearia</option>
             </select>
-            <div id="admin-access-new-feedback" class="form-feedback" style="display:none;"></div>
-            <button type="button" onclick="criarAcessoAdmin()">Adicionar acesso</button>
+            <div id="admin-access-new-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
+            <div class="management-form-actions management-form-span-2">
+              <button type="button" onclick="criarAcessoAdmin()">Adicionar acesso</button>
+            </div>
           </div>
         </section>
 
@@ -572,7 +578,7 @@
                 <h2>Permissoes e contexto</h2>
               </div>
             </div>
-            <div class="management-form">
+            <div class="management-form management-form-grid management-form-compact">
               <input type="text" id="admin-access-editor-name" placeholder="Nome do usuario">
               <input type="email" id="admin-access-editor-email" placeholder="Email" disabled>
               <select id="admin-access-editor-role">
@@ -583,10 +589,12 @@
               <select id="admin-access-editor-barbershop">
                 <option value="">Sem barbearia</option>
               </select>
-              <div id="admin-access-editor-permissions" class="management-stack"></div>
-              <div id="admin-access-editor-feedback" class="form-feedback" style="display:none;"></div>
-              <button type="button" onclick="salvarEditorDeAcessoAdmin()">Salvar alteracoes</button>
-              <button type="button" class="secondary-action" onclick="fecharEditorDeAcessoAdmin()">Fechar editor</button>
+              <div id="admin-access-editor-permissions" class="management-stack management-form-span-2"></div>
+              <div id="admin-access-editor-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
+              <div class="management-form-actions management-form-span-2">
+                <button type="button" onclick="salvarEditorDeAcessoAdmin()">Salvar alteracoes</button>
+                <button type="button" class="secondary-action" onclick="fecharEditorDeAcessoAdmin()">Fechar editor</button>
+              </div>
             </div>
           </section>
         </div>
@@ -616,7 +624,7 @@
               <h2>Novo usuario do sistema</h2>
             </div>
           </div>
-          <div class="management-form">
+          <div class="management-form management-form-grid management-form-compact management-form-grid-3">
             <input type="text" id="admin-user-name" placeholder="Nome completo">
             <input type="email" id="admin-user-email" placeholder="Email">
             <input type="tel" id="admin-user-phone" placeholder="Telefone">
@@ -625,8 +633,6 @@
             </select>
             <input type="password" id="admin-user-password" placeholder="Senha" autocomplete="new-password">
             <input type="password" id="admin-user-password-confirm" placeholder="Confirmar senha" autocomplete="new-password">
-            <label class="field-label" for="admin-user-photo">Foto do usuario (opcional)</label>
-            <input type="file" id="admin-user-photo" accept="image/*" onchange="handleAdminUserPhotoChange()">
             <select id="admin-user-role">
               <option value="client">Perfil do usuario</option>
               <option value="client">Cliente</option>
@@ -639,8 +645,14 @@
               <option value="pro">Pro</option>
               <option value="premium">Premium</option>
             </select>
-            <div id="admin-user-create-feedback" class="form-feedback" style="display:none;"></div>
-            <button type="button" data-protected="true" onclick="cadastrarUsuarioAdmin()">Cadastrar o usuario</button>
+            <div class="management-form-file management-form-span-full">
+              <label class="field-label" for="admin-user-photo">Foto do usuario (opcional)</label>
+              <input type="file" id="admin-user-photo" accept="image/*" onchange="handleAdminUserPhotoChange()">
+            </div>
+            <div id="admin-user-create-feedback" class="form-feedback management-form-span-full" style="display:none;"></div>
+            <div class="management-form-actions management-form-span-full">
+              <button type="button" data-protected="true" onclick="cadastrarUsuarioAdmin()">Cadastrar o usuario</button>
+            </div>
           </div>
         </section>
 
@@ -683,12 +695,14 @@
               <h2>Limpar base de usuarios</h2>
             </div>
           </div>
-          <div class="management-form">
+          <div class="management-form management-form-grid management-form-compact">
             <input type="email" id="admin-cleanup-master-email" value="raphacom.web@gmail.com" placeholder="Email master preservado">
             <input type="text" id="admin-cleanup-confirmation" placeholder="Digite LIMPAR para confirmar">
-            <div id="admin-cleanup-feedback" class="form-feedback" style="display:none;"></div>
-            <button type="button" id="admin-cleanup-submit" class="danger-action" onclick="executarLimpezaDeUsuariosAdmin()">Limpar base de usuarios</button>
-            <small class="field-hint">A limpeza remove os usuarios do Auth, perfis, acessos e convites de todos os emails diferentes do master informado.</small>
+            <div id="admin-cleanup-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
+            <div class="management-form-actions management-form-span-2">
+              <button type="button" id="admin-cleanup-submit" class="danger-action" onclick="executarLimpezaDeUsuariosAdmin()">Limpar base de usuarios</button>
+            </div>
+            <small class="field-hint management-form-span-2">A limpeza remove os usuarios do Auth, perfis, acessos e convites de todos os emails diferentes do master informado.</small>
           </div>
         </section>
       </section>
