@@ -3565,6 +3565,131 @@ body.admin-premium .access-pagination button:disabled {
   cursor: not-allowed;
 }
 
+body.admin-premium .access-group {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.admin-premium .access-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body.admin-premium .access-group-stack {
+  display: grid;
+  gap: 10px;
+}
+
+body.admin-premium .access-user-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.48);
+  transition: var(--admin-transition);
+}
+
+body.admin-premium .access-user-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(99, 102, 241, 0.18);
+  background: rgba(15, 23, 42, 0.68);
+}
+
+body.admin-premium .access-user-card.is-selected {
+  border-color: rgba(99, 102, 241, 0.24);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.12);
+}
+
+body.admin-premium .access-user-main-compact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: start;
+}
+
+body.admin-premium .access-user-identity-compact {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+body.admin-premium .access-user-identity-compact strong {
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+body.admin-premium .access-user-identity-compact .management-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+
+body.admin-premium .access-user-badges {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.admin-premium .access-user-badges .role-badge,
+body.admin-premium .access-user-badges .status-badge {
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 999px;
+}
+
+body.admin-premium .access-user-details-compact {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+body.admin-premium .access-user-details-compact span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+body.admin-premium .access-user-details-compact span strong {
+  color: var(--admin-muted-soft);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body.admin-premium .access-user-actions-compact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+body.admin-premium .access-user-actions-compact button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+body.admin-premium .admin-access-modal-card {
+  width: min(100%, 760px);
+}
+
 body.admin-premium .role-admin,
 body.admin-premium .access-table .role-admin {
   background: rgba(59, 130, 246, 0.16);
@@ -3729,6 +3854,15 @@ body.admin-premium .approval-actions {
   body.admin-premium .access-filters-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  body.admin-premium .access-user-main-compact,
+  body.admin-premium .access-user-details-compact {
+    grid-template-columns: 1fr;
+  }
+
+  body.admin-premium .access-user-badges {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 760px) {
@@ -3799,6 +3933,19 @@ body.admin-premium .approval-actions {
   body.admin-premium .access-actions-menu {
     right: auto;
     left: 0;
+  }
+
+  body.admin-premium .access-user-identity-compact .management-meta {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  body.admin-premium .access-user-actions-compact button {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  body.admin-premium .admin-access-modal-card {
+    width: min(100%, 96vw);
   }
 }
 

@@ -8514,7 +8514,68 @@ function renderAdminAccessList(items) {
     return
   }
 
-  container.innerHTML = renderUserTable(items)
+  if (!items.length) {
+    renderManagementMessage('admin-access-list', 'Nenhum usuario encontrado para os filtros selecionados.')
+    return
+  }
+
+  const grouped = items.reduce((map, item) => {
+    const groupKey = item.barbershop_name || 'Sem barbearia'
+    const bucket = map.get(groupKey) || []
+    bucket.push(item)
+    map.set(groupKey, bucket)
+    return map
+  }, new Map())
+
+  container.innerHTML = Array.from(grouped.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([groupName, groupItems]) => `
+      <section class="access-group">
+        <div class="access-group-header">
+          <div>
+            <strong>${groupName}</strong>
+            <span class="management-meta">${groupItems[0]?.barbershop_location || 'Sem localizacao'} | ${groupItems.length} usuario(s)</span>
+          </div>
+        </div>
+        <div class="access-group-stack">
+          ${groupItems.map((item) => {
+            const statusMeta = getAccessStatusMeta(item.status)
+            const roleMeta = getRoleBadgeMeta(item.role)
+            const isBlocked = item.status === 'blocked'
+            return `
+              <article class="access-user-card ${selectedAdminAccessKey === item.accessKey ? 'is-selected' : ''}">
+                <div class="access-user-main access-user-main-compact">
+                  <div class="access-user-identity access-user-identity-compact">
+                    <strong>${item.name || item.email || 'Usuario sem nome'}</strong>
+                    <span class="management-meta" title="${escapeTemplateString(item.email || '-')}">${item.email || '-'}</span>
+                  </div>
+                  <div class="access-user-badges">
+                    <span class="role-badge ${roleMeta.className}">${roleMeta.label}</span>
+                    <span class="status-badge ${statusMeta.className}">${statusMeta.label}</span>
+                    ${item.profileStatus ? `<span class="status-badge ${getAccessStatusMeta(item.profileStatus).className}">Perfil: ${getAccessStatusMeta(item.profileStatus).label}</span>` : ''}
+                  </div>
+                  <div class="access-user-actions access-user-actions-compact">
+                    <button type="button" class="edit-button" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}')">Permissoes</button>
+                    <button type="button" class="secondary-action" onclick="editarEmailUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.email || '')}')">Email</button>
+                    <button type="button" class="secondary-action" onclick="editarTelefoneUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.phone || '')}')">Telefone</button>
+                    <button type="button" class="secondary-action" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}', true)">Transferir</button>
+                    <button type="button" class="${isBlocked ? 'secondary-action' : 'danger-action'}" onclick="alternarBloqueioDeAcessoAdmin('${item.accessKey}')">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
+                    <button type="button" class="danger-action" onclick="revogarAcessoAdmin('${item.accessKey}')">Revogar</button>
+                  </div>
+                </div>
+                <div class="access-user-details access-user-details-compact">
+                  <span><strong>Barbearia</strong>${item.barbershop_name || 'Sem barbearia'}</span>
+                  <span><strong>Ultimo acesso</strong>${formatAdminDate(item.last_login_at)}</span>
+                  <span><strong>Criado</strong>${formatAdminDate(item.created_at || item.approved_at)}</span>
+                  <span><strong>Liberado por</strong>${item.approved_by_email || ADMIN_EMAIL}</span>
+                </div>
+              </article>
+            `
+          }).join('')}
+        </div>
+      </section>
+    `)
+    .join('')
 }
 
 function findAdminAccessEntry(accessKey) {
@@ -8546,9 +8607,9 @@ function renderAdminAccessEditorPermissions(role) {
 
 window.abrirEditorDeAcessoAdmin = function (accessKey, focusBarbershop = false) {
   const entry = findAdminAccessEntry(accessKey)
-  const card = document.getElementById('admin-access-editor-card')
+  const modal = document.getElementById('admin-access-editor-modal')
 
-  if (!entry || !card) {
+  if (!entry || !modal) {
     return
   }
 
@@ -8559,7 +8620,7 @@ window.abrirEditorDeAcessoAdmin = function (accessKey, focusBarbershop = false) 
   document.getElementById('admin-access-editor-role').value = entry.role || CUSTOMER_ROLE
   document.getElementById('admin-access-editor-status').value = entry.status || 'active'
   document.getElementById('admin-access-editor-barbershop').value = entry.barbershop_id || ''
-  card.style.display = 'block'
+  modal.style.display = 'grid'
   setAdminAccessEditorFeedback('', 'info')
   renderAdminAccessEditorPermissions(entry.role || CUSTOMER_ROLE)
   filtrarAdminAcessos({ resetPage: false })
@@ -8569,11 +8630,15 @@ window.abrirEditorDeAcessoAdmin = function (accessKey, focusBarbershop = false) 
   }
 }
 
-window.fecharEditorDeAcessoAdmin = function () {
+window.fecharEditorDeAcessoAdmin = function (event) {
+  if (event && event.target && event.target !== event.currentTarget) {
+    return
+  }
+
   selectedAdminAccessKey = null
-  const card = document.getElementById('admin-access-editor-card')
-  if (card) {
-    card.style.display = 'none'
+  const modal = document.getElementById('admin-access-editor-modal')
+  if (modal) {
+    modal.style.display = 'none'
   }
   setAdminAccessEditorFeedback('', 'info')
   filtrarAdminAcessos({ resetPage: false })

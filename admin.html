@@ -570,25 +570,39 @@
           <div id="admin-access-results-info" class="field-hint">Carregando acessos...</div>
         </section>
 
-        <div class="management-grid access-layout-grid">
-          <section class="management-card">
-            <div class="management-card-header">
-              <div>
-                <span class="management-kicker">Diretorio</span>
-                <h2>Usuarios cadastrados</h2>
-              </div>
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Diretorio</span>
+              <h2>Usuarios cadastrados</h2>
             </div>
-            <div id="admin-access-loading" class="admin-empty" style="display:none;">Carregando diretorio de acessos...</div>
-            <div id="admin-access-list" class="management-stack"></div>
-          </section>
+          </div>
+          <div id="admin-access-loading" class="admin-empty" style="display:none;">Carregando diretorio de acessos...</div>
+          <div id="admin-access-list" class="management-stack"></div>
+        </section>
 
-          <section id="admin-access-editor-card" class="management-card" style="display:none;">
-            <div class="management-card-header">
-              <div>
-                <span class="management-kicker">Editor</span>
-                <h2>Permissoes e contexto</h2>
-              </div>
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Auditoria</span>
+              <h2>Atividade recente de seguranca</h2>
             </div>
+          </div>
+          <div id="admin-access-audit-log" class="management-stack"></div>
+        </section>
+      </section>
+
+      <div id="admin-access-editor-modal" class="modal-overlay" style="display:none;" onclick="fecharEditorDeAcessoAdmin(event)">
+        <div class="modal-card admin-access-modal-card" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <span class="screen-kicker">Editor</span>
+              <h2>Permissoes e contexto</h2>
+            </div>
+            <button type="button" class="link-button" onclick="fecharEditorDeAcessoAdmin()">Fechar</button>
+          </div>
+
+          <div class="modal-body">
             <div class="management-form management-form-grid management-form-compact">
               <input type="text" id="admin-access-editor-name" placeholder="Nome do usuario">
               <input type="email" id="admin-access-editor-email" placeholder="Email" disabled>
@@ -612,22 +626,11 @@
                 <button type="button" class="secondary-action" onclick="abrirEdicaoEmailNoAcessoAdmin()">Alterar email</button>
                 <button type="button" class="secondary-action" onclick="abrirEdicaoTelefoneNoAcessoAdmin()">Alterar telefone</button>
                 <button type="button" onclick="salvarEditorDeAcessoAdmin()">Salvar alteracoes</button>
-                <button type="button" class="secondary-action" onclick="fecharEditorDeAcessoAdmin()">Fechar editor</button>
               </div>
             </div>
-          </section>
-        </div>
-
-        <section class="management-card">
-          <div class="management-card-header">
-            <div>
-              <span class="management-kicker">Auditoria</span>
-              <h2>Atividade recente de seguranca</h2>
-            </div>
           </div>
-          <div id="admin-access-audit-log" class="management-stack"></div>
-        </section>
-      </section>
+        </div>
+      </div>
 
       <section id="admin-users" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
