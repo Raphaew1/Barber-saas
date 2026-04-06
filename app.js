@@ -14,19 +14,30 @@ const supabaseClient = supabaseLib.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 )
+const statelessSupabaseClientsByToken = new Map()
 
 document.body?.classList.add('app-loading')
 
 function getActiveSupabaseClient(preferredAccessToken = '') {
   const accessToken = preferredAccessToken || lastAuthAccessToken || currentSession?.access_token || ''
   if (accessToken) {
-    return supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
+    if (!statelessSupabaseClientsByToken.has(accessToken)) {
+      statelessSupabaseClientsByToken.set(accessToken, supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+          storageKey: `sb-stateless-${accessToken.slice(0, 12)}`
         }
-      }
-    })
+      }))
+    }
+
+    return statelessSupabaseClientsByToken.get(accessToken)
   }
   return supabaseClient
 }
@@ -853,6 +864,43 @@ async function upsertProfileRecord(profile) {
   }
 
   return result
+}
+
+async function updateProfileRecordWithFallback(profileId, updatePayload, optionalColumns = ['name', 'phone', 'global_role', 'status', 'role', 'barbershop_id', 'plan_code']) {
+  if (!profileId) {
+    return { error: new Error('Perfil nao informado.') }
+  }
+
+  let payload = Object.entries(updatePayload || {}).reduce((accumulator, [key, value]) => {
+    if (value !== undefined) {
+      accumulator[key] = value
+    }
+    return accumulator
+  }, {})
+
+  if (!Object.keys(payload).length) {
+    return { error: null }
+  }
+
+  while (Object.keys(payload).length) {
+    const result = await supabaseClient
+      .from('profiles')
+      .update(payload)
+      .eq('id', profileId)
+
+    if (!result.error) {
+      return result
+    }
+
+    const missingColumn = optionalColumns.find((columnName) => Object.prototype.hasOwnProperty.call(payload, columnName) && isMissingColumnError(result.error, [columnName]))
+    if (!missingColumn) {
+      return result
+    }
+
+    delete payload[missingColumn]
+  }
+
+  return { error: null }
 }
 
 function isProfilesRlsError(error) {
@@ -7916,12 +7964,9 @@ window.criarAcessoAdmin = async function () {
         status: signaledStatus === 'pending' ? 'pending' : signaledStatus
       }
 
-      const { error: profileUpdateError } = await supabaseClient
-        .from('profiles')
-        .update(profileUpdate)
-        .eq('id', profileId)
+      const { error: profileUpdateError } = await updateProfileRecordWithFallback(profileId, profileUpdate)
 
-      if (profileUpdateError && !isMissingColumnError(profileUpdateError, ['status'])) {
+      if (profileUpdateError) {
         showFormFeedback(`Acesso liberado, mas falha ao atualizar perfil: ${profileUpdateError.message}`, 'warning', feedbackId)
         return
       }
@@ -8476,21 +8521,7 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName,
       barbershop_id: needsBarbershopContext ? nextBarbershopId : null
     }
 
-    let profileResult = await supabaseClient
-      .from('profiles')
-      .update(updatePayload)
-      .eq('id', entry.id)
-
-    if (profileResult.error && isMissingColumnError(profileResult.error, ['name'])) {
-      profileResult = await supabaseClient
-        .from('profiles')
-        .update({
-          role: normalizedPortalRole,
-          global_role: getGlobalRoleForPortalRole(normalizedPortalRole, entry.global_role || ''),
-          barbershop_id: needsBarbershopContext ? nextBarbershopId : null
-        })
-        .eq('id', entry.id)
-    }
+    const profileResult = await updateProfileRecordWithFallback(entry.id, updatePayload)
 
     if (profileResult.error) {
       return { error: profileResult.error }
@@ -8575,14 +8606,7 @@ async function updateAdminAccessEntryPhone(entry, nextPhone) {
   }
 
   const normalizedPhone = String(nextPhone || '').trim()
-  let phoneResult = await supabaseClient
-    .from('profiles')
-    .update({ phone: normalizedPhone || null })
-    .eq('id', entry.id)
-
-  if (phoneResult.error && isMissingColumnError(phoneResult.error, ['phone'])) {
-    phoneResult = { error: null }
-  }
+  const phoneResult = await updateProfileRecordWithFallback(entry.id, { phone: normalizedPhone || null }, ['phone'])
 
   return { error: phoneResult.error || null }
 }
@@ -8637,12 +8661,9 @@ window.salvarEditorDeAcessoAdmin = async function () {
   }
 
   if (entry.id && entry.id !== entry.accessKey) {
-    const profileStatusResult = await supabaseClient
-      .from('profiles')
-      .update({ status: nextStatus })
-      .eq('id', entry.id)
+    const profileStatusResult = await updateProfileRecordWithFallback(entry.id, { status: nextStatus }, ['status'])
 
-    if (profileStatusResult.error && !isMissingColumnError(profileStatusResult.error, ['status'])) {
+    if (profileStatusResult.error) {
       setAdminAccessEditorFeedback(`Erro ao salvar status: ${profileStatusResult.error.message}`, 'error')
       return
     }
@@ -8711,12 +8732,9 @@ window.alternarBloqueioDeAcessoAdmin = async function (accessKey) {
   }
 
   if (entry.id && entry.id !== entry.accessKey) {
-    const profileResult = await supabaseClient
-      .from('profiles')
-      .update({ status: nextProfileStatus })
-      .eq('id', entry.id)
+    const profileResult = await updateProfileRecordWithFallback(entry.id, { status: nextProfileStatus }, ['status'])
 
-    if (profileResult.error && !isMissingColumnError(profileResult.error, ['status'])) {
+    if (profileResult.error) {
       showAppToast(`Erro ao atualizar status: ${profileResult.error.message}`, 'error')
       return
     }
@@ -8801,10 +8819,7 @@ window.editarTelefoneUsuario = async function (userId, currentPhone = '') {
 
   const normalizedPhone = nextPhone.trim()
 
-  const { error } = await supabaseClient
-    .from('profiles')
-    .update({ phone: normalizedPhone })
-    .eq('id', userId)
+  const { error } = await updateProfileRecordWithFallback(userId, { phone: normalizedPhone }, ['phone'])
 
   if (error) {
     alert(`Erro ao atualizar telefone: ${error.message}`)
