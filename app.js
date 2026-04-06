@@ -15,31 +15,18 @@ const supabaseClient = supabaseLib.createClient(
   SUPABASE_ANON_KEY
 )
 
-let authorizedSupabaseClient = supabaseClient
-let authorizedSupabaseClientAccessToken = ''
-
-function createAuthorizedSupabaseClient(accessToken = '') {
-  if (!accessToken) {
-    return supabaseClient
-  }
-
-  if (accessToken === authorizedSupabaseClientAccessToken) {
-    return authorizedSupabaseClient
-  }
-
-  authorizedSupabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    }
-  })
-  authorizedSupabaseClientAccessToken = accessToken
-  return authorizedSupabaseClient
-}
-
 function getActiveSupabaseClient(preferredAccessToken = '') {
-  return createAuthorizedSupabaseClient(preferredAccessToken || lastAuthAccessToken || currentSession?.access_token || '')
+  const accessToken = preferredAccessToken || lastAuthAccessToken || currentSession?.access_token || ''
+  if (accessToken) {
+    return supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    })
+  }
+  return supabaseClient
 }
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
   if (event === 'PASSWORD_RECOVERY') {
