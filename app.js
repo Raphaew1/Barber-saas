@@ -6330,7 +6330,6 @@ function updateLoginPortalUi() {
 function updatePortalLandingUi() {
   const shouldUseLandingLayout = isMainPortalLanding() && currentVisibleScreenId === 'login'
   document.body.classList.toggle('portal-landing', shouldUseLandingLayout)
-  document.documentElement.classList.toggle('initial-portal-landing', shouldUseLandingLayout)
 }
 
 // Exibe apenas os botoes de menu permitidos para o portal atual.

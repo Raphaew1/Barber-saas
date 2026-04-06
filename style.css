@@ -915,14 +915,26 @@ body:not(.dark-mode) .topbar-screen-description {
 .portal-entry-brand {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 14px;
   margin-bottom: 26px;
 }
 
 .portal-entry-brand .brand-badge {
-  width: 64px;
-  height: 64px;
-  border-radius: 22px;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+}
+
+.portal-entry-brand-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.portal-entry-brand-copy strong {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .portal-entry-actions {
@@ -988,7 +1000,8 @@ body:not(.dark-mode) .portal-entry-button-label {
   color: #7d8799;
 }
 
-body:not(.dark-mode) .portal-entry-button strong {
+body:not(.dark-mode) .portal-entry-button strong,
+body:not(.dark-mode) .portal-entry-brand-copy strong {
   color: #172033;
 }
 
@@ -1116,21 +1129,6 @@ body:not(.dark-mode) .portal-shortcut:hover {
   border-color: rgba(255, 122, 0, 0.14);
   background: rgba(255, 122, 0, 0.08);
   color: #ff6a00;
-}
-
-html.initial-portal-landing body .sidebar,
-html.initial-portal-landing body .content-topbar,
-html.initial-portal-landing body .mobile-menu-toggle,
-html.initial-portal-landing body .mobile-menu-overlay {
-  display: none !important;
-}
-
-html.initial-portal-landing body .app {
-  display: block;
-}
-
-html.initial-portal-landing body .content {
-  padding: 42px 34px;
 }
 
 body.portal-landing .sidebar,
@@ -2271,10 +2269,6 @@ button:disabled {
   }
 
   body.portal-landing .content {
-    padding: 18px 8px;
-  }
-
-  html.initial-portal-landing body .content {
     padding: 18px 8px;
   }
 }
