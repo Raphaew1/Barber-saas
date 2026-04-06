@@ -122,6 +122,7 @@ let platformContextCache = null
 let adminPasswordModalTarget = null
 let adminEditingBarbershopId = null
 let isMobileMenuOpen = false
+const missingProfileColumnsCache = new Set()
 let adminContextStatsCache = {
   usersByBarbershop: new Map(),
   appointmentsByBarbershop: new Map()
@@ -514,6 +515,17 @@ function isMissingTableError(error, tableName) {
   )
 }
 
+function isMissingTableFunctionError(error, tableName) {
+  const normalizedMessage = [
+    error?.message,
+    error?.payload?.error,
+    error?.payload?.message,
+    error?.responseText
+  ].filter(Boolean).join(' | ')
+
+  return isMissingTableError({ ...error, message: normalizedMessage }, tableName)
+}
+
 function createMissingTableResult(error) {
   return {
     data: [],
@@ -878,6 +890,12 @@ async function updateProfileRecordWithFallback(profileId, updatePayload, optiona
     return accumulator
   }, {})
 
+  optionalColumns.forEach((columnName) => {
+    if (missingProfileColumnsCache.has(columnName)) {
+      delete payload[columnName]
+    }
+  })
+
   if (!Object.keys(payload).length) {
     return { error: null }
   }
@@ -897,10 +915,36 @@ async function updateProfileRecordWithFallback(profileId, updatePayload, optiona
       return result
     }
 
+    missingProfileColumnsCache.add(missingColumn)
     delete payload[missingColumn]
   }
 
   return { error: null }
+}
+
+async function syncManagedUserAccess(targetUserId, barbershopId, role, status) {
+  const result = await invokeProtectedFunction('admin-update-user-access', {
+    targetUserId,
+    barbershopId,
+    role,
+    status
+  }, {
+    authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para atualizar os acessos.'
+  })
+
+  if (result.error) {
+    if (isMissingTableFunctionError(result.error, 'user_access')) {
+      return { data: null, error: null, skippedMissingTable: true }
+    }
+
+    return result
+  }
+
+  if (result.data?.error && isMissingTableError({ message: result.data.error }, 'user_access')) {
+    return { data: null, error: null, skippedMissingTable: true }
+  }
+
+  return result
 }
 
 function isProfilesRlsError(error) {
@@ -8530,14 +8574,12 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName,
 
   if (entry.id && entry.id !== entry.accessKey && (entry.barbershop_id || nextBarbershopId)) {
     if (entry.barbershop_id && entry.barbershop_id !== nextBarbershopId) {
-      const { error: blockPreviousAccessError } = await invokeProtectedFunction('admin-update-user-access', {
-        targetUserId: entry.id,
-        barbershopId: entry.barbershop_id,
-        role: currentAccessRole,
-        status: 'blocked'
-      }, {
-        authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para atualizar os acessos.'
-      })
+      const { error: blockPreviousAccessError } = await syncManagedUserAccess(
+        entry.id,
+        entry.barbershop_id,
+        currentAccessRole,
+        'blocked'
+      )
 
       if (blockPreviousAccessError) {
         return { error: blockPreviousAccessError }
@@ -8545,14 +8587,12 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName,
     }
 
     if (nextBarbershopId) {
-      const { data: accessData, error: accessError } = await invokeProtectedFunction('admin-update-user-access', {
-        targetUserId: entry.id,
-        barbershopId: nextBarbershopId,
-        role: normalizedAccessRole,
-        status: normalizedStatus === 'pending' ? 'pending' : normalizedStatus
-      }, {
-        authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para atualizar os acessos.'
-      })
+      const { data: accessData, error: accessError } = await syncManagedUserAccess(
+        entry.id,
+        nextBarbershopId,
+        normalizedAccessRole,
+        normalizedStatus === 'pending' ? 'pending' : normalizedStatus
+      )
 
       if (accessError) {
         return { error: accessError }
@@ -8694,14 +8734,12 @@ window.alternarBloqueioDeAcessoAdmin = async function (accessKey) {
   const nextAccessStatus = shouldBlock ? 'blocked' : 'active'
 
   if (entry.id && entry.id !== entry.accessKey && entry.barbershop_id) {
-    const { data, error } = await invokeProtectedFunction('admin-update-user-access', {
-      targetUserId: entry.id,
-      barbershopId: entry.barbershop_id,
-      role: normalizeAccessRole(entry.accessRole || entry.role),
-      status: nextAccessStatus
-    }, {
-      authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para atualizar os acessos.'
-    })
+    const { data, error } = await syncManagedUserAccess(
+      entry.id,
+      entry.barbershop_id,
+      normalizeAccessRole(entry.accessRole || entry.role),
+      nextAccessStatus
+    )
 
     if (error) {
       showAppToast(`Erro ao atualizar acesso principal: ${error.message}`, 'error')
@@ -8764,14 +8802,12 @@ window.revogarAcessoAdmin = async function (accessKey) {
   }
 
   if (entry.id && entry.id !== entry.accessKey && entry.barbershop_id) {
-    const { data, error } = await invokeProtectedFunction('admin-update-user-access', {
-      targetUserId: entry.id,
-      barbershopId: entry.barbershop_id,
-      role: normalizeAccessRole(entry.accessRole || entry.role),
-      status: 'blocked'
-    }, {
-      authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para atualizar os acessos.'
-    })
+    const { data, error } = await syncManagedUserAccess(
+      entry.id,
+      entry.barbershop_id,
+      normalizeAccessRole(entry.accessRole || entry.role),
+      'blocked'
+    )
 
     if (error) {
       showAppToast(`Erro ao revogar acesso principal: ${error.message}`, 'error')
