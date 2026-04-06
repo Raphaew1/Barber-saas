@@ -249,9 +249,14 @@ function isClientEntryPage() {
   return APP_ENTRY_MODE === 'client'
 }
 
+function isBarberEntryPage() {
+  return APP_ENTRY_MODE === 'barber'
+}
+
 function isMainPortalLanding() {
   return !isAdminEntryPage()
     && !isClientEntryPage()
+    && !isBarberEntryPage()
     && !isSignupEntryPage()
     && !getPortalHintFromUrl()
     && !currentSession
@@ -275,7 +280,7 @@ function getPortalHintFromUrl() {
 
 function getSlugFromUrl() {
   const path = String(window.location.pathname || '').replace(/^\/+|\/+$/g, '')
-  if (!path || ['index.html', 'admin.html', 'signup.html', 'cliente.html'].includes(path.toLowerCase())) {
+  if (!path || ['index.html', 'admin.html', 'signup.html', 'cliente.html', 'barbearia.html'].includes(path.toLowerCase())) {
     return null
   }
 
@@ -395,6 +400,8 @@ function clearAuthCallbackParams() {
 function redirectToPortalEntry(portal) {
   const target = portal === 'admin'
     ? 'admin.html'
+    : portal === BARBER_ROLE
+      ? 'barbearia.html'
     : portal === CUSTOMER_ROLE
       ? 'cliente.html'
       : 'index.html'
@@ -429,6 +436,23 @@ window.voltarParaTelaInicial = async function () {
     applyPortalUi()
     showScreen('agendar')
     await carregarPortalData('agendar')
+    return
+  }
+
+  if (isBarberEntryPage()) {
+    const isLoggedIn = await hasActiveSession()
+
+    if (!isLoggedIn) {
+      setPortal('barbeiro')
+      applyPortalUi()
+      showScreen('login')
+      return
+    }
+
+    setPortal('barbeiro')
+    applyPortalUi()
+    showScreen('gestao')
+    await carregarPortalData('gestao')
     return
   }
 
@@ -2166,6 +2190,7 @@ window.signup = async function () {
       id: user.id,
       email: user.email,
       role: CUSTOMER_ROLE,
+      global_role: CUSTOMER_ROLE,
       name: signupName,
       phone: signupPhone,
       status: 'pending'
@@ -3656,6 +3681,23 @@ function isCurrentSessionSuperAdmin() {
   return Boolean(currentSession?.user?.email) && (isAdminEmail(currentSession.user.email) || platformContextCache?.global_role === 'super_admin')
 }
 
+function isCurrentSessionBarberPortalUser() {
+  return platformContextCache?.global_role === BARBER_ROLE
+}
+
+function getGlobalRoleForPortalRole(role, currentGlobalRole = '') {
+  const normalizedRole = normalizePortalRole(role)
+  if (normalizedRole === BARBER_ROLE) {
+    return BARBER_ROLE
+  }
+
+  if (normalizedRole === CUSTOMER_ROLE) {
+    return CUSTOMER_ROLE
+  }
+
+  return currentGlobalRole === 'super_admin' ? 'super_admin' : 'user'
+}
+
 function buildMasterAdminContext(user, profile = null) {
   return {
     user_id: user?.id || '',
@@ -3676,14 +3718,15 @@ async function resolvePortalForUser(user) {
   if (canAccessAdminPortal(user, context)) {
     return 'admin'
   }
+
+  if (context?.global_role === BARBER_ROLE) {
+    return 'barbeiro'
+  }
+
   if (context) {
     const activeAccess = Array.isArray(context.access)
       ? context.access.filter((item) => item?.status === 'active')
       : []
-
-    if (activeAccess.some((item) => item.role === 'admin' || item.role === 'barber')) {
-      return 'barbeiro'
-    }
 
     if (activeAccess.some((item) => item.role === 'client')) {
       return 'cliente'
@@ -3702,15 +3745,11 @@ async function resolvePortalForUser(user) {
 
   const { data: profile } = await supabaseClient
     .from('profiles')
-    .select('role')
+    .select('role, global_role')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (profile?.role === BARBER_ROLE) {
-    return 'barbeiro'
-  }
-
-  if (profile?.role === ADMIN_ROLE) {
+  if (profile?.global_role === BARBER_ROLE) {
     return 'barbeiro'
   }
 
@@ -3754,8 +3793,11 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
 
   if (isSuperAdmin) {
     role = ADMIN_ROLE
+  } else if (context?.global_role === BARBER_ROLE) {
+    role = BARBER_ROLE
   } else if (profile?.role) {
-    role = normalizePortalRole(profile.role)
+    const normalizedProfileRole = normalizePortalRole(profile.role)
+    role = normalizedProfileRole === BARBER_ROLE ? CUSTOMER_ROLE : normalizedProfileRole
   } else if (fallbackPortal) {
     role = fallbackPortal
   } else {
@@ -3778,6 +3820,11 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
   if (role === BARBER_ROLE) {
     setPortal('barbeiro')
     applyPortalUi()
+    if (!isBarberEntryPage()) {
+      window.location.href = getAppUrl('barbearia.html')
+      return role
+    }
+
     showScreen('gestao')
     await carregarPortalData('gestao')
     return role
@@ -3805,6 +3852,13 @@ async function validateBarberPortalAccess(user) {
   }
 
   const context = await fetchPlatformContext()
+  if (context?.global_role !== BARBER_ROLE) {
+    return {
+      allowed: false,
+      message: 'Somente perfis com regra global barbeiro podem acessar o portal da barbearia.'
+    }
+  }
+
   if (context) {
     const access = Array.isArray(context.access)
       ? context.access.find((item) => item?.status === 'active' && (item.role === 'admin' || item.role === 'barber'))
@@ -4380,6 +4434,7 @@ window.cadastrarUsuarioAdmin = async function () {
         name,
         phone,
         role,
+        global_role: getGlobalRoleForPortalRole(role),
         barbershop_id: barbershopId,
         plan_code: planCode,
         status: 'pending'
@@ -6079,10 +6134,13 @@ async function aplicarDecisaoDeAprovacaoAdmin(entry, nextStatus) {
 
   let profileResult = await supabaseClient
     .from('profiles')
-    .update({ status: nextStatus })
+    .update({
+      status: nextStatus,
+      global_role: getGlobalRoleForPortalRole(entry.role, entry.global_role || '')
+    })
     .eq('id', entry.id)
 
-  if (profileResult.error && isMissingColumnError(profileResult.error, ['status'])) {
+  if (profileResult.error && isMissingColumnError(profileResult.error, ['status', 'global_role'])) {
     profileResult = { error: null }
   }
 
@@ -6189,7 +6247,7 @@ async function carregarGestaoDeAcessos(barbershopId) {
     return
   }
 
-  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin())) {
+  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin() || isCurrentSessionBarberPortalUser())) {
     card.style.display = 'none'
     return
   }
@@ -6236,7 +6294,7 @@ async function carregarGestaoDeAcessos(barbershopId) {
 // Autoriza manualmente um email para acessar o portal do barbeiro.
 window.aprovarEmailBarbeiro = async function () {
   const currentUser = await getCurrentUser()
-  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin())) {
+  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin() || isCurrentSessionBarberPortalUser())) {
     alert('Somente o admin pode liberar acesso ao portal do barbeiro.')
     return
   }
@@ -6285,7 +6343,7 @@ window.aprovarEmailBarbeiro = async function () {
 // Revoga o acesso de um email ao portal do barbeiro.
 window.revogarEmailBarbeiro = async function (email) {
   const currentUser = await getCurrentUser()
-  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin())) {
+  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin() || isCurrentSessionBarberPortalUser())) {
     alert('Somente o admin pode revogar acessos.')
     return
   }
@@ -6608,6 +6666,11 @@ function restorePortalSelection() {
     return
   }
 
+  if (isBarberEntryPage()) {
+    currentPortal = 'barbeiro'
+    return
+  }
+
   const portalHint = getPortalHintFromUrl()
   if (portalHint) {
     currentPortal = portalHint
@@ -6635,6 +6698,8 @@ function updateLoginPortalUi() {
         ? 'Portal master'
         : isClientEntryPage()
           ? 'Portal cliente'
+          : isBarberEntryPage()
+            ? 'Portal barbearia'
         : isSignupEntryPage()
           ? 'Cadastro'
           : isClientPublicView()
@@ -6661,6 +6726,8 @@ function updateLoginPortalUi() {
       ? 'Acesso restrito ao administrador principal.'
       : isClientEntryPage()
         ? 'Portal do cliente com acesso a agendamentos e produtos.'
+      : isBarberEntryPage()
+        ? 'Portal da barbearia com acesso a gestao, agenda, cadastros e aprovacoes.'
       : isClientPublicView()
         ? `Agendamento direto para ${currentBarbershopContext?.name || 'esta barbearia'}.`
       : isSignupEntryPage()
@@ -6679,6 +6746,8 @@ function updateLoginPortalUi() {
       ? 'Entrar no portal do administrador'
       : isClientEntryPage()
         ? 'Entrar no portal do cliente'
+      : isBarberEntryPage()
+        ? 'Entrar no portal da barbearia'
       : isClientPublicView()
         ? `Agende com ${currentBarbershopContext?.name || 'a barbearia'}`
         : currentPortal === BARBER_ROLE
@@ -6695,6 +6764,8 @@ function updateLoginPortalUi() {
       ? 'Somente o email master autorizado pode acessar esta area.'
       : isClientEntryPage()
         ? 'Use seu email e senha para acessar somente agendamentos e produtos.'
+      : isBarberEntryPage()
+        ? 'Use seu email e senha para acessar gestao, agenda, cadastros e aprovacoes da sua barbearia.'
       : isClientPublicView()
         ? 'Escolha barbeiro, servicos e horario. O contexto da barbearia ja foi identificado pela URL.'
       : isSignupEntryPage()
@@ -6758,7 +6829,11 @@ function isScreenAllowedForPortal(screenId) {
   }
 
   if (screenId === 'aprovacoes') {
-    return (currentPortal === 'barbeiro' || currentPortal === 'admin') && isCurrentSessionSuperAdmin()
+    return currentPortal === 'admin'
+      ? isCurrentSessionSuperAdmin()
+      : currentPortal === 'barbeiro'
+        ? (isCurrentSessionBarberPortalUser() || isCurrentSessionSuperAdmin())
+        : false
   }
 
   const portalPermissions = {
@@ -7871,7 +7946,7 @@ async function carregarAdminUsuarios() {
   const [profilesResult, barberAccessResult, barbershopsResult] = await Promise.all([
     supabaseClient
       .from('profiles')
-      .select('id, email, role, name, phone, barbershop_id')
+      .select('id, email, role, global_role, name, phone, barbershop_id')
       .order('role', { ascending: true })
       .order('email', { ascending: true }),
     supabaseClient
@@ -7911,6 +7986,7 @@ async function carregarAdminUsuarios() {
       id: item.id,
       email: item.email || '',
       role: normalizePortalRole(item.role || CUSTOMER_ROLE),
+      global_role: item.global_role || '',
       name: item.name || '',
       phone: item.phone || '',
       barbershop_id: item.barbershop_id || null,
@@ -7930,6 +8006,7 @@ async function carregarAdminUsuarios() {
       usersByEmail.set(key, {
         ...existingUser,
         role: existingUser.role || BARBER_ROLE,
+        global_role: existingUser.global_role || BARBER_ROLE,
         barbershop_id: existingUser.barbershop_id || item.barbershop_id || null,
         access_active: item.is_active
       })
@@ -7940,6 +8017,7 @@ async function carregarAdminUsuarios() {
       id: key,
       email: item.email,
       role: BARBER_ROLE,
+      global_role: BARBER_ROLE,
       name: '',
       phone: '',
       barbershop_id: item.barbershop_id || null,
@@ -7953,6 +8031,7 @@ async function carregarAdminUsuarios() {
       id: currentUser.id || ADMIN_EMAIL,
       email: ADMIN_EMAIL,
       role: ADMIN_ROLE,
+      global_role: 'super_admin',
       name: 'Administrador principal',
       phone: '',
       barbershop_id: null,
@@ -7969,20 +8048,21 @@ async function carregarAdminUsuarios() {
     return String(a.email || '').localeCompare(String(b.email || ''))
   })
 
-  const customers = users.filter((item) => item.role === CUSTOMER_ROLE)
+  const customers = users.filter((item) => item.global_role !== BARBER_ROLE && item.role === CUSTOMER_ROLE)
   const barbershops = users
-    .filter((item) => item.role === BARBER_ROLE)
+    .filter((item) => item.global_role === BARBER_ROLE)
     .map((item) => ({
       ...item,
       meta: [
         `Email: ${item.email || '-'}`,
         formatOptionalContactLine('Telefone', item.phone),
         item.barbershop_id ? `Barbearia: ${barbershopNameById.get(item.barbershop_id) || item.barbershop_id}` : null,
+        item.global_role ? `Regra global: ${item.global_role}` : null,
         item.source === 'barber_access' ? 'Status: aguardando perfil completo' : null,
         item.access_active === false ? 'Acesso: inativo' : null
       ].filter(Boolean).join(' | ')
     }))
-  const admins = users.filter((item) => item.role === ADMIN_ROLE)
+  const admins = users.filter((item) => item.role === ADMIN_ROLE || item.global_role === 'super_admin')
 
   renderAdminUsersGroup('admin-users-customers-list', customers, 'Nenhum usuario do portal cliente cadastrado.')
   renderAdminUsersGroup('admin-users-barbershops-list', barbershops, 'Nenhum usuario do portal da barbearia cadastrado.')
@@ -8378,6 +8458,7 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName)
   if (entry.id && entry.id !== entry.accessKey) {
     const updatePayload = {
       role: normalizedPortalRole,
+      global_role: getGlobalRoleForPortalRole(normalizedPortalRole, entry.global_role || ''),
       name: nextName || null,
       barbershop_id: needsBarbershopContext ? nextBarbershopId : null
     }
@@ -8392,6 +8473,7 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName)
         .from('profiles')
         .update({
           role: normalizedPortalRole,
+          global_role: getGlobalRoleForPortalRole(normalizedPortalRole, entry.global_role || ''),
           barbershop_id: needsBarbershopContext ? nextBarbershopId : null
         })
         .eq('id', entry.id)
@@ -8965,7 +9047,11 @@ window.resetPassword = async function () {
   }
 
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: isAdminEntryPage() ? getAppUrl('admin.html') : getAppUrl('cliente.html')
+    redirectTo: isAdminEntryPage()
+      ? getAppUrl('admin.html')
+      : isBarberEntryPage()
+        ? getAppUrl('barbearia.html')
+        : getAppUrl('cliente.html')
   });
 
   if (error) {
