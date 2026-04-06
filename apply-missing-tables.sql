@@ -1,8 +1,8 @@
 # Script para aplicar migração manual das tabelas faltantes
 # Execute este script no SQL Editor do Supabase Dashboard
 
--- Missing tables migration
--- Add tables that are referenced in code but missing from database
+-- Missing tables migration - Fix version without non-existent table references
+-- Creates only the structure needed without foreign keys to missing tables
 
 -- Create barber_access table
 create table if not exists public.barber_access (
@@ -19,34 +19,34 @@ create table if not exists public.barber_access (
   unique(email, barbershop_id)
 );
 
--- Create service_sales table
+-- Create service_sales table (without FK to non-existent tables)
 create table if not exists public.service_sales (
   id uuid primary key default gen_random_uuid(),
   barbershop_id uuid not null references public.barbershops(id) on delete cascade,
-  service_id uuid references public.services(id) on delete set null,
+  service_id uuid,
   service_name text,
   service_price numeric(10,2) not null default 0,
-  appointment_id uuid references public.appointments(id) on delete set null,
-  customer_id uuid references public.customers(id) on delete set null,
+  appointment_id uuid,
+  customer_id uuid,
   customer_name text,
-  barber_id uuid references public.barbers(id) on delete set null,
+  barber_id uuid,
   barber_name text,
   created_at timestamptz not null default now()
 );
 
--- Create product_sales table
+-- Create product_sales table (without FK to non-existent tables)
 create table if not exists public.product_sales (
   id uuid primary key default gen_random_uuid(),
   barbershop_id uuid not null references public.barbershops(id) on delete cascade,
-  product_id uuid references public.products(id) on delete set null,
+  product_id uuid,
   product_name text,
   quantity integer not null default 1,
   unit_price numeric(10,2) not null default 0,
   total_amount numeric(10,2) not null default 0,
-  appointment_id uuid references public.appointments(id) on delete set null,
-  customer_id uuid references public.customers(id) on delete set null,
+  appointment_id uuid,
+  customer_id uuid,
   customer_name text,
-  barber_id uuid references public.barbers(id) on delete set null,
+  barber_id uuid,
   barber_name text,
   created_at timestamptz not null default now()
 );
