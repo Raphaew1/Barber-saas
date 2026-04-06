@@ -658,14 +658,14 @@ async function createBarbershopRecord(barbershop) {
 async function createAdminBarbershopProvision(payload) {
   const executeInvoke = async () => {
     try {
-      const authContext = await getAuthHeaderContext()
+      const { accessToken } = await getSessionAccessToken()
       const requestHeaders = {
         'Content-Type': 'application/json',
         apikey: SUPABASE_ANON_KEY
       }
 
-      if (authContext.accessToken) {
-        requestHeaders.Authorization = `Bearer ${authContext.accessToken}`
+      if (accessToken) {
+        requestHeaders.Authorization = `Bearer ${accessToken}`
       }
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/create-barbershop`, {
