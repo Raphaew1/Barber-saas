@@ -1632,6 +1632,18 @@ function getActiveAccessFromContext(context, preferredBarbershopId = '') {
   return activeAccess[0] || null
 }
 
+function canAccessAdminPortal(user, context = null) {
+  if (!user?.email) {
+    return false
+  }
+
+  if (isAdminEmail(user.email)) {
+    return true
+  }
+
+  return context?.global_role === 'super_admin'
+}
+
 function updateAdminContextUi(barbershops = null) {
   const wrapper = document.getElementById('admin-context-switcher')
   const select = document.getElementById('admin-active-barbershop')
@@ -3291,16 +3303,11 @@ async function resolvePortalForUser(user) {
     return null
   }
 
-  if (isAdminEmail(user.email)) {
+  const context = await fetchPlatformContext()
+  if (canAccessAdminPortal(user, context)) {
     return 'admin'
   }
-
-  const context = await fetchPlatformContext()
   if (context) {
-    if (context.global_role === 'super_admin') {
-      return 'admin'
-    }
-
     const activeAccess = Array.isArray(context.access)
       ? context.access.filter((item) => item?.status === 'active')
       : []
@@ -3335,7 +3342,7 @@ async function resolvePortalForUser(user) {
   }
 
   if (profile?.role === ADMIN_ROLE) {
-    return 'admin'
+    return 'barbeiro'
   }
 
   return 'cliente'
@@ -3343,6 +3350,7 @@ async function resolvePortalForUser(user) {
 
 async function handleUserAfterLogin(user, fallbackPortal = '') {
   let role = ''
+  const context = await fetchPlatformContext()
 
   const { data: profile } = await supabaseClient
     .from('profiles')
@@ -3350,7 +3358,7 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
     .eq('id', user.id)
     .maybeSingle()
 
-  if (isAdminEmail(user?.email)) {
+  if (canAccessAdminPortal(user, context)) {
     role = ADMIN_ROLE
   } else if (profile?.role) {
     role = normalizePortalRole(profile.role)
@@ -3486,19 +3494,11 @@ async function validateAdminPortalAccess(user) {
     }
   }
 
-  // Permitir qualquer usuário acessar o portal admin para criar barbearias
-  const { error: profileError } = await upsertProfileRecord({
-    id: user.id,
-    email: user.email,
-    role: ADMIN_ROLE,
-    global_role: 'super_admin',
-    status: 'active'
-  })
-
-  if (profileError && !isProfilesRlsError(profileError) && !isUnauthorizedError(profileError)) {
+  const context = await fetchPlatformContext()
+  if (!canAccessAdminPortal(user, context)) {
     return {
       allowed: false,
-      message: `Nao foi possivel sincronizar o perfil de administrador: ${profileError.message}`
+      message: 'Somente usuarios com regra global super_admin podem acessar o portal do administrador.'
     }
   }
 
@@ -3594,7 +3594,27 @@ async function init() {
   }
 
   if (isAdminEntryPage()) {
-    // Acesso direto ao portal admin sem autenticação
+    if (!sessionState.session?.user) {
+      setPortal('admin')
+      updateProtectedUi(false)
+      applyPortalUi()
+      showScreen('login')
+      return
+    }
+
+    const accessResult = await validateAdminPortalAccess(sessionState.session.user)
+    if (!accessResult.allowed) {
+      await supabaseClient.auth.signOut()
+      currentSession = null
+      clearPlatformContextCache()
+      currentBarbershopId = null
+      updateProtectedUi(false)
+      applyPortalUi()
+      showScreen('login')
+      setAuthFeedback(accessResult.message, 'error')
+      return
+    }
+
     setPortal('admin')
     updateProtectedUi(true)
     applyPortalUi()
@@ -6200,32 +6220,14 @@ window.selecionarContextoAdminDaBarbearia = async function (barbershopId) {
 }
 
 async function ensureAdminAccess() {
-  // Se estamos no portal admin público (admin.html), permitir sem autenticação
-  if (isAdminEntryPage()) {
-    return {
-      id: '00000000-0000-0000-0000-000000000000',
-      email: 'admin@barbersaas.com'
-    }
-  }
-
   const currentUser = await getCurrentUser()
   if (!currentUser?.email) {
     alert('Faca login novamente para acessar essa area.')
     return null
   }
 
-  if (isAdminEmail(currentUser.email)) {
-    const accessResult = await validateAdminPortalAccess(currentUser)
-    if (!accessResult.allowed) {
-      alert(accessResult.message)
-      return null
-    }
-
-    return currentUser
-  }
-
   const context = await fetchPlatformContext()
-  if (context?.global_role === 'super_admin') {
+  if (canAccessAdminPortal(currentUser, context)) {
     const accessResult = await validateAdminPortalAccess(currentUser)
     if (!accessResult.allowed) {
       alert(accessResult.message)

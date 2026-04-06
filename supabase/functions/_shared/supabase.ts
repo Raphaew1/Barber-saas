@@ -190,24 +190,7 @@ export async function requireSuperAdmin(authHeader: string) {
     return { ...authResult, serviceClient, profile, error: null };
   }
 
-  // Permite admin de barbearia (user_access.admin) e acessos de barbearia
-  console.log("requireSuperAdmin: Checking user_access for admin role");
-  const { data: accessData, error: accessError } = await serviceClient
-    .from("user_access")
-    .select("id")
-    .eq("user_id", authResult.user.id)
-    .eq("role", "admin")
-    .eq("status", "active")
-    .limit(1);
-
-  console.log("requireSuperAdmin: user_access check -", { hasError: !!accessError, accessError: accessError?.message, hasAccess: accessData?.length > 0 });
-  
-  if (!accessError && accessData?.length > 0) {
-    console.log("requireSuperAdmin: Access granted - user has active admin role");
-    return { ...authResult, serviceClient, profile, error: null };
-  }
-
-  console.error("requireSuperAdmin: Access denied - not super_admin nor barbershop admin");
+  console.error("requireSuperAdmin: Access denied - not super_admin");
   return { ...authResult, serviceClient, profile, error: "Acesso restrito ao super admin." };
 }
 

@@ -1,4 +1,4 @@
-import { insertAuditLog, jsonResponse, methodNotAllowedResponse, preflightResponse, requireAuthenticatedUser, createServiceClient } from "../_shared/supabase.ts";
+import { insertAuditLog, jsonResponse, methodNotAllowedResponse, preflightResponse, requireSuperAdmin } from "../_shared/supabase.ts";
 
 async function hashToken(value: string) {
   const bytes = new TextEncoder().encode(value);
@@ -126,29 +126,18 @@ Deno.serve(async (request) => {
 
   try {
     const authHeader = request.headers.get("Authorization");
-    let authResult = null;
-    let serviceClient = createServiceClient();
-    let currentUser = null;
-
-    if (authHeader) {
-      console.log("create-barbershop: Validando usuario autenticado");
-      authResult = await requireAuthenticatedUser(authHeader);
-
-      if (authResult.error || !authResult.user) {
-        console.error("create-barbershop: Acesso negado - usuario nao autenticado", authResult.error);
-        return jsonResponse({ error: authResult.error || "Usuario nao autenticado." }, 401);
-      }
-
-      console.log("create-barbershop: Usuario autenticado -", authResult.user.email);
-      currentUser = authResult.user;
-    } else {
-      console.log("create-barbershop: Acesso sem autenticacao - portal admin publico");
-      // Criar usuario virtual para barbearias criadas sem login
-      currentUser = {
-        id: '00000000-0000-0000-0000-000000000000', // UUID nulo padrao
-        email: 'admin@barbersaas.com'
-      };
+    if (!authHeader) {
+      return jsonResponse({ error: "Authorization header ausente." }, 401);
     }
+
+    const authResult = await requireSuperAdmin(authHeader);
+    if (authResult.error || !authResult.user || !authResult.serviceClient) {
+      console.error("create-barbershop: Acesso negado - super_admin obrigatorio", authResult.error);
+      return jsonResponse({ error: authResult.error || "Acesso restrito ao super admin." }, 403);
+    }
+
+    const serviceClient = authResult.serviceClient;
+    const currentUser = authResult.user;
 
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
