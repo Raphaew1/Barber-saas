@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <title>CorteFacil | Criar conta</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='none' stroke='%23d6a54b' stroke-width='2'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='24' font-weight='700' fill='%23f7efe0'%3ECF%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-app-entry="signup">
+<div class="ambient ambient-left"></div>
+<div class="ambient ambient-right"></div>
+<div class="ambient ambient-bottom"></div>
+
+<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar modo dark">
+  Dark
+</button>
+
+<div class="app-shell">
+  <div class="app">
+    <aside class="sidebar">
+      <button type="button" class="sidebar-brand sidebar-brand-button" onclick="voltarParaTelaInicial()">
+        <span class="brand-badge">CF</span>
+        <div>
+          <span class="sidebar-kicker">Client onboarding</span>
+          <h2>CorteFacil</h2>
+        </div>
+      </button>
+
+      <div class="sidebar-footer">
+        <span class="sidebar-kicker">Conta de cliente</span>
+        <p>Crie seu acesso, confirme seu email e entre na plataforma com um fluxo simples e profissional.</p>
+      </div>
+    </aside>
+
+    <main class="content auth-content">
+      <div class="content-topbar">
+        <div>
+          <span class="screen-kicker">Cadastro</span>
+          <h3>Fluxo dedicado para criar conta de cliente</h3>
+        </div>
+      </div>
+
+      <section id="signup" class="tela">
+        <div class="screen-header">
+          <span class="screen-kicker">Criar conta</span>
+          <h1>Criar conta de cliente</h1>
+          <p>Informe seus dados para criar sua conta. Depois, confirme seu email e volte para fazer login.</p>
+        </div>
+
+        <div class="form-block">
+          <div class="login-mode-chip">
+            <span>Seu acesso sera criado como cliente. A confirmacao do email redireciona para a tela de login.</span>
+          </div>
+          <div id="auth-feedback" class="form-feedback" style="display:none;"></div>
+          <input type="text" id="signup-name" placeholder="Nome completo">
+          <input type="tel" id="signup-phone" placeholder="Telefone">
+          <input type="email" id="email" placeholder="Email">
+          <input type="password" id="password" placeholder="Senha">
+          <button id="signup-submit" onclick="signup()">Criar conta</button>
+          <a class="link-button" href="index.html">Ja tem conta? Entrar</a>
+        </div>
+      </section>
+
+      <section id="reset-password" class="tela" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Seguranca</span>
+          <h1>Redefinir senha</h1>
+          <p>Digite sua nova senha para acessar novamente sua conta.</p>
+        </div>
+
+        <div class="form-block">
+          <div id="reset-password-feedback" class="form-feedback" style="display:none;"></div>
+          <input type="password" id="new-password" placeholder="Nova senha">
+          <input type="password" id="confirm-password" placeholder="Confirmar senha">
+          <button onclick="updatePassword()">Atualizar senha</button>
+          <a class="link-button" href="index.html">Voltar para login</a>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

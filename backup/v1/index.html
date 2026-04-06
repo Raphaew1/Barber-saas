@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barber SaaS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="ambient ambient-left"></div>
+<div class="ambient ambient-right"></div>
+<div class="ambient ambient-bottom"></div>
+
+<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar modo dark">
+  Dark
+</button>
+
+<div class="app-shell">
+  <div class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-badge">CF</span>
+        <div>
+          <span class="sidebar-kicker">Barber control</span>
+          <h2>💈 CorteFacil</h2>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button id="nav-agendar" class="nav-button" data-screen="agendar" data-protected="true" data-portal="cliente" onclick="mostrarTela('agendar')">Agendar</button>
+        <button id="nav-produtos" class="nav-button" data-screen="produtos" data-protected="true" data-portal="cliente" onclick="mostrarTela('produtos')">Produtos</button>
+        <button id="nav-gestao" class="nav-button" data-screen="gestao" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('gestao')">Gestao</button>
+        <button id="nav-agenda" class="nav-button" data-screen="agenda" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('agenda')">Minha Agenda</button>
+        <button id="nav-cadastros" class="nav-button" data-screen="cadastros" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('cadastros')">Cadastros</button>
+        <button id="nav-aprovacoes" class="nav-button" data-screen="aprovacoes" data-protected="true" data-portal="barbeiro" data-admin-only="true" onclick="mostrarTela('aprovacoes')">Aprovacoes</button>
+        <button id="nav-sair" class="nav-button nav-button-ghost" data-protected="true" onclick="logout()">Sair</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="sidebar-kicker">Experiencia premium</span>
+        <p>Agenda, gestao, servicos e barbeiros com acesso separado por portal.</p>
+      </div>
+    </aside>
+
+    <!-- Conteudo -->
+    <main class="content">
+      <div class="content-topbar">
+        <div>
+          <span class="screen-kicker">Studio dashboard</span>
+          <h3>Gestao elegante para sua barbearia</h3>
+        </div>
+      </div>
+
+      <!-- Login -->
+      <section id="login" class="tela">
+        <div class="screen-header">
+          <span class="screen-kicker">Escolha o portal</span>
+          <h1 id="login-title">Como voce deseja entrar?</h1>
+          <p id="login-description">Selecione se o acesso sera como cliente ou barbeiro antes de continuar.</p>
+        </div>
+
+        <div class="portal-choice">
+          <button type="button" id="portal-cliente" class="portal-option" onclick="selecionarPortal('cliente')">
+            <span class="portal-option-kicker">Portal simplificado</span>
+            <strong>Cliente</strong>
+            <span>Faz agendamento e consulta produtos disponiveis.</span>
+          </button>
+          <button type="button" id="portal-barbeiro" class="portal-option" onclick="selecionarPortal('barbeiro')">
+            <span class="portal-option-kicker">Portal completo</span>
+            <strong>Barbeiro</strong>
+            <span>Visualiza agenda, gestao, cadastros e toda a operacao da barbearia.</span>
+          </button>
+        </div>
+
+        <div class="form-block">
+          <div class="login-mode-chip">
+            <span id="selected-portal-label">Selecione um portal para continuar.</span>
+            <button type="button" class="link-button" onclick="limparPortalSelecionado()">Trocar</button>
+          </div>
+          <input type="email" id="email" placeholder="Email">
+          <input type="password" id="password" placeholder="Senha">
+          <button onclick="login()">Entrar</button>
+          <button id="signup-button" class="secondary-action" onclick="signup()">Criar conta</button>
+        </div>
+      </section>
+
+      <!-- Agendar -->
+      <section id="agendar" class="tela" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Atendimento</span>
+          <h1>Novo agendamento</h1>
+          <p>Monte o atendimento com barbeiro, multiplos servicos e horario em poucos cliques.</p>
+        </div>
+
+        <div class="form-block">
+          <label class="field-label" for="name">Cliente</label>
+          <input type="text" id="name" placeholder="Seu nome">
+          <label class="field-label" for="barber">Barbeiro</label>
+          <select id="barber">
+            <option value="">Faca login para carregar</option>
+          </select>
+          <label class="field-label" for="service">Servicos</label>
+          <div id="service-picker" class="service-picker">
+            <button
+              type="button"
+              id="service-trigger"
+              class="service-trigger"
+              onclick="toggleServicePicker()"
+              aria-expanded="false"
+            >
+              Selecione os servicos
+            </button>
+            <div id="service-options" class="service-options" style="display:none;">
+              <div class="service-empty">Faca login para carregar</div>
+            </div>
+          </div>
+          <small class="field-hint">Voce pode marcar varios servicos se desejar.</small>
+          <label class="field-label" for="time">Data e horario</label>
+          <input type="datetime-local" id="time">
+
+          <button data-protected="true" onclick="agendar()">Agendar</button>
+        </div>
+
+        <div class="inline-history">
+          <div class="inline-history-header">
+            <span class="screen-kicker">Historico</span>
+            <h2>Meus agendamentos</h2>
+          </div>
+          <div id="client-history-list"></div>
+        </div>
+      </section>
+
+      <!-- Agenda -->
+      <section id="agenda" class="tela" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Rotina</span>
+          <h1>Minha Agenda</h1>
+          <p>Visualize os atendimentos, detalhes de servicos e organize o dia com clareza.</p>
+        </div>
+        <div id="lista"></div>
+      </section>
+
+      <!-- Produtos -->
+      <section id="produtos" class="tela tela-larga" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Vitrine</span>
+          <h1>Produtos da barbearia</h1>
+          <p>Confira os produtos disponiveis, descricoes e precos antes de finalizar o atendimento.</p>
+        </div>
+        <div id="products-catalog-list" class="catalog-grid"></div>
+      </section>
+
+      <!-- Gestao -->
+      <section id="gestao" class="tela tela-larga" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Financeiro</span>
+          <h1>Gestao da barbearia</h1>
+          <p>Acompanhe caixa, vendas, estoque e faturamento da equipe em um unico painel.</p>
+        </div>
+
+        <div id="management-summary" class="management-summary"></div>
+
+        <div class="management-grid">
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Estoque</span>
+                <h2>Controle de estoque</h2>
+              </div>
+            </div>
+            <div id="stock-list" class="management-stack"></div>
+          </section>
+
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Vendas</span>
+                <h2>Registrar venda de produto</h2>
+              </div>
+            </div>
+            <div class="management-form">
+              <select id="sale-product-id">
+                <option value="">Selecione o produto</option>
+              </select>
+              <input type="number" id="sale-quantity" min="1" step="1" placeholder="Quantidade vendida">
+              <input type="number" id="sale-unit-price" min="0" step="0.01" placeholder="Preco unitario">
+              <button type="button" onclick="registrarVendaProduto()">Registrar venda</button>
+            </div>
+            <div id="sales-list" class="management-stack"></div>
+          </section>
+        </div>
+
+        <div class="management-grid">
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Servicos</span>
+                <h2>Valores de servicos realizados</h2>
+              </div>
+            </div>
+            <div id="services-revenue-list" class="management-stack"></div>
+          </section>
+
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Equipe</span>
+                <h2>Faturamento por barbeiro</h2>
+              </div>
+            </div>
+            <div id="barber-revenue-list" class="management-stack"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="aprovacoes" class="tela tela-larga" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Acesso</span>
+          <h1>Aprovacoes do portal barbeiro</h1>
+          <p>Libere manualmente os emails que podem entrar no portal completo da barbearia.</p>
+        </div>
+
+        <section id="access-management-card" class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Autorizacoes</span>
+              <h2>Emails autorizados</h2>
+            </div>
+          </div>
+          <div class="management-form">
+            <input type="email" id="approved-barber-email" placeholder="Email para liberar acesso ao portal barbeiro">
+            <button type="button" onclick="aprovarEmailBarbeiro()">Autorizar email</button>
+          </div>
+          <div id="approved-barbers-list" class="management-stack"></div>
+        </section>
+      </section>
+
+      <!-- Cadastros -->
+      <section id="cadastros" class="tela tela-larga" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Configuracao</span>
+          <h1>Cadastros da barbearia</h1>
+          <p>Gerencie equipe, servicos e produtos em cards consistentes com o novo painel.</p>
+        </div>
+
+        <div class="cadastro-grid">
+          <section class="cadastro-card">
+            <h2>Barbeiros</h2>
+            <input type="text" id="new-barber-name" placeholder="Nome do barbeiro">
+            <button data-protected="true" onclick="cadastrarBarbeiro()">Cadastrar barbeiro</button>
+            <div id="barbers-admin-list" class="admin-list"></div>
+          </section>
+
+          <section class="cadastro-card">
+            <h2>Servicos</h2>
+            <input type="text" id="new-service-name" placeholder="Nome do servico">
+            <textarea id="new-service-description" placeholder="Descricao do servico"></textarea>
+            <input type="number" id="new-service-price" placeholder="Preco do servico" min="0" step="0.01">
+            <button data-protected="true" onclick="cadastrarServico()">Cadastrar servico</button>
+            <div id="services-admin-list" class="admin-list"></div>
+          </section>
+
+          <section class="cadastro-card">
+            <h2>Produtos</h2>
+            <input type="text" id="new-product-name" placeholder="Nome do produto">
+            <textarea id="new-product-description" placeholder="Descricao do produto"></textarea>
+            <input type="number" id="new-product-price" placeholder="Preco" min="0" step="0.01">
+            <button data-protected="true" onclick="cadastrarProduto()">Cadastrar produto</button>
+            <div id="products-admin-list" class="admin-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <div id="purchase-modal" class="modal-overlay" style="display:none;" onclick="fecharModalCompra(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <span class="screen-kicker">Compra</span>
+              <h2 id="purchase-modal-title">Comprar produto</h2>
+            </div>
+            <button type="button" class="link-button" onclick="fecharModalCompra()">Fechar</button>
+          </div>
+
+          <div class="modal-body">
+            <span id="purchase-modal-description" class="catalog-meta">Defina a quantidade desejada para confirmar a compra.</span>
+            <input type="text" id="purchase-customer-name" placeholder="Seu nome">
+            <input type="tel" id="purchase-customer-phone" placeholder="Seu telefone">
+            <input type="number" id="purchase-quantity" min="1" step="1" placeholder="Quantidade" oninput="atualizarResumoCompra()">
+
+            <div class="purchase-summary">
+              <div class="purchase-summary-row">
+                <span>Preco unitario</span>
+                <strong id="purchase-unit-price">R$ 0,00</strong>
+              </div>
+              <div class="purchase-summary-row">
+                <span>Total</span>
+                <strong id="purchase-total-price">R$ 0,00</strong>
+              </div>
+            </div>
+
+            <button type="button" onclick="confirmarCompraProduto()">Confirmar compra</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
