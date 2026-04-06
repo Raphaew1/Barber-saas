@@ -2658,48 +2658,47 @@ button:disabled {
 body.admin-premium {
   --admin-bg: #0b0f14;
   --admin-bg-elevated: #0f172a;
-  --admin-panel: #121821;
+  --admin-panel: #111827;
   --admin-panel-alt: #0f172a;
   --admin-border: rgba(255, 255, 255, 0.06);
-  --admin-border-strong: rgba(59, 130, 246, 0.24);
-  --admin-text: #dbe7f5;
-  --admin-title: #f8fbff;
+  --admin-border-strong: rgba(99, 102, 241, 0.28);
+  --admin-text: #e5e7eb;
+  --admin-title: #f9fafb;
   --admin-muted: #94a3b8;
   --admin-muted-soft: #64748b;
-  --admin-primary: #3b82f6;
-  --admin-primary-strong: #2563eb;
+  --admin-primary: #6366f1;
+  --admin-primary-strong: #4f46e5;
   --admin-success: #22c55e;
   --admin-danger: #ef4444;
   --admin-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   --admin-shadow-soft: 0 18px 50px rgba(2, 6, 23, 0.42);
+  --admin-transition: all 0.2s ease;
   color: var(--admin-text);
   font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 26%),
-    radial-gradient(circle at 82% 10%, rgba(124, 58, 237, 0.14), transparent 18%),
-    radial-gradient(circle at bottom center, rgba(15, 23, 42, 0.95), transparent 38%),
-    linear-gradient(180deg, #0b0f14, #0a0f17 48%, #0b0f14);
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.55), transparent 28%),
+    linear-gradient(180deg, #0b0f14, #0b0f14);
 }
 
 body.admin-premium:not(.dark-mode) {
   color: var(--admin-text);
   background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 26%),
-    radial-gradient(circle at 82% 10%, rgba(124, 58, 237, 0.14), transparent 18%),
-    radial-gradient(circle at bottom center, rgba(15, 23, 42, 0.95), transparent 38%),
-    linear-gradient(180deg, #0b0f14, #0a0f17 48%, #0b0f14);
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.55), transparent 28%),
+    linear-gradient(180deg, #0b0f14, #0b0f14);
 }
 
 body.admin-premium .ambient-left {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(99, 102, 241, 0.14);
 }
 
 body.admin-premium .ambient-right {
-  background: rgba(124, 58, 237, 0.14);
+  background: rgba(79, 70, 229, 0.08);
 }
 
 body.admin-premium .ambient-bottom {
-  background: rgba(14, 116, 144, 0.14);
+  background: rgba(15, 23, 42, 0.2);
 }
 
 body.admin-premium .app-shell {
@@ -2710,9 +2709,7 @@ body.admin-premium .app {
   min-height: calc(100vh - 40px);
   border: 1px solid var(--admin-border);
   border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgba(18, 24, 33, 0.96), rgba(10, 15, 22, 0.98)),
-    #0b0f14;
+  background: #0b0f14;
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(20px);
 }
@@ -2720,9 +2717,10 @@ body.admin-premium .app {
 body.admin-premium .theme-toggle,
 body.admin-premium .mobile-menu-toggle {
   border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(18, 24, 33, 0.9);
+  background: rgba(17, 24, 39, 0.9);
   color: var(--admin-text);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
+  transition: var(--admin-transition);
 }
 
 body.admin-premium .mobile-menu-toggle span {
@@ -2732,9 +2730,7 @@ body.admin-premium .mobile-menu-toggle span {
 body.admin-premium .sidebar {
   width: 292px;
   padding: 24px 18px 18px;
-  background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(10, 15, 22, 0.96)),
-    #0f172a;
+  background: #0f172a;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -2747,10 +2743,10 @@ body.admin-premium .brand-badge {
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(124, 58, 237, 0.16));
-  color: #eff6ff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.24);
+  background: rgba(99, 102, 241, 0.14);
+  color: #eef2ff;
+  box-shadow: none;
 }
 
 body.admin-premium .sidebar-kicker,
@@ -2781,6 +2777,20 @@ body.admin-premium .sidebar h2 {
   font-size: 24px;
 }
 
+body.admin-premium .content-topbar h3 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+body.admin-premium .management-card h2,
+body.admin-premium .cadastro-card h2,
+body.admin-premium .catalog-card h2,
+body.admin-premium .modal-header h2,
+body.admin-premium .inline-history-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
 body.admin-premium .sidebar-nav {
   gap: 20px;
   margin-top: 4px;
@@ -2797,16 +2807,16 @@ body.admin-premium .nav-group-label {
 body.admin-premium .nav-button {
   position: relative;
   justify-content: flex-start;
-  min-height: 48px;
-  padding: 12px 14px 12px 18px;
+  min-height: 50px;
+  padding: 14px 14px 14px 18px;
   border: 1px solid transparent;
   border-radius: 14px;
   background: transparent;
-  color: #c7d2fe;
+  color: #cbd5e1;
   box-shadow: none;
   font-size: 14px;
   font-weight: 600;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: var(--admin-transition);
 }
 
 body.admin-premium .nav-button::before {
@@ -2816,7 +2826,7 @@ body.admin-premium .nav-button::before {
   justify-content: center;
   width: 18px;
   margin-right: 12px;
-  color: #64748b;
+  color: #94a3b8;
   font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
@@ -2836,28 +2846,28 @@ body.admin-premium .nav-button::after {
 
 body.admin-premium .nav-button:hover {
   transform: translateY(-1px);
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.12);
-  color: #eff6ff;
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.14);
+  color: #f9fafb;
 }
 
 body.admin-premium .nav-button:hover::before {
-  color: #93c5fd;
+  color: #c7d2fe;
 }
 
 body.admin-premium .nav-button.is-active {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.16), rgba(59, 130, 246, 0.08));
-  border-color: rgba(59, 130, 246, 0.18);
-  color: #eff6ff;
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.16);
+  color: #f9fafb;
 }
 
 body.admin-premium .nav-button.is-active::before {
-  color: #bfdbfe;
+  color: #e0e7ff;
 }
 
 body.admin-premium .nav-button.is-active::after {
-  background: linear-gradient(180deg, #60a5fa, #2563eb);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.55);
+  background: #6366f1;
+  box-shadow: none;
 }
 
 body.admin-premium .sidebar-footer {
@@ -2872,7 +2882,7 @@ body.admin-premium .sidebar-user-identity {
   gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(148, 163, 184, 0.06);
+  background: rgba(148, 163, 184, 0.05);
   border: 1px solid rgba(148, 163, 184, 0.08);
 }
 
@@ -2880,8 +2890,8 @@ body.admin-premium .sidebar-user-avatar {
   width: 40px;
   height: 40px;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(124, 58, 237, 0.18));
-  color: #eff6ff;
+  background: rgba(99, 102, 241, 0.16);
+  color: #eef2ff;
 }
 
 body.admin-premium .sidebar-user-content strong,
@@ -2929,13 +2939,12 @@ body.admin-premium .sidebar-logout-button:hover {
 
 body.admin-premium .content {
   padding: 28px;
-  background:
-    linear-gradient(180deg, rgba(11, 15, 20, 0.12), rgba(11, 15, 20, 0));
+  background: transparent;
 }
 
 body.admin-premium .content-topbar {
   gap: 18px;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
 body.admin-premium .topbar-main,
@@ -2951,34 +2960,33 @@ body.admin-premium .agenda-visual-day,
 body.admin-premium .payment-panel,
 body.admin-premium .purchase-summary,
 body.admin-premium .modal-card {
-  background: linear-gradient(180deg, rgba(18, 24, 33, 0.98), rgba(14, 20, 28, 0.98));
+  background: #111827;
   border: 1px solid var(--admin-border);
   border-radius: 16px;
-  box-shadow: var(--admin-shadow);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
 
 body.admin-premium .topbar-main {
-  gap: 14px;
-  padding: 24px;
-  box-shadow: var(--admin-shadow-soft);
+  gap: 16px;
+  padding: 24px 26px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
 }
 
 body.admin-premium .content-topbar h3 {
-  font-size: clamp(28px, 3vw, 38px);
-  line-height: 1.05;
+  line-height: 1.1;
 }
 
 body.admin-premium .topbar-screen-description {
-  max-width: 760px;
+  max-width: 680px;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.65;
 }
 
 body.admin-premium .topbar-user-identity,
 body.admin-premium .topbar-status-pill {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(148, 163, 184, 0.06);
+  background: rgba(15, 23, 42, 0.9);
   color: var(--admin-text);
 }
 
@@ -2990,13 +2998,13 @@ body.admin-premium .topbar-status-pill {
 
 body.admin-premium .admin-context-switcher {
   min-width: 300px;
-  padding: 20px;
+  padding: 20px 22px;
 }
 
 body.admin-premium .tela {
   max-width: 760px;
   padding: 28px;
-  box-shadow: var(--admin-shadow-soft);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
 }
 
 body.admin-premium .tela-larga {
@@ -3004,19 +3012,19 @@ body.admin-premium .tela-larga {
 }
 
 body.admin-premium .screen-header {
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 body.admin-premium .screen-header h1 {
-  font-size: clamp(30px, 3vw, 42px);
-  line-height: 1.02;
+  font-size: 28px;
+  line-height: 1.08;
   margin-bottom: 12px;
 }
 
 body.admin-premium .screen-header p {
-  max-width: 680px;
+  max-width: 620px;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 body.admin-premium .form-block,
@@ -3025,7 +3033,7 @@ body.admin-premium .cadastro-card,
 body.admin-premium .catalog-card,
 body.admin-premium .metric-card,
 body.admin-premium .agenda-card {
-  padding: 20px;
+  padding: 20px 24px;
 }
 
 body.admin-premium .management-summary,
@@ -3033,7 +3041,7 @@ body.admin-premium .management-grid,
 body.admin-premium .cadastro-grid,
 body.admin-premium .catalog-grid {
   gap: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 body.admin-premium .management-card-header,
@@ -3047,7 +3055,7 @@ body.admin-premium .management-stack,
 body.admin-premium .admin-list,
 body.admin-premium .catalog-grid,
 body.admin-premium .payment-summary {
-  gap: 14px;
+  gap: 16px;
 }
 
 body.admin-premium .management-row,
@@ -3059,10 +3067,11 @@ body.admin-premium .slot-chip,
 body.admin-premium .slot-day,
 body.admin-premium .service-trigger,
 body.admin-premium .topbar-user-identity {
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(148, 163, 184, 0.05);
+  background: #0f172a;
   box-shadow: none;
+  transition: var(--admin-transition);
 }
 
 body.admin-premium .management-row,
@@ -3081,8 +3090,8 @@ body.admin-premium .catalog-card:hover,
 body.admin-premium .management-card:hover,
 body.admin-premium .cadastro-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(59, 130, 246, 0.18);
-  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.3);
+  border-color: rgba(99, 102, 241, 0.14);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.24);
 }
 
 body.admin-premium .metric-card {
@@ -3097,16 +3106,20 @@ body.admin-premium .management-card::before {
   inset: 0 auto auto 0;
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.4), rgba(124, 58, 237, 0));
-  opacity: 0.9;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.35), rgba(99, 102, 241, 0));
+  opacity: 0.75;
 }
 
 body.admin-premium .metric-label {
   margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--admin-muted);
 }
 
 body.admin-premium .metric-value {
-  font-size: clamp(26px, 3vw, 34px);
+  font-size: 30px;
+  font-weight: 700;
   letter-spacing: -0.04em;
 }
 
@@ -3118,13 +3131,13 @@ body.admin-premium input,
 body.admin-premium textarea,
 body.admin-premium select,
 body.admin-premium .service-trigger {
-  padding: 13px 14px;
-  border-radius: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #0f172a;
-  color: #e2e8f0;
+  color: #f9fafb;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: var(--admin-transition);
 }
 
 body.admin-premium input::placeholder,
@@ -3137,34 +3150,36 @@ body.admin-premium textarea:focus,
 body.admin-premium select:focus,
 body.admin-premium .service-trigger:focus {
   outline: none;
-  border-color: rgba(59, 130, 246, 0.9);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
 }
 
 body.admin-premium .field-label {
   margin-bottom: 6px;
   color: #cbd5e1;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.02em;
 }
 
 body.admin-premium button {
   padding: 12px 18px;
   border-radius: 999px;
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  background: linear-gradient(180deg, #3b82f6, #2563eb);
-  color: #eff6ff;
+  border: 1px solid rgba(99, 102, 241, 0.24);
+  background: #6366f1;
+  color: #ffffff;
   font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0.01em;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.26);
+  transition: var(--admin-transition);
 }
 
 body.admin-premium button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.34), 0 0 0 1px rgba(96, 165, 250, 0.18) inset;
+  background: #4f46e5;
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.34);
 }
 
 body.admin-premium .secondary-action,
@@ -3174,8 +3189,8 @@ body.admin-premium .user-action-button,
 body.admin-premium .link-button,
 body.admin-premium .portal-shortcut {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(148, 163, 184, 0.05);
-  color: #cbd5f5;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
   box-shadow: none;
 }
 
@@ -3184,9 +3199,9 @@ body.admin-premium .admin-item button:hover,
 body.admin-premium .segmented-button:hover,
 body.admin-premium .user-action-button:hover,
 body.admin-premium .portal-shortcut:hover {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.18);
-  color: #eff6ff;
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.18);
+  color: #f9fafb;
   box-shadow: 0 10px 20px rgba(2, 6, 23, 0.22);
 }
 
@@ -3196,20 +3211,21 @@ body.admin-premium .link-button {
 
 body.admin-premium .danger-action {
   border-color: rgba(239, 68, 68, 0.24);
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+  background: #ef4444;
   color: #fff1f2;
   box-shadow: 0 10px 24px rgba(127, 29, 29, 0.28);
 }
 
 body.admin-premium .danger-action:hover {
+  background: #dc2626;
   box-shadow: 0 14px 28px rgba(127, 29, 29, 0.34);
 }
 
 body.admin-premium .segmented-button.is-active,
 body.admin-premium .user-action-button-primary {
-  border-color: rgba(59, 130, 246, 0.24);
-  background: rgba(59, 130, 246, 0.14);
-  color: #eff6ff;
+  border-color: rgba(99, 102, 241, 0.24);
+  background: rgba(99, 102, 241, 0.16);
+  color: #f9fafb;
 }
 
 body.admin-premium .form-feedback {
@@ -3231,12 +3247,12 @@ body.admin-premium .payment-summary,
 body.admin-premium .purchase-summary {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(15, 23, 42, 0.72);
+  background: #0f172a;
 }
 
 body.admin-premium .access-user-card.is-selected {
-  border-color: rgba(59, 130, 246, 0.24);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
+  border-color: rgba(99, 102, 241, 0.24);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.12);
 }
 
 body.admin-premium .role-admin,
@@ -3247,8 +3263,8 @@ body.admin-premium .status-active {
 
 body.admin-premium .role-barber,
 body.admin-premium .status-pending {
-  background: rgba(59, 130, 246, 0.14);
-  color: #93c5fd;
+  background: rgba(99, 102, 241, 0.14);
+  color: #c7d2fe;
 }
 
 body.admin-premium .role-client,
@@ -3285,7 +3301,7 @@ body.admin-premium .admin-context-switcher {
   body.admin-premium .sidebar {
     width: min(320px, calc(100vw - 36px));
     padding: 88px 16px 22px;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(10, 15, 22, 0.98));
+    background: #0f172a;
   }
 
   body.admin-premium .content {
