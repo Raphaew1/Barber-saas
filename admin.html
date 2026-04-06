@@ -571,6 +571,17 @@
         </section>
 
         <div class="management-grid access-layout-grid">
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Diretorio</span>
+                <h2>Usuarios cadastrados</h2>
+              </div>
+            </div>
+            <div id="admin-access-loading" class="admin-empty" style="display:none;">Carregando diretorio de acessos...</div>
+            <div id="admin-access-list" class="management-stack"></div>
+          </section>
+
           <section id="admin-access-editor-card" class="management-card" style="display:none;">
             <div class="management-card-header">
               <div>
@@ -581,10 +592,16 @@
             <div class="management-form management-form-grid management-form-compact">
               <input type="text" id="admin-access-editor-name" placeholder="Nome do usuario">
               <input type="email" id="admin-access-editor-email" placeholder="Email" disabled>
+              <input type="tel" id="admin-access-editor-phone" placeholder="Telefone do usuario">
               <select id="admin-access-editor-role">
                 <option value="cliente">Cliente</option>
                 <option value="barbeiro">Barbearia</option>
                 <option value="admin">Admin</option>
+              </select>
+              <select id="admin-access-editor-status">
+                <option value="active">Ativo</option>
+                <option value="pending">Pendente</option>
+                <option value="blocked">Bloqueado</option>
               </select>
               <select id="admin-access-editor-barbershop">
                 <option value="">Sem barbearia</option>
@@ -592,6 +609,8 @@
               <div id="admin-access-editor-permissions" class="management-stack management-form-span-2"></div>
               <div id="admin-access-editor-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
               <div class="management-form-actions management-form-span-2">
+                <button type="button" class="secondary-action" onclick="abrirEdicaoEmailNoAcessoAdmin()">Alterar email</button>
+                <button type="button" class="secondary-action" onclick="abrirEdicaoTelefoneNoAcessoAdmin()">Alterar telefone</button>
                 <button type="button" onclick="salvarEditorDeAcessoAdmin()">Salvar alteracoes</button>
                 <button type="button" class="secondary-action" onclick="fecharEditorDeAcessoAdmin()">Fechar editor</button>
               </div>

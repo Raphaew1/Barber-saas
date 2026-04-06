@@ -7504,10 +7504,10 @@ async function carregarAdminAcessos() {
 async function fetchProfilesForAdminAccess() {
   let result = await supabaseClient
     .from('profiles')
-    .select('id, email, role, name, phone, barbershop_id, status, last_login_at, created_at')
+    .select('id, email, role, global_role, name, phone, barbershop_id, status, last_login_at, created_at')
     .order('email', { ascending: true })
 
-  if (result.error && isMissingColumnError(result.error, ['status', 'last_login_at', 'created_at'])) {
+  if (result.error && isMissingColumnError(result.error, ['global_role', 'status', 'last_login_at', 'created_at'])) {
     result = await supabaseClient
       .from('profiles')
       .select('id, email, role, name, phone, barbershop_id')
@@ -7585,10 +7585,11 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       name: profile.name || '',
       email: profile.email || '',
       phone: profile.phone || '',
+      global_role: profile.global_role || '',
       role: normalizePortalRole(profile.role || CUSTOMER_ROLE),
       accessRole: normalizeAccessRole(profile.role || CUSTOMER_ROLE),
       profileStatus: explicitStatus,
-      status: explicitStatus === 'blocked' ? 'blocked' : 'active',
+      status: explicitStatus === 'blocked' ? 'blocked' : explicitStatus === 'pending' ? 'pending' : 'active',
       barbershop_id: profile.barbershop_id || null,
       barbershop_name: profile.barbershop_id ? (barbershopMap.get(profile.barbershop_id)?.name || profile.barbershop_id) : 'Sem barbearia',
       barbershop_location: profile.barbershop_id ? (barbershopMap.get(profile.barbershop_id)?.location || '') : '',
@@ -7618,6 +7619,7 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       name: existing?.name || profile?.name || '',
       email: profile?.email || existing?.email || '',
       phone: existing?.phone || profile?.phone || '',
+      global_role: existing?.global_role || profile?.global_role || '',
       role: normalizedRole,
       accessRole: normalizeAccessRole(access.role || normalizedRole),
       profileStatus: existing?.profileStatus || String(profile?.status || '').trim().toLowerCase(),
@@ -7651,6 +7653,7 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       name: existing?.name || '',
       email: access.email,
       phone: existing?.phone || '',
+      global_role: existing?.global_role || '',
       role: normalizePortalRole(existing?.role || BARBER_ROLE),
       accessRole: normalizeAccessRole(existing?.accessRole || existing?.role || BARBER_ROLE),
       profileStatus: existing?.profileStatus || '',
@@ -7673,6 +7676,7 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       name: 'Administrador principal',
       email: ADMIN_EMAIL,
       phone: '',
+      global_role: 'super_admin',
       role: ADMIN_ROLE,
       accessRole: 'admin',
       status: 'active',
@@ -7687,7 +7691,9 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
     })
   }
 
-  return Array.from(byEmail.values()).sort((a, b) => {
+  return Array.from(byEmail.values())
+    .filter((item) => item.source !== 'barber_access')
+    .sort((a, b) => {
     const shopDiff = String(a.barbershop_name || '').localeCompare(String(b.barbershop_name || ''))
     if (shopDiff !== 0) {
       return shopDiff
@@ -8333,7 +8339,9 @@ function renderAdminAccessList(items) {
                   <span>Liberado por: ${item.approved_by_email || ADMIN_EMAIL}</span>
                 </div>
                 <div class="access-user-actions">
-                  <button type="button" class="edit-button" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}')">Editar role</button>
+                  <button type="button" class="edit-button" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}')">Editar permissoes</button>
+                  <button type="button" class="secondary-action" onclick="editarEmailUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.email || '')}')">Alterar email</button>
+                  <button type="button" class="secondary-action" onclick="editarTelefoneUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.phone || '')}')">Alterar telefone</button>
                   <button type="button" class="secondary-action" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}', true)">Transferir</button>
                   <button type="button" class="${isBlocked ? 'secondary-action' : 'danger-action'}" onclick="alternarBloqueioDeAcessoAdmin('${item.accessKey}')">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
                   <button type="button" class="danger-action" onclick="revogarAcessoAdmin('${item.accessKey}')">Revogar</button>
@@ -8385,7 +8393,9 @@ window.abrirEditorDeAcessoAdmin = function (accessKey, focusBarbershop = false) 
   selectedAdminAccessKey = accessKey
   document.getElementById('admin-access-editor-name').value = entry.name || ''
   document.getElementById('admin-access-editor-email').value = entry.email || ''
+  document.getElementById('admin-access-editor-phone').value = entry.phone || ''
   document.getElementById('admin-access-editor-role').value = entry.role || CUSTOMER_ROLE
+  document.getElementById('admin-access-editor-status').value = entry.status || 'active'
   document.getElementById('admin-access-editor-barbershop').value = entry.barbershop_id || ''
   card.style.display = 'block'
   setAdminAccessEditorFeedback('', 'info')
@@ -8440,7 +8450,7 @@ window.filtrarAdminAcessos = function () {
   renderAdminAccessList(filtered)
 }
 
-async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName) {
+async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName, nextStatus = 'active') {
   const currentUser = await ensureAdminAccess()
   if (!currentUser) {
     return { error: new Error('Acesso negado') }
@@ -8450,6 +8460,7 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName)
   const normalizedAccessRole = normalizeAccessRole(normalizedPortalRole)
   const currentAccessRole = normalizeAccessRole(entry.accessRole || entry.role)
   const needsBarbershopContext = normalizedPortalRole === BARBER_ROLE || normalizedPortalRole === ADMIN_ROLE
+  const normalizedStatus = nextStatus === 'blocked' ? 'blocked' : nextStatus === 'pending' ? 'pending' : 'active'
 
   if (needsBarbershopContext && !nextBarbershopId) {
     return { error: new Error('Selecione uma barbearia para usuarios do portal da barbearia.') }
@@ -8505,7 +8516,7 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName)
         targetUserId: entry.id,
         barbershopId: nextBarbershopId,
         role: normalizedAccessRole,
-        status: entry.status === 'blocked' ? 'blocked' : 'active'
+        status: normalizedStatus === 'pending' ? 'pending' : normalizedStatus
       }, {
         authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para atualizar os acessos.'
       })
@@ -8532,7 +8543,7 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName)
           barbershop_id: nextBarbershopId,
           approved_by_email: currentUser.email,
           approved_at: new Date().toISOString(),
-          is_active: entry.status !== 'blocked'
+          is_active: normalizedStatus === 'active'
         }], { onConflict: 'email' })
 
       if (accessResult.error) {
@@ -8556,6 +8567,46 @@ async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName)
   return { error: null }
 }
 
+async function updateAdminAccessEntryPhone(entry, nextPhone) {
+  if (!entry?.id || entry.id === entry.accessKey) {
+    return { error: null }
+  }
+
+  const normalizedPhone = String(nextPhone || '').trim()
+  let phoneResult = await supabaseClient
+    .from('profiles')
+    .update({ phone: normalizedPhone || null })
+    .eq('id', entry.id)
+
+  if (phoneResult.error && isMissingColumnError(phoneResult.error, ['phone'])) {
+    phoneResult = { error: null }
+  }
+
+  return { error: phoneResult.error || null }
+}
+
+window.abrirEdicaoEmailNoAcessoAdmin = async function () {
+  const entry = findAdminAccessEntry(selectedAdminAccessKey)
+  if (!entry) {
+    setAdminAccessEditorFeedback('Selecione um usuario para editar.', 'error')
+    return
+  }
+
+  await editarEmailUsuario(entry.id, entry.email || '')
+  await carregarAdminAcessos()
+}
+
+window.abrirEdicaoTelefoneNoAcessoAdmin = async function () {
+  const entry = findAdminAccessEntry(selectedAdminAccessKey)
+  if (!entry) {
+    setAdminAccessEditorFeedback('Selecione um usuario para editar.', 'error')
+    return
+  }
+
+  await editarTelefoneUsuario(entry.id, entry.phone || '')
+  await carregarAdminAcessos()
+}
+
 window.salvarEditorDeAcessoAdmin = async function () {
   const entry = findAdminAccessEntry(selectedAdminAccessKey)
   if (!entry) {
@@ -8564,22 +8615,42 @@ window.salvarEditorDeAcessoAdmin = async function () {
   }
 
   const nextRole = document.getElementById('admin-access-editor-role')?.value || entry.role
+  const nextStatus = document.getElementById('admin-access-editor-status')?.value || entry.status || 'active'
   const nextBarbershopId = document.getElementById('admin-access-editor-barbershop')?.value || ''
   const nextName = document.getElementById('admin-access-editor-name')?.value?.trim() || ''
+  const nextPhone = document.getElementById('admin-access-editor-phone')?.value?.trim() || ''
 
   setAdminAccessEditorFeedback('Salvando alteracoes...', 'info')
-  const result = await syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName)
+  const result = await syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName, nextStatus)
 
   if (result.error) {
     setAdminAccessEditorFeedback(`Erro ao salvar: ${result.error.message}`, 'error')
     return
   }
 
+  const phoneResult = await updateAdminAccessEntryPhone(entry, nextPhone)
+  if (phoneResult.error) {
+    setAdminAccessEditorFeedback(`Erro ao salvar telefone: ${phoneResult.error.message}`, 'error')
+    return
+  }
+
+  if (entry.id && entry.id !== entry.accessKey) {
+    const profileStatusResult = await supabaseClient
+      .from('profiles')
+      .update({ status: nextStatus })
+      .eq('id', entry.id)
+
+    if (profileStatusResult.error && !isMissingColumnError(profileStatusResult.error, ['status'])) {
+      setAdminAccessEditorFeedback(`Erro ao salvar status: ${profileStatusResult.error.message}`, 'error')
+      return
+    }
+  }
+
   addAdminAccessAuditEntry({
     action: 'Perfil atualizado',
     target_email: entry.email,
     performed_by_email: currentSession?.user?.email || ADMIN_EMAIL,
-    details: `Role: ${nextRole}${nextBarbershopId ? ' | Contexto ajustado' : ''}`
+    details: `Role: ${nextRole} | Status: ${nextStatus}${nextBarbershopId ? ' | Contexto ajustado' : ''}${nextPhone ? ' | Telefone ajustado' : ''}`
   })
 
   showAppToast('Permissoes atualizadas com sucesso.', 'success')
