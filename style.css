@@ -2,35 +2,35 @@
   box-sizing: border-box;
 }
 :root {
-  --bg-main: #09111e;
-  --bg-top: #0d1829;
-  --bg-bottom: #050b15;
-  --panel: rgba(10, 17, 29, 0.76);
-  --panel-strong: rgba(12, 19, 33, 0.9);
-  --panel-soft: rgba(255, 255, 255, 0.04);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(238, 198, 120, 0.26);
-  --text: #f4f7fb;
-  --muted: #97a9c3;
-  --muted-strong: #d0d9e8;
-  --input-bg: rgba(255, 255, 255, 0.06);
-  --input-border: rgba(201, 170, 106, 0.18);
-  --input-text: #f8fbff;
-  --input-placeholder: #8799b1;
-  --primary-top: #f5d089;
-  --primary-bottom: #c99235;
-  --primary-text: #1c1203;
-  --primary-shadow: rgba(207, 152, 56, 0.24);
-  --secondary-top: rgba(255, 255, 255, 0.1);
-  --secondary-bottom: rgba(255, 255, 255, 0.04);
-  --secondary-text: #e8f4ff;
-  --secondary-shadow: rgba(0, 0, 0, 0.24);
-  --danger-text: #ff7d98;
+  --bg-main: #f7f8fb;
+  --bg-top: #ffffff;
+  --bg-bottom: #f3f5f8;
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-strong: rgba(255, 255, 255, 0.98);
+  --panel-soft: rgba(15, 23, 42, 0.03);
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(107, 114, 128, 0.24);
+  --text: #172033;
+  --muted: #7d8799;
+  --muted-strong: #4f5b6e;
+  --input-bg: rgba(255, 255, 255, 0.96);
+  --input-border: rgba(148, 163, 184, 0.28);
+  --input-text: #172033;
+  --input-placeholder: #94a3b8;
+  --primary-top: #6b7280;
+  --primary-bottom: #4b5563;
+  --primary-text: #ffffff;
+  --primary-shadow: rgba(75, 85, 99, 0.2);
+  --secondary-top: #7b8493;
+  --secondary-bottom: #626d7d;
+  --secondary-text: #ffffff;
+  --secondary-shadow: rgba(15, 23, 42, 0.12);
+  --danger-text: #d44963;
   --success-top: #74f0d1;
   --success-bottom: #1ea57f;
   --success-text: #04281e;
-  --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.34);
+  --shadow-xl: 0 30px 80px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 18px 50px rgba(15, 23, 42, 0.08);
 }
 body.dark-mode {
   --bg-main: #070b14;
@@ -155,6 +155,15 @@ body {
   text-transform: uppercase;
 }
 
+body:not(.dark-mode) .theme-toggle {
+  border-color: rgba(107, 114, 128, 0.24);
+  background: linear-gradient(180deg, #6b7280, #4b5563);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
 .mobile-menu-toggle {
   position: fixed;
   top: 18px;
@@ -166,9 +175,9 @@ body {
   padding: 0;
   margin: 0;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 14px 30px rgba(10, 16, 26, 0.16);
+  border: 1px solid rgba(245, 208, 137, 0.18);
+  background: linear-gradient(180deg, rgba(45, 53, 64, 0.92), rgba(28, 35, 45, 0.96));
+  box-shadow: 0 14px 30px rgba(10, 16, 26, 0.22);
   backdrop-filter: blur(16px);
 }
 
@@ -178,8 +187,23 @@ body {
   height: 2px;
   margin: 3px auto;
   border-radius: 999px;
-  background: #718197;
+  background: #d4deeb;
   transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+body:not(.dark-mode) .mobile-menu-toggle {
+  border-color: rgba(107, 114, 128, 0.22);
+  background: linear-gradient(180deg, #6b7280, #4b5563);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14);
+}
+
+body:not(.dark-mode) .mobile-menu-toggle span {
+  background: #ffffff;
+}
+
+body.app-loading .mobile-menu-toggle {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .mobile-menu-overlay {
@@ -189,6 +213,87 @@ body {
   display: none;
   background: rgba(6, 10, 18, 0.48);
   backdrop-filter: blur(8px);
+}
+
+body:not(.dark-mode) .app {
+  border-color: rgba(15, 23, 42, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 251, 253, 0.98)),
+    rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 28px 80px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+body:not(.dark-mode) .topbar-main,
+body:not(.dark-mode) .admin-context-switcher,
+body:not(.dark-mode) .tela,
+body:not(.dark-mode) .metric-card,
+body:not(.dark-mode) .management-card,
+body:not(.dark-mode) .catalog-card,
+body:not(.dark-mode) .cadastro-card,
+body:not(.dark-mode) .agenda-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 252, 0.98)),
+    rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+body:not(.dark-mode) .management-row,
+body:not(.dark-mode) .admin-item,
+body:not(.dark-mode) .purchase-summary,
+body:not(.dark-mode) .payment-panel,
+body:not(.dark-mode) .agenda-visual-day,
+body:not(.dark-mode) .agenda-visual-row,
+body:not(.dark-mode) .payment-summary-row,
+body:not(.dark-mode) .slot-day,
+body:not(.dark-mode) .slot-chip,
+body:not(.dark-mode) .segmented-button,
+body:not(.dark-mode) .topbar-user-identity,
+body:not(.dark-mode) .topbar-status-pill {
+  background: rgba(248, 250, 252, 0.95);
+  border-color: rgba(15, 23, 42, 0.06);
+  color: var(--text);
+  box-shadow: none;
+}
+
+body:not(.dark-mode) .sidebar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 252, 0.98)),
+    rgba(255, 255, 255, 0.98);
+  border-right-color: rgba(15, 23, 42, 0.06);
+}
+
+body:not(.dark-mode) .sidebar-brand {
+  border-bottom-color: rgba(15, 23, 42, 0.06);
+}
+
+body:not(.dark-mode) .sidebar h2,
+body:not(.dark-mode) .management-row strong,
+body:not(.dark-mode) .admin-item strong,
+body:not(.dark-mode) .topbar-user-identity strong,
+body:not(.dark-mode) .catalog-card h2,
+body:not(.dark-mode) .screen-header h1,
+body:not(.dark-mode) .content-topbar h3,
+body:not(.dark-mode) .cadastro-card h2 {
+  color: #172033;
+}
+
+body:not(.dark-mode) .sidebar-kicker,
+body:not(.dark-mode) .screen-kicker,
+body:not(.dark-mode) .management-kicker,
+body:not(.dark-mode) .metric-label,
+body:not(.dark-mode) .management-meta,
+body:not(.dark-mode) .admin-meta,
+body:not(.dark-mode) .catalog-meta,
+body:not(.dark-mode) .field-hint,
+body:not(.dark-mode) .topbar-user-label,
+body:not(.dark-mode) .topbar-user-meta,
+body:not(.dark-mode) .sidebar-user-content small,
+body:not(.dark-mode) .screen-header p,
+body:not(.dark-mode) .topbar-screen-description {
+  color: #7d8799;
 }
 
 .sidebar {

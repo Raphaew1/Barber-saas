@@ -15,6 +15,8 @@ const supabaseClient = supabaseLib.createClient(
   SUPABASE_ANON_KEY
 )
 
+document.body?.classList.add('app-loading')
+
 function getActiveSupabaseClient(preferredAccessToken = '') {
   const accessToken = preferredAccessToken || lastAuthAccessToken || currentSession?.access_token || ''
   if (accessToken) {
@@ -1562,9 +1564,10 @@ function updateTopbarUserIdentity() {
   }
 
   const portalLabel = getCurrentPortalLabel()
-  const displayValue = user.email || user.id || 'Usuario autenticado'
+  const profileName = String(platformContextCache?.name || '').trim()
+  const displayValue = profileName || user.user_metadata?.name || user.email || user.id || 'Usuario autenticado'
   const shortId = user.id ? String(user.id).slice(0, 8) : ''
-  const displayName = user.user_metadata?.name || user.email || 'Usuario autenticado'
+  const displayName = displayValue
   const avatarText = String(displayName).trim().slice(0, 2).toUpperCase()
 
   wrapper.style.display = 'inline-flex'
@@ -1573,7 +1576,7 @@ function updateTopbarUserIdentity() {
   }
   value.textContent = displayValue
   if (meta) {
-    meta.textContent = user.email && shortId ? `ID: ${shortId}` : (user.id || '')
+    meta.textContent = user.email && shortId ? `${user.email} · ID: ${shortId}` : (user.id || '')
   }
   wrapper.title = user.id && user.email ? `Email: ${user.email}\nID: ${user.id}` : displayValue
 
@@ -1673,10 +1676,14 @@ function shouldUseMobileMenu() {
   return window.innerWidth <= 980
 }
 
+function isAppLoading() {
+  return document.body?.classList.contains('app-loading')
+}
+
 function syncMobileMenuUi() {
   const toggle = document.getElementById('mobile-menu-toggle')
   const overlay = document.getElementById('mobile-menu-overlay')
-  const isAvailable = shouldUseMobileMenu() && !isClientPublicView()
+  const isAvailable = shouldUseMobileMenu() && !isClientPublicView() && !isAppLoading()
 
   if (toggle) {
     toggle.style.display = isAvailable ? 'inline-flex' : 'none'
@@ -1721,7 +1728,18 @@ async function fetchPlatformContext(forceRefresh = false) {
   }
 
   if (currentSession?.user?.email && isAdminEmail(currentSession.user.email)) {
-    platformContextCache = buildMasterAdminContext(currentSession.user)
+    let adminProfile = null
+    try {
+      const { data } = await getActiveSupabaseClient()
+        .from('profiles')
+        .select('name, status')
+        .eq('id', currentSession.user.id)
+        .maybeSingle()
+      adminProfile = data || null
+    } catch (_error) {
+    }
+
+    platformContextCache = buildMasterAdminContext(currentSession.user, adminProfile)
     return platformContextCache
   }
 
@@ -3548,13 +3566,13 @@ function isAdminPortal() {
   return currentPortal === 'admin'
 }
 
-function buildMasterAdminContext(user) {
+function buildMasterAdminContext(user, profile = null) {
   return {
     user_id: user?.id || '',
     email: user?.email || ADMIN_EMAIL,
-    name: '',
+    name: profile?.name || user?.user_metadata?.name || '',
     global_role: 'super_admin',
-    profile_status: 'active',
+    profile_status: profile?.status || 'active',
     access: []
   }
 }
@@ -3769,153 +3787,158 @@ async function validateAdminPortalAccess(user) {
 
 // Faz a inicializacao da pagina ao abrir a aplicacao.
 async function init() {
-  applySavedTheme()
-  if (warnIfRunningFromFileProtocol()) {
-    return
-  }
-
-  const barbershop = await loadBarbershopBySlug()
-  if (barbershop) {
-    applyBranding(barbershop)
-  }
-
-  restorePortalSelection()
-  updateAdminContextUi()
-  bindEnterSubmit(['email', 'password'], () => {
-    if (isSignupEntryPage()) {
-      window.signup()
+  try {
+    applySavedTheme()
+    if (warnIfRunningFromFileProtocol()) {
       return
     }
 
-    window.login()
-  })
-  bindEnterSubmit(['signup-name', 'signup-phone'], () => {
-    if (isSignupEntryPage()) {
-      window.signup()
-    }
-  })
-  bindEnterSubmit(['new-password', 'confirm-password'], () => {
-    window.updatePassword()
-  })
-
-  const emailInput = document.getElementById('email')
-  const barberInput = document.getElementById('barber')
-  if (emailInput && !emailInput.dataset.boundPortalAccess) {
-    emailInput.addEventListener('input', () => {
-      updateLoginPortalUi()
-    })
-    emailInput.dataset.boundPortalAccess = 'true'
-  }
-
-  if (barberInput && !barberInput.dataset.boundSlots) {
-    barberInput.addEventListener('change', () => {
-      refreshAppointmentSlotPicker()
-    })
-    barberInput.dataset.boundSlots = 'true'
-  }
-
-  const { data } = await supabaseClient.auth.getSession()
-  currentSession = data.session ?? null
-  lastAuthAccessToken = data.session?.access_token || lastAuthAccessToken
-
-  if (barbershop && !currentSession) {
-    currentPortal = 'cliente'
-    updateProtectedUi(false)
-    applyPortalUi()
-    showScreen('agendar')
-    await carregarDados()
-    return
-  }
-
-  const sessionState = await ensureValidSessionState()
-  if (sessionState.error && !sessionState.session) {
+    const barbershop = await loadBarbershopBySlug()
     if (barbershop) {
+      applyBranding(barbershop)
+    }
+
+    restorePortalSelection()
+    updateAdminContextUi()
+    bindEnterSubmit(['email', 'password'], () => {
+      if (isSignupEntryPage()) {
+        window.signup()
+        return
+      }
+
+      window.login()
+    })
+    bindEnterSubmit(['signup-name', 'signup-phone'], () => {
+      if (isSignupEntryPage()) {
+        window.signup()
+      }
+    })
+    bindEnterSubmit(['new-password', 'confirm-password'], () => {
+      window.updatePassword()
+    })
+
+    const emailInput = document.getElementById('email')
+    const barberInput = document.getElementById('barber')
+    if (emailInput && !emailInput.dataset.boundPortalAccess) {
+      emailInput.addEventListener('input', () => {
+        updateLoginPortalUi()
+      })
+      emailInput.dataset.boundPortalAccess = 'true'
+    }
+
+    if (barberInput && !barberInput.dataset.boundSlots) {
+      barberInput.addEventListener('change', () => {
+        refreshAppointmentSlotPicker()
+      })
+      barberInput.dataset.boundSlots = 'true'
+    }
+
+    const { data } = await supabaseClient.auth.getSession()
+    currentSession = data.session ?? null
+    lastAuthAccessToken = data.session?.access_token || lastAuthAccessToken
+
+    if (barbershop && !currentSession) {
       currentPortal = 'cliente'
       updateProtectedUi(false)
       applyPortalUi()
       showScreen('agendar')
       await carregarDados()
-    }
-    return
-  }
-
-  clearPlatformContextCache()
-
-  if (isSignupConfirmationLanding() && sessionState.session && !isAdminEntryPage()) {
-    await supabaseClient.auth.signOut()
-    currentSession = null
-    clearPlatformContextCache()
-    currentBarbershopId = null
-    updateProtectedUi(false)
-    applyPortalUi()
-    clearAuthCallbackParams()
-    showScreen('login')
-    setAuthFeedback('Email confirmado com sucesso. Agora faca login para acessar o sistema.', 'success')
-    return
-  }
-
-  if (isAdminEntryPage()) {
-    if (!sessionState.session?.user) {
-      setPortal('admin')
-      updateProtectedUi(false)
-      applyPortalUi()
-      showScreen('login')
       return
     }
 
-    const accessResult = await validateAdminPortalAccess(sessionState.session.user)
-    if (!accessResult.allowed) {
+    const sessionState = await ensureValidSessionState()
+    if (sessionState.error && !sessionState.session) {
+      if (barbershop) {
+        currentPortal = 'cliente'
+        updateProtectedUi(false)
+        applyPortalUi()
+        showScreen('agendar')
+        await carregarDados()
+      }
+      return
+    }
+
+    clearPlatformContextCache()
+
+    if (isSignupConfirmationLanding() && sessionState.session && !isAdminEntryPage()) {
       await supabaseClient.auth.signOut()
       currentSession = null
       clearPlatformContextCache()
       currentBarbershopId = null
       updateProtectedUi(false)
       applyPortalUi()
+      clearAuthCallbackParams()
       showScreen('login')
-      setAuthFeedback(accessResult.message, 'error')
+      setAuthFeedback('Email confirmado com sucesso. Agora faca login para acessar o sistema.', 'success')
       return
     }
 
-    setPortal('admin')
-    updateProtectedUi(true)
-    applyPortalUi()
-    showScreen('admin-dashboard')
-    await carregarPortalData('admin-dashboard')
-    return
-  } else {
-    if (sessionState.session?.user) {
+    if (isAdminEntryPage()) {
+      if (!sessionState.session?.user) {
+        setPortal('admin')
+        updateProtectedUi(false)
+        applyPortalUi()
+        showScreen('login')
+        return
+      }
+
+      const accessResult = await validateAdminPortalAccess(sessionState.session.user)
+      if (!accessResult.allowed) {
+        await supabaseClient.auth.signOut()
+        currentSession = null
+        clearPlatformContextCache()
+        currentBarbershopId = null
+        updateProtectedUi(false)
+        applyPortalUi()
+        showScreen('login')
+        setAuthFeedback(accessResult.message, 'error')
+        return
+      }
+
+      setPortal('admin')
       updateProtectedUi(true)
       applyPortalUi()
-      await handleUserAfterLogin(sessionState.session.user)
+      showScreen('admin-dashboard')
+      await carregarPortalData('admin-dashboard')
       return
+    } else {
+      if (sessionState.session?.user) {
+        updateProtectedUi(true)
+        applyPortalUi()
+        await handleUserAfterLogin(sessionState.session.user)
+        return
+      }
+
+      applyPortalUi()
+      showScreen(isSignupEntryPage() ? 'signup' : 'login')
+      renderSelectState('barber', 'Faca login para carregar', true)
+      renderServiceState('Faca login para carregar')
+      renderAdminMessage('customers-admin-list', 'Faca login para gerenciar clientes.')
+      renderAdminMessage('barbers-admin-list', 'Faca login para gerenciar barbeiros.')
+      renderAdminMessage('services-admin-list', 'Faca login para gerenciar servicos.')
+      renderAdminMessage('products-admin-list', 'Faca login para gerenciar produtos.')
+      renderCatalogMessage('Faca login para visualizar os produtos.')
     }
 
-    applyPortalUi()
-    showScreen(isSignupEntryPage() ? 'signup' : 'login')
-    renderSelectState('barber', 'Faca login para carregar', true)
-    renderServiceState('Faca login para carregar')
-    renderAdminMessage('customers-admin-list', 'Faca login para gerenciar clientes.')
-    renderAdminMessage('barbers-admin-list', 'Faca login para gerenciar barbeiros.')
-    renderAdminMessage('services-admin-list', 'Faca login para gerenciar servicos.')
-    renderAdminMessage('products-admin-list', 'Faca login para gerenciar produtos.')
-    renderCatalogMessage('Faca login para visualizar os produtos.')
-  }
-
-  if (!authUiInitialized) {
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-      currentSession = session ?? null
-      if (session?.access_token) {
-        lastAuthAccessToken = session.access_token
-      }
-      clearPlatformContextCache()
-      if (!session) {
-        currentBarbershopId = null
-      }
-      updateProtectedUi(Boolean(session))
-      applyPortalUi()
-      updateAdminContextUi()
-    })
-    authUiInitialized = true
+    if (!authUiInitialized) {
+      supabaseClient.auth.onAuthStateChange((_event, session) => {
+        currentSession = session ?? null
+        if (session?.access_token) {
+          lastAuthAccessToken = session.access_token
+        }
+        clearPlatformContextCache()
+        if (!session) {
+          currentBarbershopId = null
+        }
+        updateProtectedUi(Boolean(session))
+        applyPortalUi()
+        updateAdminContextUi()
+      })
+      authUiInitialized = true
+    }
+  } finally {
+    document.body?.classList.remove('app-loading')
+    syncMobileMenuUi()
   }
 }
 
