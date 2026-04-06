@@ -3413,12 +3413,16 @@ body.admin-premium .access-user-card.is-selected {
 
 body.admin-premium .access-user-main-compact {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) auto auto;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "identity badges"
+    "actions actions";
+  align-items: start;
   gap: 10px 14px;
 }
 
 body.admin-premium .access-user-identity-compact {
+  grid-area: identity;
   min-width: 0;
   display: grid;
   gap: 3px;
@@ -3436,8 +3440,10 @@ body.admin-premium .access-user-identity-compact .management-meta {
 }
 
 body.admin-premium .access-user-badges {
+  grid-area: badges;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
 }
@@ -3452,7 +3458,7 @@ body.admin-premium .access-user-badges .status-badge {
 
 body.admin-premium .access-user-details-compact {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px 16px;
   padding-top: 2px;
 }
@@ -3474,9 +3480,10 @@ body.admin-premium .access-user-details-compact span strong {
 }
 
 body.admin-premium .access-user-actions-compact {
+  grid-area: actions;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
 }
 
@@ -3486,6 +3493,7 @@ body.admin-premium .access-user-actions-compact button {
   border-radius: 12px;
   font-size: 12px;
   line-height: 1;
+  flex: 0 0 auto;
 }
 
 body.admin-premium .role-admin,
@@ -3622,6 +3630,13 @@ body.admin-premium .approval-actions {
   }
 }
 
+@media (max-width: 1380px) {
+  .access-layout-grid,
+  body.admin-premium .access-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   body.admin-premium .content {
     padding: 14px 14px 104px;
@@ -3668,6 +3683,13 @@ body.admin-premium .approval-actions {
 
   body.admin-premium .access-user-identity-compact .management-meta {
     white-space: normal;
+  }
+
+  body.admin-premium .access-user-main-compact {
+    grid-template-areas:
+      "identity"
+      "badges"
+      "actions";
   }
 
   body.admin-premium .access-user-actions-compact button {
