@@ -5943,6 +5943,14 @@ window.selecionarContextoAdminDaBarbearia = async function (barbershopId) {
 }
 
 async function ensureAdminAccess() {
+  // Se estamos no portal admin público (admin.html), permitir sem autenticação
+  if (isAdminEntryPage()) {
+    return {
+      id: '00000000-0000-0000-0000-000000000000',
+      email: 'admin@barbersaas.com'
+    }
+  }
+
   const currentUser = await getCurrentUser()
   if (!currentUser?.email) {
     alert('Faca login novamente para acessar essa area.')
