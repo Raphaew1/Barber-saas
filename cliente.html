@@ -1,18 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b1220">
-  <title>CorteFacil | Portal administrador</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>CorteFacil | Plataforma para barbearias</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='none' stroke='%23d6a54b' stroke-width='2'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='24' font-weight='700' fill='%23f7efe0'%3ECF%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 
-<body data-app-entry="admin" class="admin-premium">
+<body data-app-entry="client">
 <div class="ambient ambient-left"></div>
 <div class="ambient ambient-right"></div>
 <div class="ambient ambient-bottom"></div>
@@ -29,11 +26,13 @@
   </button>
   <div id="mobile-menu-overlay" class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
   <div class="app">
+
+    <!-- Sidebar -->
     <aside class="sidebar">
       <button type="button" class="sidebar-brand sidebar-brand-button" onclick="voltarParaTelaInicial()">
         <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
         <div>
-          <span class="sidebar-kicker">Admin control</span>
+          <span class="sidebar-kicker">Barber control</span>
           <h2>CorteFacil</h2>
         </div>
       </button>
@@ -62,7 +61,7 @@
 
       <div class="sidebar-footer">
         <div id="sidebar-user-identity" class="sidebar-user-identity" style="display:none;">
-          <span class="sidebar-user-avatar">AD</span>
+          <span class="sidebar-user-avatar">CF</span>
           <div class="sidebar-user-content">
             <strong id="sidebar-user-value">Conta</strong>
             <small id="sidebar-user-meta">Sem sessao</small>
@@ -72,6 +71,7 @@
       </div>
     </aside>
 
+    <!-- Conteudo -->
     <main class="content">
       <div class="content-topbar">
         <div class="topbar-main">
@@ -82,11 +82,11 @@
               <small id="topbar-user-meta" class="topbar-user-meta"></small>
             </div>
           </div>
-          <span id="topbar-screen-kicker" class="screen-kicker">Master dashboard</span>
-          <h3 id="topbar-screen-title">Administrador com visao total da plataforma</h3>
+          <span id="topbar-screen-kicker" class="screen-kicker">Studio dashboard</span>
+          <h3 id="topbar-screen-title">Gestao elegante para sua barbearia</h3>
           <p id="topbar-screen-description" class="topbar-screen-description">Navegacao organizada por portal, contexto e etapa de operacao.</p>
           <div class="topbar-status-pills">
-            <span id="topbar-portal-badge" class="topbar-status-pill">Portal admin</span>
+            <span id="topbar-portal-badge" class="topbar-status-pill">Portal publico</span>
             <span id="topbar-context-badge" class="topbar-status-pill">Sem contexto</span>
           </div>
         </div>
@@ -100,32 +100,70 @@
         </div>
       </div>
 
-      <section id="login" class="tela" style="display:none;">
+      <!-- Login -->
+      <section id="login" class="tela">
+        <div class="portal-entry-brand">
+          <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
+          <div class="portal-entry-brand-copy">
+            <strong class="brand-name">CorteFacil</strong>
+          </div>
+        </div>
         <div class="screen-header">
-          <span class="screen-kicker">Portal master</span>
-          <h1 id="login-title">Portal do administrador</h1>
-          <p id="login-description">Acesso liberado para todos os usuários criarem barbearias.</p>
+          <span id="login-kicker" class="screen-kicker">Portal</span>
+          <h1 id="login-title">Entrar no portal</h1>
+          <p id="login-description">Escolha como deseja acessar a plataforma.</p>
         </div>
 
-        <div class="form-block">
-          <div class="login-mode-chip">
-            <span id="selected-portal-label">Portal selecionado: Administrador.</span>
-            <a class="link-button" href="index.html">Ir para o portal principal</a>
-          </div>
-          <div class="portal-shortcuts">
-            <a class="portal-shortcut" href="cliente.html">Login de cliente</a>
-            <a class="portal-shortcut" href="index.html?portal=barbeiro">Login de barbearia</a>
+        <div id="portal-entry-actions" class="portal-entry-actions">
+          <a class="portal-entry-button" href="cliente.html">
+            <span class="portal-entry-button-label">Portal cliente</span>
+            <strong>Entrar no portal</strong>
+          </a>
+          <a class="portal-entry-button" href="index.html?portal=barbeiro">
+            <span class="portal-entry-button-label">Portal barbearia</span>
+            <strong>Entrar no portal</strong>
+          </a>
+          <a class="portal-entry-button" href="admin.html">
+            <span class="portal-entry-button-label">Portal admin</span>
+            <strong>Entrar no portal</strong>
+          </a>
+        </div>
+
+        <div id="login-form-panel" class="form-block" style="display:none;">
+          <div id="login-mode-chip" class="login-mode-chip">
+            <span id="selected-portal-label">Entre com seu email e o sistema identifica automaticamente seu portal.</span>
           </div>
           <div id="auth-feedback" class="form-feedback" style="display:none;"></div>
-          <p>Acesso automático concedido. Redirecionando...</p>
+          <input type="email" id="email" placeholder="Email">
+          <input type="password" id="password" placeholder="Senha">
+          <button id="login-submit" onclick="login()">Entrar</button>
+          <button type="button" class="link-button" onclick="resetPassword()">Esqueci minha senha?</button>
+          <button type="button" class="secondary-action" onclick="window.location.href='signup.html'">Criar conta</button>
         </div>
       </section>
 
+      <section id="reset-password" class="tela" style="display:none;">
+        <div class="screen-header">
+          <span class="screen-kicker">Seguranca</span>
+          <h1>Redefinir senha</h1>
+          <p>Digite sua nova senha para acessar novamente sua conta.</p>
+        </div>
+
+        <div class="form-block">
+          <div id="reset-password-feedback" class="form-feedback" style="display:none;"></div>
+          <input type="password" id="new-password" placeholder="Nova senha">
+          <input type="password" id="confirm-password" placeholder="Confirmar senha">
+          <button onclick="updatePassword()">Atualizar senha</button>
+          <a class="link-button" href="index.html">Voltar para login</a>
+        </div>
+      </section>
+
+      <!-- Agendar -->
       <section id="agendar" class="tela" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Atendimento</span>
           <h1>Novo agendamento</h1>
-          <p>Monte o atendimento da barbearia selecionada no contexto do administrador.</p>
+          <p>Monte o atendimento com barbeiro, multiplos servicos e horario em poucos cliques.</p>
         </div>
 
         <div class="form-block">
@@ -152,7 +190,7 @@
           <input type="email" id="customer-email" placeholder="Seu email">
           <label class="field-label" for="barber">Barbeiro</label>
           <select id="barber">
-            <option value="">Selecione uma barbearia no contexto</option>
+            <option value="">Faca login para carregar</option>
           </select>
           <div class="field-label">Servicos</div>
           <div id="service-picker" class="service-picker">
@@ -166,7 +204,7 @@
               Selecione os servicos
             </button>
             <div id="service-options" class="service-options" style="display:none;">
-              <div class="service-empty">Selecione uma barbearia no contexto</div>
+              <div class="service-empty">Faca login para carregar</div>
             </div>
           </div>
           <small class="field-hint">Voce pode marcar varios servicos se desejar.</small>
@@ -205,11 +243,12 @@
         </div>
       </section>
 
+      <!-- Agenda -->
       <section id="agenda" class="tela" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Rotina</span>
           <h1>Minha Agenda</h1>
-          <p>Visualize os atendimentos da barbearia selecionada no contexto do administrador.</p>
+          <p>Visualize os atendimentos, detalhes de servicos e organize o dia com clareza.</p>
         </div>
         <div class="agenda-visual-toolbar">
           <div class="segmented-control">
@@ -221,20 +260,22 @@
         <div id="lista"></div>
       </section>
 
+      <!-- Produtos -->
       <section id="produtos" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Vitrine</span>
           <h1>Produtos da barbearia</h1>
-          <p>Confira os produtos disponiveis da unidade selecionada.</p>
+          <p>Confira os produtos disponiveis, descricoes e precos antes de finalizar o atendimento.</p>
         </div>
         <div id="products-catalog-list" class="catalog-grid"></div>
       </section>
 
+      <!-- Gestao -->
       <section id="gestao" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Financeiro</span>
           <h1>Gestao da barbearia</h1>
-          <p>O admin enxerga os mesmos dados operacionais da unidade escolhida no contexto.</p>
+          <p>Acompanhe caixa, vendas, estoque e faturamento da equipe em um unico painel.</p>
         </div>
 
         <div id="management-summary" class="management-summary"></div>
@@ -361,20 +402,9 @@
       <section id="aprovacoes" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Acesso</span>
-          <h1 id="approvals-screen-title">Aprovacoes de acesso</h1>
-          <p id="approvals-screen-description">Gerencie os acessos pendentes e libere a entrada no portal correto para cada usuario.</p>
+          <h1>Aprovacoes do portal da barbearia</h1>
+          <p>Libere manualmente os emails que podem entrar no portal completo da barbearia.</p>
         </div>
-
-        <section id="admin-user-approvals-card" class="management-card" style="display:none;">
-          <div class="management-card-header">
-            <div>
-              <span class="management-kicker">Fila</span>
-              <h2>Usuarios aguardando aprovacao</h2>
-            </div>
-          </div>
-          <div id="admin-user-approvals-feedback" class="form-feedback" style="display:none;"></div>
-          <div id="admin-user-approvals-list"></div>
-        </section>
 
         <section id="access-management-card" class="management-card">
           <div class="management-card-header">
@@ -395,7 +425,7 @@
         <div class="screen-header">
           <span class="screen-kicker">Master control</span>
           <h1>Dashboard do administrador</h1>
-          <p>Tenha visao total da plataforma com indicadores gerais, faturamento consolidado e operacao das barbearias.</p>
+          <p>Tenha visao total da plataforma com indicadores gerais, acessos e operacao das barbearias.</p>
         </div>
 
         <div id="admin-summary" class="management-summary"></div>
@@ -447,7 +477,7 @@
               <h2>Criar barbearia</h2>
             </div>
           </div>
-          <div class="management-form management-form-grid management-form-compact">
+          <div class="management-form">
             <input type="text" id="admin-new-barbershop-name" placeholder="Nome da barbearia">
             <input type="tel" id="admin-new-barbershop-phone" placeholder="Telefone da barbearia">
             <input type="email" id="admin-new-barbershop-email" placeholder="Email da barbearia">
@@ -458,9 +488,7 @@
               <option value="pro">Plano Pro</option>
               <option value="premium">Plano Premium</option>
             </select>
-            <div class="management-form-actions management-form-span-2">
-              <button type="button" onclick="criarBarbeariaAdmin()">Criar barbearia</button>
-            </div>
+            <button type="button" onclick="criarBarbeariaAdmin()">Criar barbearia</button>
           </div>
         </section>
 
@@ -471,25 +499,23 @@
               <h2>Alterar informacoes da barbearia</h2>
             </div>
           </div>
-          <div class="management-form management-form-grid management-form-compact management-form-grid-3">
+          <div class="management-form">
             <input type="text" id="admin-edit-barbershop-id" placeholder="ID da barbearia" readonly>
             <input type="text" id="admin-edit-barbershop-name" placeholder="Nome da barbearia">
             <input type="tel" id="admin-edit-barbershop-phone" placeholder="Telefone da barbearia">
             <input type="email" id="admin-edit-barbershop-email" placeholder="Email da barbearia">
             <input type="text" id="admin-edit-barbershop-slug" placeholder="Slug publico da barbearia">
             <input type="url" id="admin-edit-barbershop-logo-url" placeholder="URL do logo da barbearia">
-            <input type="hidden" id="admin-edit-barbershop-primary-color" value="#ffffff">
-            <input type="hidden" id="admin-edit-barbershop-secondary-color" value="#000000">
+            <input type="color" id="admin-edit-barbershop-primary-color" value="#ffffff" title="Cor primaria">
+            <input type="color" id="admin-edit-barbershop-secondary-color" value="#000000" title="Cor secundaria">
             <select id="admin-edit-barbershop-plan">
               <option value="free">Plano Free</option>
               <option value="pro">Plano Pro</option>
               <option value="premium">Plano Premium</option>
             </select>
-            <div id="admin-barbershop-edit-feedback" class="form-feedback management-form-span-full" style="display:none;"></div>
-            <div class="management-form-actions management-form-span-full">
-              <button type="button" onclick="salvarBarbeariaAdmin()">Salvar alteracoes</button>
-              <button type="button" class="edit-button" onclick="cancelarEdicaoBarbeariaAdmin()">Limpar edicao</button>
-            </div>
+            <div id="admin-barbershop-edit-feedback" class="form-feedback" style="display:none;"></div>
+            <button type="button" onclick="salvarBarbeariaAdmin()">Salvar alteracoes</button>
+            <button type="button" class="edit-button" onclick="cancelarEdicaoBarbeariaAdmin()">Limpar edicao</button>
           </div>
         </section>
 
@@ -508,39 +534,10 @@
         <div class="screen-header">
           <span class="screen-kicker">Seguranca</span>
           <h1>Controle global de acessos</h1>
-          <p>Centralize governanca, acessos, status e seguranca de usuarios em todas as unidades da plataforma.</p>
+          <p>Centralize governanca, acessos, status e seguranca de usuarios em todas as barbearias da plataforma.</p>
         </div>
 
         <div id="admin-access-kpis" class="management-summary"></div>
-
-        <section class="management-card">
-          <div class="management-card-header">
-            <div>
-              <span class="management-kicker">Novo acesso</span>
-              <h2>Conceder acesso ao portal</h2>
-            </div>
-          </div>
-          <div class="management-form management-form-grid management-form-compact">
-            <input type="email" id="admin-access-new-email" placeholder="Email para liberar acesso">
-            <select id="admin-access-new-portal" onchange="handleAdminAccessPortalChange()">
-              <option value="cliente">Portal Cliente</option>
-              <option value="barbeiro">Portal Barbearia</option>
-              <option value="admin">Portal Admin</option>
-            </select>
-            <select id="admin-access-new-status">
-              <option value="active">Ativo</option>
-              <option value="pending">Pendente</option>
-              <option value="blocked">Bloqueado</option>
-            </select>
-            <select id="admin-access-new-barbershop" style="display:none;">
-              <option value="">Selecione a barbearia</option>
-            </select>
-            <div id="admin-access-new-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
-            <div class="management-form-actions management-form-span-2">
-              <button type="button" onclick="criarAcessoAdmin()">Adicionar acesso</button>
-            </div>
-          </div>
-        </section>
 
         <section class="management-card">
           <div class="management-card-header">
@@ -571,6 +568,17 @@
         </section>
 
         <div class="management-grid access-layout-grid">
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Diretorio</span>
+                <h2>Access Management</h2>
+              </div>
+            </div>
+            <div id="admin-access-loading" class="admin-empty" style="display:none;">Carregando diretorio de acessos...</div>
+            <div id="admin-access-list" class="management-stack"></div>
+          </section>
+
           <section id="admin-access-editor-card" class="management-card" style="display:none;">
             <div class="management-card-header">
               <div>
@@ -578,7 +586,7 @@
                 <h2>Permissoes e contexto</h2>
               </div>
             </div>
-            <div class="management-form management-form-grid management-form-compact">
+            <div class="management-form">
               <input type="text" id="admin-access-editor-name" placeholder="Nome do usuario">
               <input type="email" id="admin-access-editor-email" placeholder="Email" disabled>
               <select id="admin-access-editor-role">
@@ -589,12 +597,10 @@
               <select id="admin-access-editor-barbershop">
                 <option value="">Sem barbearia</option>
               </select>
-              <div id="admin-access-editor-permissions" class="management-stack management-form-span-2"></div>
-              <div id="admin-access-editor-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
-              <div class="management-form-actions management-form-span-2">
-                <button type="button" onclick="salvarEditorDeAcessoAdmin()">Salvar alteracoes</button>
-                <button type="button" class="secondary-action" onclick="fecharEditorDeAcessoAdmin()">Fechar editor</button>
-              </div>
+              <div id="admin-access-editor-permissions" class="management-stack"></div>
+              <div id="admin-access-editor-feedback" class="form-feedback" style="display:none;"></div>
+              <button type="button" onclick="salvarEditorDeAcessoAdmin()">Salvar alteracoes</button>
+              <button type="button" class="secondary-action" onclick="fecharEditorDeAcessoAdmin()">Fechar editor</button>
             </div>
           </section>
         </div>
@@ -616,45 +622,6 @@
           <h1>Usuarios cadastrados</h1>
           <p>Gerencie os usuarios por portal. O admin pode editar telefone, redefinir senha e alterar o proprio email de acesso.</p>
         </div>
-
-        <section class="management-card">
-          <div class="management-card-header">
-            <div>
-              <span class="management-kicker">Criar novo usuario</span>
-              <h2>Novo usuario do sistema</h2>
-            </div>
-          </div>
-          <div class="management-form management-form-grid management-form-compact management-form-grid-3">
-            <input type="text" id="admin-user-name" placeholder="Nome completo">
-            <input type="email" id="admin-user-email" placeholder="Email">
-            <input type="tel" id="admin-user-phone" placeholder="Telefone">
-            <select id="admin-user-barbershop">
-              <option value="">Selecione a barbearia</option>
-            </select>
-            <input type="password" id="admin-user-password" placeholder="Senha" autocomplete="new-password">
-            <input type="password" id="admin-user-password-confirm" placeholder="Confirmar senha" autocomplete="new-password">
-            <select id="admin-user-role">
-              <option value="client">Perfil do usuario</option>
-              <option value="client">Cliente</option>
-              <option value="barber">Barbeiro</option>
-              <option value="admin">Administrador</option>
-            </select>
-            <select id="admin-user-plan">
-              <option value="free">Plano contratado</option>
-              <option value="free">Free</option>
-              <option value="pro">Pro</option>
-              <option value="premium">Premium</option>
-            </select>
-            <div class="management-form-file management-form-span-full">
-              <label class="field-label" for="admin-user-photo">Foto do usuario (opcional)</label>
-              <input type="file" id="admin-user-photo" accept="image/*" onchange="handleAdminUserPhotoChange()">
-            </div>
-            <div id="admin-user-create-feedback" class="form-feedback management-form-span-full" style="display:none;"></div>
-            <div class="management-form-actions management-form-span-full">
-              <button type="button" data-protected="true" onclick="cadastrarUsuarioAdmin()">Cadastrar o usuario</button>
-            </div>
-          </div>
-        </section>
 
         <div class="management-grid">
           <section class="management-card">
@@ -695,23 +662,22 @@
               <h2>Limpar base de usuarios</h2>
             </div>
           </div>
-          <div class="management-form management-form-grid management-form-compact">
+          <div class="management-form">
             <input type="email" id="admin-cleanup-master-email" value="raphacom.web@gmail.com" placeholder="Email master preservado">
             <input type="text" id="admin-cleanup-confirmation" placeholder="Digite LIMPAR para confirmar">
-            <div id="admin-cleanup-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
-            <div class="management-form-actions management-form-span-2">
-              <button type="button" id="admin-cleanup-submit" class="danger-action" onclick="executarLimpezaDeUsuariosAdmin()">Limpar base de usuarios</button>
-            </div>
-            <small class="field-hint management-form-span-2">A limpeza remove os usuarios do Auth, perfis, acessos e convites de todos os emails diferentes do master informado.</small>
+            <div id="admin-cleanup-feedback" class="form-feedback" style="display:none;"></div>
+            <button type="button" id="admin-cleanup-submit" class="danger-action" onclick="executarLimpezaDeUsuariosAdmin()">Limpar base de usuarios</button>
+            <small class="field-hint">A limpeza remove os usuarios do Auth, perfis, acessos e convites de todos os emails diferentes do master informado.</small>
           </div>
         </section>
       </section>
 
+      <!-- Cadastros -->
       <section id="cadastros" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Configuracao</span>
           <h1>Cadastros da barbearia</h1>
-          <p>Gerencie clientes, equipe, servicos e produtos da unidade selecionada.</p>
+          <p>Gerencie equipe, servicos e produtos em cards consistentes com o novo painel.</p>
         </div>
 
         <div class="cadastro-grid">
@@ -749,20 +715,6 @@
             <button data-protected="true" onclick="cadastrarProduto()">Cadastrar produto</button>
             <div id="products-admin-list" class="admin-list"></div>
           </section>
-        </div>
-      </section>
-
-      <section id="reset-password" class="tela" style="display:none;">
-        <div class="screen-header">
-          <span class="screen-kicker">Seguranca</span>
-          <h1>Redefinir senha</h1>
-          <p>Digite sua nova senha para acessar novamente sua conta.</p>
-        </div>
-
-        <div class="form-block">
-          <input type="password" id="new-password" placeholder="Nova senha">
-          <input type="password" id="confirm-password" placeholder="Confirmar senha">
-          <button onclick="updatePassword()">Atualizar senha</button>
         </div>
       </section>
 

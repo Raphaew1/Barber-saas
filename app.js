@@ -75,7 +75,7 @@ window.updatePassword = async function () {
 
   window.setTimeout(() => {
     if (isSignupEntryPage()) {
-      window.location.href = getAppUrl('index.html')
+      window.location.href = getAppUrl('cliente.html')
       return
     }
 
@@ -245,8 +245,13 @@ function isSignupEntryPage() {
   return APP_ENTRY_MODE === 'signup'
 }
 
+function isClientEntryPage() {
+  return APP_ENTRY_MODE === 'client'
+}
+
 function isMainPortalLanding() {
   return !isAdminEntryPage()
+    && !isClientEntryPage()
     && !isSignupEntryPage()
     && !getPortalHintFromUrl()
     && !currentSession
@@ -270,7 +275,7 @@ function getPortalHintFromUrl() {
 
 function getSlugFromUrl() {
   const path = String(window.location.pathname || '').replace(/^\/+|\/+$/g, '')
-  if (!path || ['index.html', 'admin.html', 'signup.html'].includes(path.toLowerCase())) {
+  if (!path || ['index.html', 'admin.html', 'signup.html', 'cliente.html'].includes(path.toLowerCase())) {
     return null
   }
 
@@ -388,7 +393,11 @@ function clearAuthCallbackParams() {
 }
 
 function redirectToPortalEntry(portal) {
-  const target = portal === 'admin' ? 'admin.html' : 'index.html'
+  const target = portal === 'admin'
+    ? 'admin.html'
+    : portal === CUSTOMER_ROLE
+      ? 'cliente.html'
+      : 'index.html'
   window.location.href = getAppUrl(target)
 }
 
@@ -403,6 +412,23 @@ window.voltarParaTelaInicial = async function () {
 
   if (isSignupEntryPage()) {
     window.location.href = getAppUrl('index.html')
+    return
+  }
+
+  if (isClientEntryPage()) {
+    const isLoggedIn = await hasActiveSession()
+
+    if (!isLoggedIn) {
+      setPortal('cliente')
+      applyPortalUi()
+      showScreen('login')
+      return
+    }
+
+    setPortal('cliente')
+    applyPortalUi()
+    showScreen('agendar')
+    await carregarPortalData('agendar')
     return
   }
 
@@ -2119,7 +2145,7 @@ window.signup = async function () {
       email,
       password,
       options: {
-        emailRedirectTo: getAppUrl('index.html')
+        emailRedirectTo: getAppUrl('cliente.html')
       }
     })
 
@@ -3715,6 +3741,11 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
     showScreen('gestao')
     await carregarPortalData('gestao')
     return role
+  }
+
+  if (!isClientEntryPage() && !isClientPublicView()) {
+    window.location.href = getAppUrl('cliente.html')
+    return CUSTOMER_ROLE
   }
 
   setPortal('cliente')
@@ -6528,6 +6559,11 @@ function restorePortalSelection() {
     return
   }
 
+  if (isClientEntryPage()) {
+    currentPortal = 'cliente'
+    return
+  }
+
   const portalHint = getPortalHintFromUrl()
   if (portalHint) {
     currentPortal = portalHint
@@ -6553,6 +6589,8 @@ function updateLoginPortalUi() {
       ? 'Portal'
       : isAdminEntryPage()
         ? 'Portal master'
+        : isClientEntryPage()
+          ? 'Portal cliente'
         : isSignupEntryPage()
           ? 'Cadastro'
           : isClientPublicView()
@@ -6577,6 +6615,8 @@ function updateLoginPortalUi() {
       ? ''
       : isAdminEntryPage()
       ? 'Acesso restrito ao administrador principal.'
+      : isClientEntryPage()
+        ? 'Portal do cliente com acesso a agendamentos e produtos.'
       : isClientPublicView()
         ? `Agendamento direto para ${currentBarbershopContext?.name || 'esta barbearia'}.`
       : isSignupEntryPage()
@@ -6593,6 +6633,8 @@ function updateLoginPortalUi() {
       ? 'Entrar no portal'
       : isAdminEntryPage()
       ? 'Entrar no portal do administrador'
+      : isClientEntryPage()
+        ? 'Entrar no portal do cliente'
       : isClientPublicView()
         ? `Agende com ${currentBarbershopContext?.name || 'a barbearia'}`
         : currentPortal === BARBER_ROLE
@@ -6607,6 +6649,8 @@ function updateLoginPortalUi() {
       ? ''
       : isAdminEntryPage()
       ? 'Somente o email master autorizado pode acessar esta area.'
+      : isClientEntryPage()
+        ? 'Use seu email e senha para acessar somente agendamentos e produtos.'
       : isClientPublicView()
         ? 'Escolha barbeiro, servicos e horario. O contexto da barbearia ja foi identificado pela URL.'
       : isSignupEntryPage()
@@ -8877,7 +8921,7 @@ window.resetPassword = async function () {
   }
 
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: isAdminEntryPage() ? getAppUrl('admin.html') : getAppUrl('index.html')
+    redirectTo: isAdminEntryPage() ? getAppUrl('admin.html') : getAppUrl('cliente.html')
   });
 
   if (error) {
