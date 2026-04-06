@@ -2750,9 +2750,9 @@ body.admin-premium .sidebar-brand {
 body.admin-premium .brand-badge {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
-  border: 1px solid rgba(99, 102, 241, 0.24);
-  background: rgba(99, 102, 241, 0.14);
+  border-radius: 0;
+  border: none;
+  background: transparent;
   color: #eef2ff;
   box-shadow: none;
 }
