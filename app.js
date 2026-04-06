@@ -242,12 +242,30 @@ function isMissingColumnError(error, columnNames = []) {
 function isMissingTableError(error, tableName) {
   const message = String(error?.message || '').toLowerCase()
   const normalizedTableName = String(tableName || '').toLowerCase()
+  const status = Number(error?.status || error?.statusCode || 0)
 
   return (
+    status === 404 ||
     message.includes(`relation "public.${normalizedTableName}" does not exist`) ||
     message.includes(`relation "${normalizedTableName}" does not exist`) ||
     message.includes(`could not find the table '${normalizedTableName}'`)
   )
+}
+
+function createMissingTableResult(error) {
+  return {
+    data: [],
+    error,
+    missingTable: true
+  }
+}
+
+function normalizeMissingTableResult(result, tableName) {
+  if (result?.error && isMissingTableError(result.error, tableName)) {
+    return createMissingTableResult(result.error)
+  }
+
+  return result
 }
 
 function isConflictError(error) {
@@ -700,6 +718,10 @@ async function fetchAdminAppointmentsSummary() {
     .order('appointment_time', { ascending: false })
     .limit(8)
 
+  if (result.error && isMissingTableError(result.error, 'appointments')) {
+    return createMissingTableResult(result.error)
+  }
+
   if (result.error) {
     result = await supabaseClient
       .from('appointments')
@@ -708,7 +730,7 @@ async function fetchAdminAppointmentsSummary() {
       .limit(8)
   }
 
-  return result
+  return normalizeMissingTableResult(result, 'appointments')
 }
 
 async function fetchAdminSubscriptionsSummary() {
@@ -6112,9 +6134,9 @@ async function carregarAdminDashboard() {
   ] = await Promise.all([
     supabaseClient.from('barbershops').select('id, name, owner_id, phone, email'),
     fetchAdminAppointmentsSummary(),
-    supabaseClient.from('barber_access').select('email, is_active'),
-    supabaseClient.from('service_sales').select('barbershop_id, service_price, barbershops(name)'),
-    supabaseClient.from('product_sales').select('barbershop_id, total_amount, barbershops(name)'),
+    supabaseClient.from('barber_access').select('email, is_active').then((result) => normalizeMissingTableResult(result, 'barber_access')),
+    supabaseClient.from('service_sales').select('barbershop_id, service_price, barbershops(name)').then((result) => normalizeMissingTableResult(result, 'service_sales')),
+    supabaseClient.from('product_sales').select('barbershop_id, total_amount, barbershops(name)').then((result) => normalizeMissingTableResult(result, 'product_sales')),
     fetchAdminSubscriptionsSummary()
   ])
 
@@ -6184,9 +6206,14 @@ async function carregarAdminAcessos() {
     supabaseClient
       .from('barber_access')
       .select('email, approved_at, approved_by_email, is_active, barbershop_id')
-      .order('approved_at', { ascending: false }),
+      .order('approved_at', { ascending: false })
+      .then((result) => normalizeMissingTableResult(result, 'barber_access')),
     fetchBarbershopsForAdminAccess(),
-    supabaseClient.from('appointments').select('id, barbershop_id, appointment_time').order('appointment_time', { ascending: false }),
+    supabaseClient
+      .from('appointments')
+      .select('id, barbershop_id, appointment_time')
+      .order('appointment_time', { ascending: false })
+      .then((result) => normalizeMissingTableResult(result, 'appointments')),
     fetchAdminAccessAuditLogs()
   ])
 
@@ -6202,7 +6229,7 @@ async function carregarAdminAcessos() {
     return
   }
 
-  if (barberAccessResult.error) {
+  if (barberAccessResult.error && !barberAccessResult.missingTable) {
     setAdminAccessLoading(false)
     renderManagementMessage('admin-access-list', `Erro ao carregar acessos: ${barberAccessResult.error.message}`)
     return
