@@ -3583,6 +3583,7 @@ body.admin-premium .access-group-header {
 
 body.admin-premium .access-group-stack {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -3862,6 +3863,10 @@ body.admin-premium .approval-actions {
 
   body.admin-premium .access-user-badges {
     justify-content: flex-start;
+  }
+
+  body.admin-premium .access-group-stack {
+    grid-template-columns: 1fr;
   }
 }
 
