@@ -7033,6 +7033,7 @@ async function carregarAdminAcessos() {
 
   updateAdminContextUi(barbershopsResult.data || [])
   populateAdminAccessFilters(barbershopsResult.data || [])
+  renderAdminAccessKpis(directory)
   filtrarAdminAcessos()
   renderAdminAccessAuditLog()
   setAdminAccessLoading(false)
@@ -7058,11 +7059,13 @@ async function fetchUserAccessForAdminAccess() {
   let result = await supabaseClient
     .from('user_access')
     .select('user_id, barbershop_id, role, status, approved_by, approved_at, created_at')
+    .then((response) => normalizeMissingTableResult(response, 'user_access'))
 
   if (result.error && isMissingColumnError(result.error, ['approved_at', 'created_at'])) {
     result = await supabaseClient
       .from('user_access')
       .select('user_id, barbershop_id, role, status, approved_by')
+      .then((response) => normalizeMissingTableResult(response, 'user_access'))
   }
 
   return result
@@ -7304,7 +7307,7 @@ window.handleAdminAccessPortalChange = function () {
   }
 }
 
-async function fetchAdminAccessAuditLogs() {
+function renderAdminAccessKpis(items = []) {
   const container = document.getElementById('admin-access-kpis')
   if (!container) {
     return
