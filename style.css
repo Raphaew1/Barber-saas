@@ -3412,6 +3412,57 @@ body.admin-premium .admin-context-switcher {
   animation: adminPremiumEnter 0.32s ease both;
 }
 
+body.admin-premium .management-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+body.admin-premium .management-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+body.admin-premium .management-table th,
+body.admin-premium .management-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  vertical-align: middle;
+}
+
+body.admin-premium .management-table th {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body.admin-premium .management-table td {
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+body.admin-premium .management-table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
+
+body.admin-premium .approval-user-cell {
+  display: grid;
+  gap: 4px;
+}
+
+body.admin-premium .approval-user-cell span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+body.admin-premium .approval-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 980px) {
   body.admin-premium .app-shell {
     padding: 12px;
@@ -3438,6 +3489,12 @@ body.admin-premium .admin-context-switcher {
   body.admin-premium .management-form-grid,
   body.admin-premium .management-form-grid-3 {
     grid-template-columns: 1fr;
+  }
+
+  body.admin-premium .management-table th,
+  body.admin-premium .management-table td {
+    min-width: 140px;
+    padding: 12px;
   }
 
   body.admin-premium .management-form-span-2,

@@ -361,9 +361,20 @@
       <section id="aprovacoes" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Acesso</span>
-          <h1>Aprovacoes do portal da barbearia</h1>
-          <p>Libere manualmente os emails que podem entrar no portal completo da unidade selecionada.</p>
+          <h1 id="approvals-screen-title">Aprovacoes de acesso</h1>
+          <p id="approvals-screen-description">Gerencie os acessos pendentes e libere a entrada no portal correto para cada usuario.</p>
         </div>
+
+        <section id="admin-user-approvals-card" class="management-card" style="display:none;">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Fila</span>
+              <h2>Usuarios aguardando aprovacao</h2>
+            </div>
+          </div>
+          <div id="admin-user-approvals-feedback" class="form-feedback" style="display:none;"></div>
+          <div id="admin-user-approvals-list"></div>
+        </section>
 
         <section id="access-management-card" class="management-card">
           <div class="management-card-header">

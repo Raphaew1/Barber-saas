@@ -104,6 +104,7 @@ let customersCrmCache = []
 let currentSubscriptionCache = null
 let adminAccessDirectoryCache = []
 let adminAccessAuditCache = []
+let adminPendingApprovalsCache = []
 let selectedAdminAccessKey = null
 let currentVisibleScreenId = ''
 let platformContextCache = null
@@ -2140,7 +2141,8 @@ window.signup = async function () {
       email: user.email,
       role: CUSTOMER_ROLE,
       name: signupName,
-      phone: signupPhone
+      phone: signupPhone,
+      status: 'pending'
     })
 
     if (profileError) {
@@ -2178,7 +2180,7 @@ window.signup = async function () {
       passwordInput.value = ''
     }
 
-    setAuthFeedback('Conta criada com sucesso. Verifique seu email para confirmar o cadastro e acessar o sistema.', 'success')
+    setAuthFeedback('Conta criada com sucesso. Verifique seu email e aguarde a aprovacao do super admin para acessar o sistema.', 'success')
   } catch (err) {
     console.error('signup error', err)
     setAuthFeedback('Erro no cadastro. Tente novamente.', 'error')
@@ -3577,12 +3579,15 @@ async function getCurrentUser() {
 
 // Indica se um email corresponde ao administrador principal.
 function isAdminEmail(email) {
-  // Permitir qualquer email como admin para criação de barbearias
-  return true
+  return String(email || '').trim().toLowerCase() === String(ADMIN_EMAIL).trim().toLowerCase()
 }
 
 function isAdminPortal() {
   return currentPortal === 'admin'
+}
+
+function isCurrentSessionSuperAdmin() {
+  return Boolean(currentSession?.user?.email) && (isAdminEmail(currentSession.user.email) || platformContextCache?.global_role === 'super_admin')
 }
 
 function buildMasterAdminContext(user, profile = null) {
@@ -3652,11 +3657,36 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
 
   const { data: profile } = await supabaseClient
     .from('profiles')
-    .select('role')
+    .select('role, status')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (canAccessAdminPortal(user, context)) {
+  const profileStatus = String(profile?.status || context?.profile_status || 'active').trim().toLowerCase()
+  const isSuperAdmin = canAccessAdminPortal(user, context)
+
+  if (!isSuperAdmin && profileStatus === 'pending') {
+    await supabaseClient.auth.signOut()
+    currentSession = null
+    clearPlatformContextCache()
+    updateProtectedUi(false)
+    applyPortalUi()
+    showScreen('login')
+    setAuthFeedback('Sua conta foi criada e esta aguardando aprovacao do super admin.', 'warning')
+    return null
+  }
+
+  if (!isSuperAdmin && profileStatus === 'blocked') {
+    await supabaseClient.auth.signOut()
+    currentSession = null
+    clearPlatformContextCache()
+    updateProtectedUi(false)
+    applyPortalUi()
+    showScreen('login')
+    setAuthFeedback('Seu acesso foi rejeitado ou bloqueado. Fale com o super admin.', 'error')
+    return null
+  }
+
+  if (isSuperAdmin) {
     role = ADMIN_ROLE
   } else if (profile?.role) {
     role = normalizePortalRole(profile.role)
@@ -4245,8 +4275,8 @@ window.cadastrarUsuarioAdmin = async function () {
     return
   }
 
-  if (role === 'barber' && !barbershopId) {
-    showFormFeedback('Selecione a barbearia para o barbeiro.', 'error', feedbackId)
+  if ((role === 'barber' || role === 'admin') && !barbershopId) {
+    showFormFeedback('Selecione a barbearia para usuarios administrativos ou barbeiros.', 'error', feedbackId)
     return
   }
 
@@ -4277,7 +4307,7 @@ window.cadastrarUsuarioAdmin = async function () {
         role,
         barbershop_id: barbershopId,
         plan_code: planCode,
-        status: 'active'
+        status: 'pending'
       })
 
       if (profileError) {
@@ -4286,7 +4316,7 @@ window.cadastrarUsuarioAdmin = async function () {
       }
     }
 
-    showFormFeedback('Usuario criado com sucesso. Verifique o email para confirmar o acesso.', 'success', feedbackId)
+    showFormFeedback('Usuario criado com sucesso e enviado para a fila de aprovacoes.', 'success', feedbackId)
 
     if (nameInput) nameInput.value = ''
     if (emailInput) emailInput.value = ''
@@ -4298,6 +4328,12 @@ window.cadastrarUsuarioAdmin = async function () {
     if (planSelect) planSelect.value = 'free'
     if (document.getElementById('admin-user-photo')) {
       document.getElementById('admin-user-photo').value = ''
+    }
+
+    await carregarAdminUsuarios()
+
+    if (currentVisibleScreenId === 'aprovacoes' && currentPortal === 'admin') {
+      await carregarAprovacoesAdmin()
     }
   } catch (err) {
     showFormFeedback(`Erro ao criar usuario: ${err.message || 'Tente novamente.'}`, 'error', feedbackId)
@@ -5811,16 +5847,274 @@ function renderAccessManagementMessage(message) {
   container.innerHTML = `<div class="admin-empty">${message}</div>`
 }
 
+function getApprovalRoleLabel(role) {
+  const normalizedRole = normalizePortalRole(role)
+  if (normalizedRole === ADMIN_ROLE) return 'Admin'
+  if (normalizedRole === BARBER_ROLE) return 'Barbeiro'
+  return 'Cliente'
+}
+
+function getAdminPendingApprovalEntry(userId) {
+  return adminPendingApprovalsCache.find((item) => item.id === userId) || null
+}
+
+function updateApprovalsScreenLayout(isAdminApprovals) {
+  const title = document.getElementById('approvals-screen-title')
+  const description = document.getElementById('approvals-screen-description')
+  const adminCard = document.getElementById('admin-user-approvals-card')
+  const barberCard = document.getElementById('access-management-card')
+
+  if (title) {
+    title.textContent = isAdminApprovals ? 'Aprovacoes de novos usuarios' : 'Aprovacoes do portal da barbearia'
+  }
+
+  if (description) {
+    description.textContent = isAdminApprovals
+      ? 'Revise os cadastros pendentes, identifique o tipo de acesso e aprove ou rejeite a entrada no portal.'
+      : 'Libere manualmente os emails que podem entrar no portal completo da unidade selecionada.'
+  }
+
+  if (adminCard) {
+    adminCard.style.display = isAdminApprovals ? 'block' : 'none'
+  }
+
+  if (barberCard) {
+    barberCard.style.display = isAdminApprovals ? 'none' : 'block'
+  }
+}
+
+function renderAdminUserApprovals(items, barbershopNameById = new Map()) {
+  const container = document.getElementById('admin-user-approvals-list')
+  if (!container) {
+    return
+  }
+
+  if (!items.length) {
+    renderManagementMessage('admin-user-approvals-list', 'Nenhum usuario aguardando aprovacao no momento.')
+    return
+  }
+
+  container.innerHTML = `
+    <div class="management-table-wrapper">
+      <table class="management-table approval-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Perfil</th>
+            <th>Portal</th>
+            <th>Contexto</th>
+            <th>Criado em</th>
+            <th>Acoes</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map((item) => `
+            <tr>
+              <td>
+                <div class="approval-user-cell">
+                  <strong>${item.name || item.email || 'Usuario sem nome'}</strong>
+                  <span>${item.email || '-'}</span>
+                </div>
+              </td>
+              <td><span class="role-badge ${getRoleBadgeMeta(item.role).className}">${getApprovalRoleLabel(item.role)}</span></td>
+              <td>${getApprovalRoleLabel(item.role)}</td>
+              <td>${item.barbershop_id ? (barbershopNameById.get(item.barbershop_id) || item.barbershop_id) : 'Sem barbearia'}</td>
+              <td>${formatAdminDate(item.created_at)}</td>
+              <td>
+                <div class="approval-actions">
+                  <button type="button" class="edit-button" onclick="aprovarUsuarioPendenteAdmin('${item.id}')">Aprovar</button>
+                  <button type="button" class="danger-action" onclick="rejeitarUsuarioPendenteAdmin('${item.id}')">Rejeitar</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `
+}
+
+async function carregarAprovacoesAdmin() {
+  const currentUser = await ensureAdminAccess()
+  updateApprovalsScreenLayout(true)
+
+  if (!currentUser) {
+    renderManagementMessage('admin-user-approvals-list', 'Somente usuarios com permissao de super admin podem gerenciar aprovacoes.')
+    return
+  }
+
+  showFormFeedback('Carregando fila de aprovacoes...', 'info', 'admin-user-approvals-feedback')
+
+  let profilesResult = await supabaseClient
+    .from('profiles')
+    .select('id, email, name, phone, role, status, barbershop_id, created_at, global_role')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+
+  if (profilesResult.error && isMissingColumnError(profilesResult.error, ['name', 'phone', 'status', 'barbershop_id', 'created_at', 'global_role'])) {
+    profilesResult = await supabaseClient
+      .from('profiles')
+      .select('id, email, role')
+      .order('id', { ascending: false })
+  }
+
+  if (profilesResult.error) {
+    showFormFeedback(`Erro ao carregar aprovacoes: ${profilesResult.error.message}`, 'error', 'admin-user-approvals-feedback')
+    renderManagementMessage('admin-user-approvals-list', `Erro ao carregar aprovacoes: ${profilesResult.error.message}`)
+    return
+  }
+
+  const rawItems = Array.isArray(profilesResult.data) ? profilesResult.data : []
+  adminPendingApprovalsCache = rawItems
+    .map((item) => ({
+      ...item,
+      role: normalizePortalRole(item.role || CUSTOMER_ROLE),
+      status: String(item.status || 'pending').trim().toLowerCase()
+    }))
+    .filter((item) => item.status === 'pending' && item.global_role !== 'super_admin')
+
+  const barbershopIds = [...new Set(adminPendingApprovalsCache.map((item) => item.barbershop_id).filter(Boolean))]
+  let barbershopNameById = new Map()
+
+  if (barbershopIds.length) {
+    const { data: barbershops } = await supabaseClient
+      .from('barbershops')
+      .select('id, name')
+      .in('id', barbershopIds)
+
+    barbershopNameById = new Map((barbershops || []).map((item) => [item.id, item.name]))
+  }
+
+  showFormFeedback('', 'info', 'admin-user-approvals-feedback')
+  renderAdminUserApprovals(adminPendingApprovalsCache, barbershopNameById)
+}
+
+async function aplicarDecisaoDeAprovacaoAdmin(entry, nextStatus) {
+  const currentUser = await ensureAdminAccess()
+  if (!currentUser) {
+    return { error: new Error('Acesso negado') }
+  }
+
+  const normalizedRole = normalizePortalRole(entry.role || CUSTOMER_ROLE)
+  const needsBarbershopContext = normalizedRole === BARBER_ROLE || normalizedRole === ADMIN_ROLE
+
+  if (needsBarbershopContext && !entry.barbershop_id) {
+    return { error: new Error('O usuario precisa estar vinculado a uma barbearia antes da aprovacao.') }
+  }
+
+  let profileResult = await supabaseClient
+    .from('profiles')
+    .update({ status: nextStatus })
+    .eq('id', entry.id)
+
+  if (profileResult.error && isMissingColumnError(profileResult.error, ['status'])) {
+    profileResult = { error: null }
+  }
+
+  if (profileResult.error) {
+    return { error: profileResult.error }
+  }
+
+  if (needsBarbershopContext && entry.barbershop_id) {
+    const accessStatus = nextStatus === 'active' ? 'active' : 'blocked'
+    const { data: accessData, error: accessError } = await invokeProtectedFunction('admin-update-user-access', {
+      targetUserId: entry.id,
+      barbershopId: entry.barbershop_id,
+      role: normalizeAccessRole(normalizedRole),
+      status: accessStatus
+    }, {
+      authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para revisar aprovacoes.'
+    })
+
+    if (accessError) {
+      return { error: accessError }
+    }
+
+    if (accessData?.error) {
+      return { error: new Error(accessData.error) }
+    }
+
+    if (entry.email) {
+      const accessResult = await supabaseClient
+        .from('barber_access')
+        .upsert([{
+          email: entry.email,
+          barbershop_id: entry.barbershop_id,
+          approved_by_email: currentUser.email,
+          approved_at: new Date().toISOString(),
+          is_active: nextStatus === 'active'
+        }], { onConflict: 'email' })
+
+      if (accessResult.error) {
+        return { error: accessResult.error }
+      }
+    }
+  }
+
+  addAdminAccessAuditEntry({
+    action: nextStatus === 'active' ? 'Usuario aprovado' : 'Usuario rejeitado',
+    target_email: entry.email,
+    performed_by_email: currentUser.email,
+    details: `Perfil: ${getApprovalRoleLabel(normalizedRole)}`
+  })
+
+  return { error: null }
+}
+
+window.aprovarUsuarioPendenteAdmin = async function (userId) {
+  const entry = getAdminPendingApprovalEntry(userId)
+  if (!entry) {
+    showFormFeedback('Usuario pendente nao encontrado.', 'error', 'admin-user-approvals-feedback')
+    return
+  }
+
+  showFormFeedback(`Aprovando ${entry.email || 'usuario'}...`, 'info', 'admin-user-approvals-feedback')
+  const result = await aplicarDecisaoDeAprovacaoAdmin(entry, 'active')
+
+  if (result.error) {
+    showFormFeedback(`Erro ao aprovar usuario: ${result.error.message}`, 'error', 'admin-user-approvals-feedback')
+    return
+  }
+
+  showFormFeedback('Usuario aprovado com sucesso. O acesso ao portal ja esta liberado.', 'success', 'admin-user-approvals-feedback')
+  await carregarAprovacoesAdmin()
+  await carregarAdminUsuarios()
+  await carregarAdminAcessos()
+}
+
+window.rejeitarUsuarioPendenteAdmin = async function (userId) {
+  const entry = getAdminPendingApprovalEntry(userId)
+  if (!entry) {
+    showFormFeedback('Usuario pendente nao encontrado.', 'error', 'admin-user-approvals-feedback')
+    return
+  }
+
+  showFormFeedback(`Rejeitando ${entry.email || 'usuario'}...`, 'info', 'admin-user-approvals-feedback')
+  const result = await aplicarDecisaoDeAprovacaoAdmin(entry, 'blocked')
+
+  if (result.error) {
+    showFormFeedback(`Erro ao rejeitar usuario: ${result.error.message}`, 'error', 'admin-user-approvals-feedback')
+    return
+  }
+
+  showFormFeedback('Usuario rejeitado com sucesso.', 'success', 'admin-user-approvals-feedback')
+  await carregarAprovacoesAdmin()
+  await carregarAdminUsuarios()
+  await carregarAdminAcessos()
+}
+
 // Carrega os emails autorizados para o portal do barbeiro no painel do admin.
 async function carregarGestaoDeAcessos(barbershopId) {
   const card = document.getElementById('access-management-card')
   const currentUser = await getCurrentUser()
 
+  updateApprovalsScreenLayout(false)
+
   if (!card) {
     return
   }
 
-  if (!isAdminEmail(currentUser?.email)) {
+  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin())) {
     card.style.display = 'none'
     return
   }
@@ -5867,7 +6161,7 @@ async function carregarGestaoDeAcessos(barbershopId) {
 // Autoriza manualmente um email para acessar o portal do barbeiro.
 window.aprovarEmailBarbeiro = async function () {
   const currentUser = await getCurrentUser()
-  if (!isAdminEmail(currentUser?.email)) {
+  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin())) {
     alert('Somente o admin pode liberar acesso ao portal do barbeiro.')
     return
   }
@@ -5916,7 +6210,7 @@ window.aprovarEmailBarbeiro = async function () {
 // Revoga o acesso de um email ao portal do barbeiro.
 window.revogarEmailBarbeiro = async function (email) {
   const currentUser = await getCurrentUser()
-  if (!isAdminEmail(currentUser?.email)) {
+  if (!(isAdminEmail(currentUser?.email) || isCurrentSessionSuperAdmin())) {
     alert('Somente o admin pode revogar acessos.')
     return
   }
@@ -6340,7 +6634,7 @@ function updatePortalNavigation() {
     const shouldShow = isClientPublicView()
       ? false
       : currentPortal
-      ? allowedPortals.includes(currentPortal) && (!requiresAdmin || isAdminEmail(currentSession?.user?.email))
+      ? allowedPortals.includes(currentPortal) && (!requiresAdmin || isCurrentSessionSuperAdmin())
       : false
     button.style.display = shouldShow ? 'inline-flex' : 'none'
   })
@@ -6376,7 +6670,7 @@ function isScreenAllowedForPortal(screenId) {
   }
 
   if (screenId === 'aprovacoes') {
-    return (currentPortal === 'barbeiro' || currentPortal === 'admin') && isAdminEmail(currentSession?.user?.email)
+    return (currentPortal === 'barbeiro' || currentPortal === 'admin') && isCurrentSessionSuperAdmin()
   }
 
   const portalPermissions = {
@@ -6439,6 +6733,11 @@ async function carregarPortalData(screenId) {
   }
 
   if (screenId === 'aprovacoes') {
+    if (currentPortal === 'admin') {
+      await carregarAprovacoesAdmin()
+      return
+    }
+
     const barbershopId = await getBarbershop()
 
     if (!barbershopId) {
