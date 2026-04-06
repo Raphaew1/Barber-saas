@@ -8412,8 +8412,8 @@ function renderAdminAccessList(items) {
             const isBlocked = item.status === 'blocked'
             return `
               <article class="access-user-card ${selectedAdminAccessKey === item.accessKey ? 'is-selected' : ''}">
-                <div class="access-user-main">
-                  <div class="access-user-identity">
+                <div class="access-user-main access-user-main-compact">
+                  <div class="access-user-identity access-user-identity-compact">
                     <strong>${item.name || item.email || 'Usuario sem nome'}</strong>
                     <span class="management-meta">${item.email || '-'}</span>
                   </div>
@@ -8422,20 +8422,20 @@ function renderAdminAccessList(items) {
                     <span class="status-badge ${statusMeta.className}">${statusMeta.label}</span>
                     ${item.profileStatus ? `<span class="status-badge ${getAccessStatusMeta(item.profileStatus).className}">Perfil: ${getAccessStatusMeta(item.profileStatus).label}</span>` : ''}
                   </div>
+                  <div class="access-user-actions access-user-actions-compact">
+                    <button type="button" class="edit-button" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}')" title="Editar permissoes">Permissoes</button>
+                    <button type="button" class="secondary-action" onclick="editarEmailUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.email || '')}')" title="Alterar email">Email</button>
+                    <button type="button" class="secondary-action" onclick="editarTelefoneUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.phone || '')}')" title="Alterar telefone">Telefone</button>
+                    <button type="button" class="secondary-action" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}', true)" title="Transferir">Transferir</button>
+                    <button type="button" class="${isBlocked ? 'secondary-action' : 'danger-action'}" onclick="alternarBloqueioDeAcessoAdmin('${item.accessKey}')" title="${isBlocked ? 'Desbloquear' : 'Bloquear'}">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
+                    <button type="button" class="danger-action" onclick="revogarAcessoAdmin('${item.accessKey}')" title="Revogar">Revogar</button>
+                  </div>
                 </div>
-                <div class="access-user-details">
-                  <span>Barbearia: ${item.barbershop_name || 'Sem barbearia'}</span>
-                  <span>Ultimo acesso: ${formatAdminDate(item.last_login_at)}</span>
-                  <span>Criado em: ${formatAdminDate(item.created_at || item.approved_at)}</span>
-                  <span>Liberado por: ${item.approved_by_email || ADMIN_EMAIL}</span>
-                </div>
-                <div class="access-user-actions">
-                  <button type="button" class="edit-button" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}')">Editar permissoes</button>
-                  <button type="button" class="secondary-action" onclick="editarEmailUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.email || '')}')">Alterar email</button>
-                  <button type="button" class="secondary-action" onclick="editarTelefoneUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.phone || '')}')">Alterar telefone</button>
-                  <button type="button" class="secondary-action" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}', true)">Transferir</button>
-                  <button type="button" class="${isBlocked ? 'secondary-action' : 'danger-action'}" onclick="alternarBloqueioDeAcessoAdmin('${item.accessKey}')">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
-                  <button type="button" class="danger-action" onclick="revogarAcessoAdmin('${item.accessKey}')">Revogar</button>
+                <div class="access-user-details access-user-details-compact">
+                  <span><strong>Barbearia</strong>${item.barbershop_name || 'Sem barbearia'}</span>
+                  <span><strong>Ultimo acesso</strong>${formatAdminDate(item.last_login_at)}</span>
+                  <span><strong>Criado</strong>${formatAdminDate(item.created_at || item.approved_at)}</span>
+                  <span><strong>Liberado por</strong>${item.approved_by_email || ADMIN_EMAIL}</span>
                 </div>
               </article>
             `
