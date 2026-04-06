@@ -15,18 +15,27 @@ const supabaseClient = supabaseLib.createClient(
   SUPABASE_ANON_KEY
 )
 
+let authorizedSupabaseClient = supabaseClient
+let authorizedSupabaseClientAccessToken = ''
+
 function createAuthorizedSupabaseClient(accessToken = '') {
   if (!accessToken) {
     return supabaseClient
   }
 
-  return supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  if (accessToken === authorizedSupabaseClientAccessToken) {
+    return authorizedSupabaseClient
+  }
+
+  authorizedSupabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: {
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
     }
   })
+  authorizedSupabaseClientAccessToken = accessToken
+  return authorizedSupabaseClient
 }
 
 function getActiveSupabaseClient(preferredAccessToken = '') {
