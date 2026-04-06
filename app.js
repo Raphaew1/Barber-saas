@@ -286,7 +286,7 @@ function getBarbershopConflictMessage(error) {
   const details = String(error?.details || '').toLowerCase()
   const combined = `${message} ${details}`
 
-  if (combined.includes('owner_user_id')) {
+  if (combined.includes('owner_id')) {
     return 'Este responsavel ja esta vinculado a outra barbearia. Use outro email de responsavel ou ajuste a regra da tabela no Supabase.'
   }
 
@@ -600,7 +600,7 @@ async function createBarbershopRecord(barbershop) {
   const basePayload = {
     id: generatedId,
     name: barbershop.name,
-    owner_user_id: barbershop.owner_user_id || null
+    owner_id: barbershop.owner_id || null
   }
 
   const payloadWithOptionalFields = {
@@ -6154,7 +6154,7 @@ async function carregarAdminDashboard() {
     productSalesResult,
     subscriptionsResult
   ] = await Promise.all([
-    supabaseClient.from('barbershops').select('id, name, owner_user_id, phone, email'),
+    supabaseClient.from('barbershops').select('id, name, owner_id, phone, email'),
     fetchAdminAppointmentsSummary(),
     supabaseClient.from('barber_access').select('email, is_active'),
     supabaseClient.from('service_sales').select('barbershop_id, service_price, barbershops(name)'),
@@ -6196,7 +6196,7 @@ async function carregarAdminBarbearias() {
     .select(`
       id,
       name,
-      owner_user_id,
+      owner_id,
       phone,
       email
     `)
@@ -7030,7 +7030,7 @@ function renderAdminBarbershopsList(items, subscriptions = []) {
           ].filter(Boolean).join(' | ')}</span>
         </div>
         <div class="admin-actions">
-          <span class="management-badge">${item.owner_user_id ? buildPlanBadge(plan.code) : 'Aguardando responsavel'}</span>
+          <span class="management-badge">${item.owner_id ? buildPlanBadge(plan.code) : 'Aguardando responsavel'}</span>
           <button type="button" class="edit-button" onclick="selecionarContextoAdminDaBarbearia('${item.id}')">Abrir operacao</button>
         </div>
       </div>
