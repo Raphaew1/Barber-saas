@@ -6250,7 +6250,6 @@ function updateLoginPortalUi() {
   const loginTitle = document.getElementById('login-title')
   const loginDescription = document.getElementById('login-description')
   const portalEntryActions = document.getElementById('portal-entry-actions')
-  const loginPortalShortcuts = document.getElementById('login-portal-shortcuts')
   const loginFormPanel = document.getElementById('login-form-panel')
   const loginModeChip = document.getElementById('login-mode-chip')
   const isPortalLanding = isMainPortalLanding()
@@ -6273,10 +6272,6 @@ function updateLoginPortalUi() {
 
   if (loginFormPanel) {
     loginFormPanel.style.display = isPortalLanding ? 'none' : 'block'
-  }
-
-  if (loginPortalShortcuts) {
-    loginPortalShortcuts.style.display = isPortalLanding ? 'none' : 'flex'
   }
 
   if (loginModeChip) {
