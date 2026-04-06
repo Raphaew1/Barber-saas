@@ -85,6 +85,8 @@ let authUiInitialized = false
 let currentSession = null
 let lastAuthAccessToken = ''
 let currentBarbershopId = null
+let currentBarbershopContext = null
+window.currentBarbershopContext = null
 let currentPortal = null
 let managementProductsCache = []
 let serviceCatalogCache = []
@@ -174,6 +176,104 @@ function getAppUrl(fileName = 'index.html') {
   return new URL(fileName, window.location.href).href
 }
 
+function getSlugFromUrl() {
+  const path = String(window.location.pathname || '').replace(/^\/+|\/+$/g, '')
+  if (!path || ['index.html', 'admin.html', 'signup.html'].includes(path.toLowerCase())) {
+    return null
+  }
+
+  return path.split('/')[0] || null
+}
+
+async function loadBarbershopBySlug() {
+  const slug = getSlugFromUrl()
+  if (!slug) {
+    currentBarbershopContext = null
+    window.currentBarbershopContext = null
+    return null
+  }
+
+  const { data, error } = await supabaseClient
+    .from('barbershops')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error || !data) {
+    console.warn('Barbearia nao encontrada por slug', slug, error?.message || '')
+    currentBarbershopContext = null
+    window.currentBarbershopContext = null
+    return null
+  }
+
+  currentBarbershopContext = data
+  currentBarbershopId = data.id || currentBarbershopId
+  window.currentBarbershopContext = data
+  return data
+}
+
+function applyBranding(barbershop) {
+  if (!barbershop) {
+    return
+  }
+
+  currentBarbershopContext = barbershop
+  window.currentBarbershopContext = barbershop
+
+  document.documentElement.style.setProperty('--primary-top', barbershop.primary_color || '#ffffff')
+  document.documentElement.style.setProperty('--secondary-top', barbershop.secondary_color || '#000000')
+
+  document.querySelectorAll('.brand-name').forEach((element) => {
+    element.textContent = barbershop.name
+  })
+
+  document.querySelectorAll('.sidebar-brand h2, .content-topbar h3').forEach((element) => {
+    element.textContent = barbershop.name || element.textContent
+  })
+
+  if (barbershop.logo_url) {
+    document.querySelectorAll('img.brand-logo').forEach((element) => {
+      element.src = barbershop.logo_url
+      element.alt = barbershop.name || 'Logo da barbearia'
+    })
+  }
+}
+
+function isClientPublicView() {
+  return !!currentBarbershopContext && !currentSession
+}
+
+function getCurrentBarbershopContextId() {
+  return currentBarbershopContext?.id || null
+}
+
+function updateClientPublicViewUi() {
+  const publicView = isClientPublicView()
+  const sidebar = document.querySelector('.sidebar')
+  const content = document.querySelector('.content')
+  const topbarIdentity = document.getElementById('topbar-user-identity')
+  const adminContext = document.getElementById('admin-context-switcher')
+
+  document.body.dataset.publicTenant = publicView ? 'true' : 'false'
+
+  if (sidebar) {
+    sidebar.style.display = publicView ? 'none' : ''
+  }
+
+  if (content) {
+    content.style.width = publicView ? '100%' : ''
+    content.style.maxWidth = publicView ? 'none' : ''
+  }
+
+  if (topbarIdentity && publicView) {
+    topbarIdentity.style.display = 'none'
+  }
+
+  if (adminContext && publicView) {
+    adminContext.style.display = 'none'
+  }
+}
+
 function getAuthCallbackParam(paramName) {
   const hashParams = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''))
   const searchParams = new URLSearchParams(window.location.search || '')
@@ -201,6 +301,14 @@ function redirectToPortalEntry(portal) {
 }
 
 window.voltarParaTelaInicial = async function () {
+  if (isClientPublicView()) {
+    currentPortal = 'cliente'
+    applyPortalUi()
+    showScreen('agendar')
+    await carregarPortalData('agendar')
+    return
+  }
+
   if (isSignupEntryPage()) {
     window.location.href = getAppUrl('index.html')
     return
@@ -853,6 +961,14 @@ async function resetInvalidSession(message = 'Sua sessao expirou. Faca login nov
 
   updateProtectedUi(false)
   applyPortalUi()
+
+  if (currentBarbershopContext) {
+    currentPortal = 'cliente'
+    showScreen('agendar')
+    await carregarPortalData('agendar')
+    return
+  }
+
   showScreen(isSignupEntryPage() ? 'signup' : 'login')
   setAuthFeedback(message, 'error')
 }
@@ -1639,8 +1755,7 @@ window.login = async function () {
     setAuthFeedback('Login realizado com sucesso.', 'success')
     updateProtectedUi(true)
     applyPortalUi()
-    showScreen(getDefaultScreenForPortal())
-    await carregarPortalData(getDefaultScreenForPortal())
+    await handleUserAfterLogin(signedUser, resolvedPortal)
   } catch (err) {
     console.error('login error', err)
     setAuthFeedback('Erro no login. Tente novamente.', 'error')
@@ -1975,7 +2090,7 @@ window.agendar = async function () {
     return
   }
 
-  const barbershopId = await resolveAppointmentBarbershop(barberId, serviceIds)
+  const barbershopId = currentBarbershopContext?.id || await getBarbershop()
   if (!barbershopId) {
     alert('Nao foi possivel identificar a barbearia do agendamento.')
     return
@@ -2457,7 +2572,10 @@ function resetAppointmentForm() {
 
 // Carrega barbeiros e servicos disponiveis para os selects da tela.
 async function carregarDados() {
-  const barbershopId = currentPortal === 'barbeiro' || currentPortal === 'admin' ? await getBarbershop() : null
+  const contextualBarbershopId = getCurrentBarbershopContextId()
+  const barbershopId = contextualBarbershopId || (currentPortal === 'barbeiro' || currentPortal === 'admin' ? await getBarbershop() : null)
+  const shouldFilterByBarbershop = Boolean(barbershopId)
+
   if ((currentPortal === 'barbeiro' || currentPortal === 'admin') && !barbershopId) {
     renderSelectState('barber', getTenantPortalMessage('Nenhum barbeiro disponivel'), true)
     renderServiceState(getTenantPortalMessage('Nenhum servico disponivel'))
@@ -2477,7 +2595,7 @@ async function carregarDados() {
     .select('id, name, price, barbershop_id')
     .order('name', { ascending: true })
 
-  if ((currentPortal === 'barbeiro' || currentPortal === 'admin') && barbershopId) {
+  if (shouldFilterByBarbershop) {
     barbersQuery = barbersQuery.eq('barbershop_id', barbershopId)
     servicesQuery = servicesQuery.eq('barbershop_id', barbershopId)
   }
@@ -2485,7 +2603,7 @@ async function carregarDados() {
   const { data: barbers, error: barbersError } = await barbersQuery
   const { data: services, error: servicesError } = await servicesQuery
 
-  if (barbershopId && !barbersError && !servicesError && (barbers?.length === 0 || services?.length === 0)) {
+  if (!contextualBarbershopId && barbershopId && !barbersError && !servicesError && (barbers?.length === 0 || services?.length === 0)) {
     try {
       await criarDadosIniciaisDaBarbearia(barbershopId)
       return carregarDados()
@@ -2515,7 +2633,7 @@ async function carregarDados() {
     selectedAppointmentDay = formatDateKey(buildUpcomingDays(1)[0])
   }
   await refreshAppointmentSlotPicker()
-  if (barbershopId) {
+  if (barbershopId && !isClientPublicView()) {
     await carregarOnboarding(barbershopId)
   }
 }
@@ -2982,12 +3100,20 @@ window.logout = async function () {
     currentBarbershopId = null
     if (isAdminEntryPage()) {
       setPortal('admin')
+    } else if (currentBarbershopContext) {
+      currentPortal = 'cliente'
     } else {
       currentPortal = null
       localStorage.removeItem(PORTAL_STORAGE_KEY)
     }
     updateProtectedUi(false)
     applyPortalUi()
+    if (currentBarbershopContext) {
+      showScreen('agendar')
+      await carregarPortalData('agendar')
+      return
+    }
+
     showScreen('login')
   } catch (err) {
     console.error('logout error', err)
@@ -2997,6 +3123,11 @@ window.logout = async function () {
 
 // Descobre a barbearia vinculada ao usuario autenticado.
 async function getBarbershop() {
+  if (getCurrentBarbershopContextId()) {
+    currentBarbershopId = getCurrentBarbershopContextId()
+    return currentBarbershopId
+  }
+
   if (currentBarbershopId) {
     return currentBarbershopId
   }
@@ -3076,6 +3207,10 @@ async function getBarbershop() {
 
 // Resolve a barbearia do agendamento a partir do barbeiro e dos servicos escolhidos.
 async function resolveAppointmentBarbershop(barberId, serviceIds) {
+  if (getCurrentBarbershopContextId()) {
+    return getCurrentBarbershopContextId()
+  }
+
   const sessionBarbershopId = await getBarbershop()
   if (sessionBarbershopId) {
     return sessionBarbershopId
@@ -3200,10 +3335,57 @@ async function resolvePortalForUser(user) {
   }
 
   if (profile?.role === ADMIN_ROLE) {
-    return 'barbeiro'
+    return 'admin'
   }
 
   return 'cliente'
+}
+
+async function handleUserAfterLogin(user, fallbackPortal = '') {
+  let role = ''
+
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (isAdminEmail(user?.email)) {
+    role = ADMIN_ROLE
+  } else if (profile?.role) {
+    role = normalizePortalRole(profile.role)
+  } else if (fallbackPortal) {
+    role = fallbackPortal
+  } else {
+    role = await resolvePortalForUser(user)
+  }
+
+  if (role === ADMIN_ROLE) {
+    setPortal('admin')
+    applyPortalUi()
+    if (!isAdminEntryPage()) {
+      window.location.href = getAppUrl('admin.html')
+      return role
+    }
+
+    showScreen('admin-dashboard')
+    await carregarPortalData('admin-dashboard')
+    return role
+  }
+
+  if (role === BARBER_ROLE) {
+    setPortal('barbeiro')
+    applyPortalUi()
+    showScreen('gestao')
+    await carregarPortalData('gestao')
+    return role
+  }
+
+  setPortal('cliente')
+  applyPortalUi()
+  showScreen('agendar')
+  await carregarPortalData('agendar')
+  return CUSTOMER_ROLE
 }
 
 // Valida se um usuario pode acessar o portal do barbeiro e sincroniza o perfil quando aprovado.
@@ -3330,6 +3512,12 @@ async function init() {
   if (warnIfRunningFromFileProtocol()) {
     return
   }
+
+  const barbershop = await loadBarbershopBySlug()
+  if (barbershop) {
+    applyBranding(barbershop)
+  }
+
   restorePortalSelection()
   updateAdminContextUi()
   bindEnterSubmit(['email', 'password'], () => {
@@ -3365,8 +3553,28 @@ async function init() {
     barberInput.dataset.boundSlots = 'true'
   }
 
+  const { data } = await supabaseClient.auth.getSession()
+  currentSession = data.session ?? null
+  lastAuthAccessToken = data.session?.access_token || lastAuthAccessToken
+
+  if (barbershop && !currentSession) {
+    currentPortal = 'cliente'
+    updateProtectedUi(false)
+    applyPortalUi()
+    showScreen('agendar')
+    await carregarDados()
+    return
+  }
+
   const sessionState = await ensureValidSessionState()
   if (sessionState.error && !sessionState.session) {
+    if (barbershop) {
+      currentPortal = 'cliente'
+      updateProtectedUi(false)
+      applyPortalUi()
+      showScreen('agendar')
+      await carregarDados()
+    }
     return
   }
 
@@ -3394,6 +3602,13 @@ async function init() {
     await carregarPortalData('admin-dashboard')
     return
   } else {
+    if (sessionState.session?.user) {
+      updateProtectedUi(true)
+      applyPortalUi()
+      await handleUserAfterLogin(sessionState.session.user)
+      return
+    }
+
     applyPortalUi()
     showScreen(isSignupEntryPage() ? 'signup' : 'login')
     renderSelectState('barber', 'Faca login para carregar', true)
@@ -5659,12 +5874,15 @@ function applyPortalUi() {
   updateLoginPortalUi()
   updatePortalNavigation()
   updateAdminContextUi()
+  updateClientPublicViewUi()
 }
 
 // Persiste o portal para manter a experiencia apos recarregar.
 function setPortal(portal) {
   currentPortal = portal
-  localStorage.setItem(PORTAL_STORAGE_KEY, portal)
+  if (portal) {
+    localStorage.setItem(PORTAL_STORAGE_KEY, portal)
+  }
 }
 
 // Restaura a escolha do portal salva no navegador.
@@ -5679,7 +5897,7 @@ function restorePortalSelection() {
     return
   }
 
-  currentPortal = null
+  currentPortal = currentBarbershopContext ? 'cliente' : null
 }
 
 // Atualiza a area de login com o portal selecionado.
@@ -5691,20 +5909,26 @@ function updateLoginPortalUi() {
   if (selectedPortalLabel) {
     selectedPortalLabel.textContent = isAdminEntryPage()
       ? 'Acesso restrito ao administrador principal.'
+      : isClientPublicView()
+        ? `Agendamento direto para ${currentBarbershopContext?.name || 'esta barbearia'}.`
       : isSignupEntryPage()
         ? 'Seu cadastro sera criado no portal do cliente.'
-      : 'Entre com seu email e o sistema identifica automaticamente seu portal.'
+        : 'Entre com seu email e o sistema identifica automaticamente seu portal.'
   }
 
   if (loginTitle) {
     loginTitle.textContent = isAdminEntryPage()
       ? 'Entrar no portal do administrador'
+      : isClientPublicView()
+        ? `Agende com ${currentBarbershopContext?.name || 'a barbearia'}`
       : 'Entrar na sua conta'
   }
 
   if (loginDescription) {
     loginDescription.textContent = isAdminEntryPage()
       ? 'Somente o email master autorizado pode acessar esta area.'
+      : isClientPublicView()
+        ? 'Escolha barbeiro, servicos e horario. O contexto da barbearia ja foi identificado pela URL.'
       : isSignupEntryPage()
         ? 'Crie sua conta de cliente e confirme seu email antes de entrar.'
       : 'Use seu email e senha. O sistema redireciona automaticamente para cliente, barbearia ou administrador.'
@@ -5716,7 +5940,9 @@ function updatePortalNavigation() {
   document.querySelectorAll('.nav-button[data-portal]').forEach((button) => {
     const allowedPortals = (button.dataset.portal || '').split(',').map((item) => item.trim())
     const requiresAdmin = button.dataset.adminOnly === 'true'
-    const shouldShow = currentPortal
+    const shouldShow = isClientPublicView()
+      ? false
+      : currentPortal
       ? allowedPortals.includes(currentPortal) && (!requiresAdmin || isAdminEmail(currentSession?.user?.email))
       : false
     button.style.display = shouldShow ? 'inline-flex' : 'none'
@@ -5738,6 +5964,10 @@ function getDefaultScreenForPortal() {
 
 // Verifica se a tela faz parte das permissoes do portal.
 function isScreenAllowedForPortal(screenId) {
+  if (isClientPublicView()) {
+    return screenId === 'agendar'
+  }
+
   if (screenId === 'login') {
     return true
   }
@@ -5759,7 +5989,7 @@ function isScreenAllowedForPortal(screenId) {
 async function carregarPortalData(screenId) {
   if (screenId === 'agendar') {
     await carregarDados()
-    if (currentPortal === 'cliente') {
+    if (currentPortal === 'cliente' && !isClientPublicView()) {
       await carregarHistoricoCliente()
     }
     return
