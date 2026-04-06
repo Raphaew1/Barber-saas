@@ -7470,7 +7470,7 @@ async function carregarAdminAcessos() {
     return
   }
 
-  if (userAccessResult.error) {
+  if (userAccessResult.error && !userAccessResult.missingTable) {
     setAdminAccessLoading(false)
     renderManagementMessage('admin-access-list', `Erro ao carregar acessos: ${userAccessResult.error.message}`)
     return
