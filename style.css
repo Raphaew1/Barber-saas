@@ -4055,7 +4055,8 @@ body.admin-premium .barbershop-col-owner {
 }
 
 body.admin-premium .barbershop-col-actions {
-  width: 190px;
+  width: 56px;
+  text-align: center;
 }
 
 body.admin-premium .barbershop-contact-stack {

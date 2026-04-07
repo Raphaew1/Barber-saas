@@ -131,6 +131,7 @@ let adminAccessCurrentPage = 1
 let adminAccessQuickFilter = 'all'
 let isAdminAccessAuditExpanded = false
 let openAdminAccessActionKey = null
+let openAdminBarbershopActionKey = null
 let currentVisibleScreenId = ''
 let platformContextCache = null
 let adminPasswordModalTarget = null
@@ -8829,6 +8830,7 @@ function renderAdminBarbershopsList(items, subscriptions = []) {
               const subscription = subscriptionMap.get(item.id)
               const plan = getPlanDefinition(subscription?.plan_code)
               const hasOwner = Boolean(item.owner_id)
+              const menuOpen = openAdminBarbershopActionKey === item.id
               return `
                 <tr class="access-table-row" onclick="editarBarbeariaAdmin('${item.id}')">
                   <td class="barbershop-col-name">
@@ -8849,9 +8851,12 @@ function renderAdminBarbershopsList(items, subscriptions = []) {
                     <span class="management-badge ${hasOwner ? 'is-success' : ''}">${hasOwner ? 'Responsavel vinculado' : 'Aguardando responsavel'}</span>
                   </td>
                   <td class="barbershop-col-actions" onclick="event.stopPropagation()">
-                    <div class="admin-actions">
-                      <button type="button" class="edit-button" onclick="editarBarbeariaAdmin('${item.id}')">Editar</button>
-                      <button type="button" class="edit-button" onclick="selecionarContextoAdminDaBarbearia('${item.id}')">Abrir operacao</button>
+                    <div class="access-actions-menu-wrap">
+                      <button type="button" class="secondary-action access-actions-trigger access-actions-icon-trigger" aria-label="Abrir acoes da barbearia" onclick="toggleAdminBarbershopActionMenu(event, '${item.id}')">...</button>
+                      <div class="access-actions-menu ${menuOpen ? 'is-open' : ''}">
+                        <button type="button" onclick="handleAdminBarbershopAction(event, 'edit', '${item.id}')">Editar</button>
+                        <button type="button" onclick="handleAdminBarbershopAction(event, 'open-context', '${item.id}')">Abrir operacao</button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -8897,6 +8902,27 @@ window.filtrarAdminBarbearias = function () {
   }
 
   renderAdminBarbershopsList(filtered, adminBarbershopsSubscriptionsCache)
+}
+
+window.toggleAdminBarbershopActionMenu = function (event, barbershopId) {
+  event?.stopPropagation?.()
+  openAdminBarbershopActionKey = openAdminBarbershopActionKey === barbershopId ? null : barbershopId
+  filtrarAdminBarbearias()
+}
+
+window.handleAdminBarbershopAction = function (event, action, barbershopId) {
+  event?.stopPropagation?.()
+  openAdminBarbershopActionKey = null
+  filtrarAdminBarbearias()
+
+  if (action === 'edit') {
+    editarBarbeariaAdmin(barbershopId)
+    return
+  }
+
+  if (action === 'open-context') {
+    selecionarContextoAdminDaBarbearia(barbershopId)
+  }
 }
 
 function buildAdminAccessTableRow(item) {
@@ -9287,6 +9313,14 @@ document.addEventListener('change', (event) => {
 
 document.addEventListener('click', (event) => {
   if (!openAdminAccessActionKey) {
+  } else if (event.target?.closest('.access-actions-menu-wrap')) {
+    return
+  } else {
+    openAdminAccessActionKey = null
+    renderAdminAccessList(adminAccessFilteredCache)
+  }
+
+  if (!openAdminBarbershopActionKey) {
     return
   }
 
@@ -9294,8 +9328,8 @@ document.addEventListener('click', (event) => {
     return
   }
 
-  openAdminAccessActionKey = null
-  renderAdminAccessList(adminAccessFilteredCache)
+  openAdminBarbershopActionKey = null
+  filtrarAdminBarbearias()
 })
 
 window.filtrarAdminAcessos = function (options = {}) {
