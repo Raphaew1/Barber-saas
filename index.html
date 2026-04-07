@@ -208,12 +208,16 @@
             </div>
           </div>
           <small class="field-hint">Voce pode marcar varios servicos se desejar.</small>
-          <div class="field-label">Dia</div>
-          <div id="appointment-day-picker" class="slot-day-picker"></div>
-          <div class="field-label">Horario</div>
-          <div id="appointment-slot-picker" class="slot-picker">
-            <div class="admin-empty">Selecione barbeiro e servicos para ver horarios.</div>
+          <label class="field-label" for="appointment-date">Data</label>
+          <input type="date" id="appointment-date">
+          <div id="calendar-source-status" class="calendar-source-status calendar-source-status-idle">
+            Selecione barbeiro, servicos e data para consultar a disponibilidade.
           </div>
+          <div class="field-label">Horarios disponiveis</div>
+          <div id="available-slots" class="slot-picker availability-slot-picker">
+            <div class="admin-empty">Selecione barbeiro, servicos e data para ver horarios.</div>
+          </div>
+          <input type="hidden" id="selected-slot-value">
           <div class="payment-panel">
             <div class="management-card-header">
               <div>
@@ -229,8 +233,6 @@
             </select>
             <div id="appointment-payment-summary" class="payment-summary"></div>
           </div>
-          <input type="datetime-local" id="time" style="display:none;">
-
           <button data-protected="true" onclick="agendar()">Agendar</button>
         </div>
 
@@ -250,6 +252,27 @@
           <h1>Minha Agenda</h1>
           <p>Visualize os atendimentos, detalhes de servicos e organize o dia com clareza.</p>
         </div>
+        <section class="management-card google-calendar-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Integracao</span>
+              <h2>Google Calendar</h2>
+            </div>
+          </div>
+          <div class="management-form management-form-grid management-form-compact google-calendar-form">
+            <select id="google-calendar-barber" onchange="handleGoogleCalendarBarberChange()">
+              <option value="">Selecione um barbeiro</option>
+            </select>
+            <div id="google-calendar-connection-status" class="google-calendar-status google-calendar-status-idle">
+              Nenhuma conta verificada.
+            </div>
+            <div id="google-calendar-connected-email" class="field-hint management-form-span-full">Selecione um barbeiro para consultar a conexao.</div>
+            <div class="management-form-actions management-form-span-full">
+              <button type="button" onclick="connectGoogleCalendar()">Conectar Google</button>
+              <button type="button" class="secondary-action" onclick="disconnectGoogleCalendar()">Desconectar Google</button>
+            </div>
+          </div>
+        </section>
         <div class="agenda-visual-toolbar">
           <div class="segmented-control">
             <button type="button" id="agenda-view-day" class="segmented-button is-active" onclick="alterarModoAgenda('day')">Dia</button>

@@ -109,6 +109,9 @@ let appointmentWorkflowSupport = null
 let appointmentSlotsCache = []
 let selectedAppointmentDay = null
 let selectedAppointmentTime = ''
+let appointmentAvailabilitySource = 'internal'
+let appointmentAvailabilityConnection = null
+let selectedGoogleCalendarBarberId = ''
 let agendaViewMode = 'day'
 let selectedAgendaDay = null
 let customersCrmCache = []
@@ -1368,6 +1371,42 @@ async function invokeProtectedFunction(functionName, body, options = {}) {
   return result
 }
 
+async function invokePublicFunction(functionName, body, options = {}) {
+  const { headers = {} } = options
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        ...headers
+      },
+      body: JSON.stringify(body || {})
+    })
+
+    const responseText = await response.text()
+    let payload = null
+    try {
+      payload = responseText ? JSON.parse(responseText) : null
+    } catch (_parseError) {
+      payload = null
+    }
+
+    if (!response.ok) {
+      const error = new Error(String(payload?.error || payload?.message || response.statusText || 'Edge Function returned a non-2xx status code'))
+      error.status = response.status
+      error.payload = payload
+      error.responseText = responseText
+      return { data: null, error }
+    }
+
+    return { data: payload, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
 async function extractFunctionErrorMessage(error, fallbackMessage = 'Nao foi possivel concluir a operacao.') {
   if (!error) {
     return fallbackMessage
@@ -2506,26 +2545,34 @@ async function upsertCustomerRecord({ barbershopId, name, phone, email }) {
 
 async function createAppointmentServerSide(payload) {
   try {
-    const { data, error } = await invokeProtectedFunction('create-appointment', payload, {
-      authErrorMessage: 'Sua sessao expirou. Faca login novamente antes de concluir o agendamento.'
-    })
+    const headers = {}
+    const sessionResult = await getSessionAccessToken().catch(() => ({ accessToken: '' }))
+    if (sessionResult?.accessToken) {
+      headers.Authorization = `Bearer ${sessionResult.accessToken}`
+    }
+
+    const { data, error } = await invokePublicFunction('create-appointment', payload, { headers })
 
     if (error) {
       return {
         success: false,
-        fallbackToClient: true,
+        fallbackToClient: false,
         message: error.message
       }
     }
 
     return {
       success: true,
-      appointments: data?.appointments || []
+      appointments: data?.appointments || [],
+      bookingGroupId: data?.bookingGroupId || '',
+      source: data?.source || 'internal',
+      syncStatus: data?.syncStatus || 'not_connected',
+      syncError: data?.syncError || ''
     }
   } catch (error) {
     return {
       success: false,
-      fallbackToClient: true,
+      fallbackToClient: false,
       message: error.message
     }
   }
@@ -2573,9 +2620,11 @@ window.agendar = async function () {
   const name = document.getElementById('name').value.trim()
   const phone = document.getElementById('customer-phone')?.value?.trim() || ''
   const formEmail = document.getElementById('customer-email')?.value?.trim().toLowerCase() || ''
-  const time = document.getElementById('time').value
   const barberId = document.getElementById('barber').value
   const serviceIds = getSelectedServiceIds()
+  const appointmentDate = getSelectedAppointmentDate()
+  const selectedSlot = getSelectedSlot()
+  const durationMinutes = calculateSelectedServicesDuration()
 
   if (!name) {
     alert('Informe o nome do cliente.')
@@ -2592,8 +2641,8 @@ window.agendar = async function () {
     return
   }
 
-  if (!time) {
-    alert('Selecione uma data e horario para o agendamento.')
+  if (!appointmentDate) {
+    alert('Selecione uma data para o agendamento.')
     return
   }
 
@@ -2602,41 +2651,17 @@ window.agendar = async function () {
     return
   }
 
-  const normalizedTime = normalizeAppointmentTime(time)
-  if (!normalizedTime) {
-    alert('Data invalida. Escolha outra data e tente novamente.')
+  if (!selectedSlot?.startsAt) {
+    alert('Selecione um horario disponivel para o agendamento.')
     return
   }
 
-  const barbershopId = currentBarbershopContext?.id || await getBarbershop()
+  const startsAt = String(selectedSlot.startsAt || '').trim()
+  const endsAt = String(selectedSlot.endsAt || '').trim() || new Date(new Date(startsAt).getTime() + durationMinutes * 60_000).toISOString()
+
+  const barbershopId = currentBarbershopContext?.id || await resolveAppointmentBarbershop(barberId, serviceIds)
   if (!barbershopId) {
     alert('Nao foi possivel identificar a barbearia do agendamento.')
-    return
-  }
-
-  const { data: existing, error: existingError } = await supabaseClient
-    .from('appointments')
-    .select('*')
-    .eq('barber_id', barberId)
-    .eq('appointment_time', normalizedTime)
-
-  if (existingError) {
-    console.error('Erro ao validar horario', existingError)
-    alert(existingError.message)
-    return
-  }
-
-  if (existing && existing.length > 0) {
-    const nextSlot = findNextAvailableSlotAfter(selectedAppointmentTime || normalizedTime.slice(0, 16))
-    if (nextSlot) {
-      selectedAppointmentTime = nextSlot.value
-      document.getElementById('time').value = nextSlot.value
-      renderAppointmentSlotPicker()
-      alert(`Horario ocupado. Reagendamento automatico sugerido para ${nextSlot.label}.`)
-      return
-    }
-
-    alert('Horario ja ocupado!')
     return
   }
 
@@ -2660,11 +2685,13 @@ window.agendar = async function () {
     console.error('Erro ao sincronizar cliente no cadastro', customerSyncResult.error)
   }
 
-  let appointmentTimeToUse = normalizedTime
   const serverSideResult = await createAppointmentServerSide({
     barberId,
     serviceIds,
-    appointmentTime: appointmentTimeToUse,
+    appointmentTime: startsAt,
+    startsAt,
+    endsAt,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Lisbon',
     customerName: name,
     customerEmail,
     customerPhone: phone
@@ -2685,128 +2712,18 @@ window.agendar = async function () {
       console.error('Erro ao registrar pagamento do agendamento', paymentResult.error)
     }
 
+    if (serverSideResult.syncStatus === 'failed' && serverSideResult.syncError) {
+      showAppToast(`Agendamento salvo, mas a sincronizacao com Google falhou: ${serverSideResult.syncError}`, 'warning')
+    }
+
     showSuccess()
     resetAppointmentForm()
     await sincronizarAgendamentos()
     return
   }
 
-  const appointmentsPayload = serviceIds.map((serviceId) => ({
-    customer_name: name,
-    barber_id: barberId,
-    service_id: serviceId,
-    appointment_time: appointmentTimeToUse,
-    barbershop_id: barbershopId,
-    customer_user_id: currentUser?.id,
-    customer_email: customerEmail || null,
-    status: 'scheduled',
-    finalized_at: null
-  }))
-
-  let insertResult = await supabaseClient
-    .from('appointments')
-    .insert(appointmentsPayload)
-    .select('id, service_id, barber_id, customer_name, appointment_time')
-
-  if (
-    insertResult.error &&
-    isMissingAppointmentIdentityColumnsError(insertResult.error) &&
-    isMissingAppointmentWorkflowColumnsError(insertResult.error)
-  ) {
-    appointmentIdentitySupport = false
-    appointmentWorkflowSupport = false
-
-    const fallbackAppointmentsPayload = serviceIds.map((serviceId) => ({
-      customer_name: name,
-      barber_id: barberId,
-      service_id: serviceId,
-      appointment_time: appointmentTimeToUse,
-      barbershop_id: barbershopId
-    }))
-
-    insertResult = await supabaseClient
-      .from('appointments')
-      .insert(fallbackAppointmentsPayload)
-      .select('id, service_id, barber_id, customer_name, appointment_time')
-  } else if (insertResult.error && isMissingAppointmentIdentityColumnsError(insertResult.error)) {
-    appointmentIdentitySupport = false
-
-    const fallbackAppointmentsPayload = serviceIds.map((serviceId) => ({
-      customer_name: name,
-      barber_id: barberId,
-      service_id: serviceId,
-      appointment_time: appointmentTimeToUse,
-      barbershop_id: barbershopId,
-      status: 'scheduled',
-      finalized_at: null
-    }))
-
-    insertResult = await supabaseClient
-      .from('appointments')
-      .insert(fallbackAppointmentsPayload)
-      .select('id, service_id, barber_id, customer_name, appointment_time')
-  } else if (insertResult.error && isMissingAppointmentWorkflowColumnsError(insertResult.error)) {
-    appointmentWorkflowSupport = false
-
-    const fallbackAppointmentsPayload = serviceIds.map((serviceId) => ({
-      customer_name: name,
-      barber_id: barberId,
-      service_id: serviceId,
-      appointment_time: appointmentTimeToUse,
-      barbershop_id: barbershopId,
-      customer_user_id: currentUser?.id,
-      customer_email: customerEmail || null
-    }))
-
-    insertResult = await supabaseClient
-      .from('appointments')
-      .insert(fallbackAppointmentsPayload)
-      .select('id, service_id, barber_id, customer_name, appointment_time')
-  } else if (!insertResult.error) {
-    appointmentIdentitySupport = true
-    appointmentWorkflowSupport = true
-  }
-
-  const { error } = insertResult
-
-  if (error) {
-    const conflictMessage = String(error.message || '').toLowerCase()
-    if (conflictMessage.includes('duplicate') || conflictMessage.includes('confl') || conflictMessage.includes('occupied')) {
-      const nextSlot = findNextAvailableSlotAfter(selectedAppointmentTime || appointmentTimeToUse.slice(0, 16))
-      if (nextSlot) {
-        appointmentTimeToUse = nextSlot.value
-        selectedAppointmentTime = nextSlot.value
-        document.getElementById('time').value = nextSlot.value
-        renderAppointmentSlotPicker()
-        alert(`Horario ocupado. Reagendamento automatico sugerido para ${nextSlot.label}. Clique em Agendar novamente para confirmar.`)
-        return
-      }
-    }
-
-    console.error('Erro ao agendar', error)
-    alert(error.message)
-    return
-  }
-
-  {
-    const paymentProvider = document.getElementById('appointment-payment-provider')?.value || 'none'
-    const paymentResult = await createAppointmentPaymentRecords(insertResult.data || [], {
-      barbershopId,
-      customerName: name,
-      customerEmail,
-      customerPhone: phone,
-      provider: paymentProvider,
-      depositAmount: getSelectedServicesTotalPrice() > 0 ? Math.max(5, Number((getSelectedServicesTotalPrice() * 0.2).toFixed(2))) : 0
-    })
-
-    if (paymentResult.error) {
-      console.error('Erro ao registrar pagamento do agendamento', paymentResult.error)
-    }
-  }
-
-  showSuccess()
-  resetAppointmentForm()
-  await sincronizarAgendamentos()
+  console.error('Erro ao agendar', serverSideResult.message)
+  alert(serverSideResult.message || 'Nao foi possivel concluir o agendamento.')
 }
 
 // Exibe um aviso visual curto apos agendar com sucesso.
@@ -2897,99 +2814,92 @@ async function fetchAppointmentsForBarber(barberId, dayKey) {
   return data || []
 }
 
-async function refreshAppointmentSlotPicker() {
-  const dayPicker = document.getElementById('appointment-day-picker')
-  const slotPicker = document.getElementById('appointment-slot-picker')
-  const barberId = document.getElementById('barber')?.value || ''
-
-  if (!dayPicker || !slotPicker) {
-    return
-  }
-
-  if (!selectedAppointmentDay) {
-    selectedAppointmentDay = formatDateKey(buildUpcomingDays(1)[0])
-  }
-
-  renderAppointmentDayPicker()
-
-  if (!barberId || getSelectedServiceIds().length === 0) {
-    slotPicker.innerHTML = '<div class="admin-empty">Selecione barbeiro e servicos para ver horarios.</div>'
-    document.getElementById('time').value = ''
-    return
-  }
-
-  slotPicker.innerHTML = '<div class="admin-empty">Carregando horarios disponiveis...</div>'
-
-  const existingAppointments = await fetchAppointmentsForBarber(barberId, selectedAppointmentDay)
-  const durationMinutes = estimateSelectedDurationMinutes()
-  const occupiedTimes = new Set(existingAppointments.map((item) => {
-    const date = new Date(item.appointment_time)
-    return `${date.getHours()}:${date.getMinutes()}`
-  }))
-
-  const slots = []
-  for (let hour = 9; hour < 19; hour += 1) {
-    for (let minute = 0; minute < 60; minute += 30) {
-      const slotDate = new Date(`${selectedAppointmentDay}T00:00:00`)
-      slotDate.setHours(hour, minute, 0, 0)
-
-      if (slotDate < new Date()) {
-        continue
-      }
-
-      const occupationKey = `${slotDate.getHours()}:${slotDate.getMinutes()}`
-      const isOccupied = occupiedTimes.has(occupationKey)
-      slots.push({
-        value: slotDate.toISOString().slice(0, 16),
-        label: `${formatHourLabel(slotDate)} · ${durationMinutes} min`,
-        disabled: isOccupied
-      })
-    }
-  }
-
-  const suggestedSlots = slots
-    .filter((slot) => !slot.disabled)
-    .slice(0, 3)
-    .map((slot) => slot.value)
-  appointmentSlotsCache = slots.map((slot) => ({
-    ...slot,
-    suggested: suggestedSlots.includes(slot.value)
-  }))
-  renderAppointmentSlotPicker()
+function getSelectedAppointmentDate() {
+  return document.getElementById('appointment-date')?.value || ''
 }
 
-function renderAppointmentDayPicker() {
-  const container = document.getElementById('appointment-day-picker')
-  if (!container) {
+function getSelectedSlot() {
+  if (!selectedAppointmentTime) {
+    return null
+  }
+
+  return appointmentSlotsCache.find((slot) => slot.value === selectedAppointmentTime) || null
+}
+
+function calculateSelectedServicesDuration() {
+  const selectedServices = getSelectedServiceRecords()
+  if (!selectedServices.length) {
+    return 0
+  }
+
+  return selectedServices.reduce((sum, item) => sum + Math.max(Number(item.duration_minutes || 30), 1), 0)
+}
+
+function renderCalendarSourceStatus(options = {}) {
+  const statusElement = document.getElementById('calendar-source-status')
+  if (!statusElement) {
     return
   }
 
-  container.innerHTML = buildUpcomingDays(7)
-    .map((date) => {
-      const value = formatDateKey(date)
-      const isActive = selectedAppointmentDay === value
-      return `
-        <button
-          type="button"
-          class="slot-day ${isActive ? 'is-active' : ''}"
-          onclick="selecionarDiaAgendamento('${value}')"
-        >
-          <strong>${date.toLocaleDateString('pt-BR', { weekday: 'short' })}</strong>
-          <span>${date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-        </button>
-      `
-    })
-    .join('')
+  const {
+    state = 'idle',
+    source = appointmentAvailabilitySource,
+    isConnected = appointmentAvailabilityConnection?.isConnected,
+    message = ''
+  } = options
+
+  statusElement.className = `calendar-source-status calendar-source-status-${state}`
+
+  if (message) {
+    statusElement.textContent = message
+    return
+  }
+
+  if (state === 'loading') {
+    statusElement.textContent = 'Consultando a disponibilidade do barbeiro...'
+    return
+  }
+
+  if (state === 'error') {
+    statusElement.textContent = 'Nao foi possivel consultar a agenda agora. Tente novamente em instantes.'
+    return
+  }
+
+  if (state === 'success') {
+    statusElement.textContent = source === 'google' && isConnected
+      ? 'Agenda sincronizada com Google Calendar.'
+      : 'Usando agenda interna da barbearia.'
+    return
+  }
+
+  statusElement.textContent = 'Selecione barbeiro, servicos e data para consultar a disponibilidade.'
 }
 
-function renderAppointmentSlotPicker() {
-  const container = document.getElementById('appointment-slot-picker')
+function clearAvailableSlots(message = 'Selecione barbeiro, servicos e data para ver horarios.') {
+  appointmentSlotsCache = []
+  selectedAppointmentTime = ''
+  const slotInput = document.getElementById('selected-slot-value')
+  const slotsContainer = document.getElementById('available-slots')
+
+  if (slotInput) {
+    slotInput.value = ''
+  }
+
+  if (slotsContainer) {
+    slotsContainer.innerHTML = `<div class="admin-empty">${message}</div>`
+  }
+
+  renderCalendarSourceStatus({ state: 'idle' })
+}
+
+function renderAvailableSlots() {
+  const container = document.getElementById('available-slots')
   if (!container) {
     return
   }
 
   if (!appointmentSlotsCache.length) {
-    container.innerHTML = '<div class="admin-empty">Nenhum horario disponivel para o dia selecionado.</div>'
+    container.innerHTML = '<div class="admin-empty">Nenhum horario disponivel para a data selecionada.</div>'
     return
   }
 
@@ -2997,29 +2907,106 @@ function renderAppointmentSlotPicker() {
     .map((slot) => `
       <button
         type="button"
-        class="slot-chip ${selectedAppointmentTime === slot.value ? 'is-active' : ''} ${slot.suggested ? 'is-suggested' : ''}"
-        ${slot.disabled ? 'disabled' : ''}
-        onclick="${slot.disabled ? '' : `selecionarHorarioAgendamento('${slot.value}')`}"
+        class="slot-chip availability-slot ${selectedAppointmentTime === slot.value ? 'is-active' : ''}"
+        onclick="selectAvailableSlot('${slot.value}')"
       >
-        ${slot.disabled ? `${slot.label} · Ocupado` : `${slot.label}${slot.suggested ? ' · Sugerido' : ''}`}
+        <strong>${slot.label}</strong>
+        <span>${slot.durationMinutes} min</span>
       </button>
     `)
     .join('')
 }
 
-window.selecionarDiaAgendamento = async function (dayKey) {
-  selectedAppointmentDay = dayKey
-  selectedAppointmentTime = ''
-  await refreshAppointmentSlotPicker()
+window.selectAvailableSlot = function (slotValue) {
+  selectedAppointmentTime = slotValue
+  const selectedSlot = getSelectedSlot()
+  const hiddenInput = document.getElementById('selected-slot-value')
+
+  if (hiddenInput) {
+    hiddenInput.value = slotValue
+  }
+
+  renderAvailableSlots()
+
+  if (selectedSlot?.label) {
+    renderCalendarSourceStatus({
+      state: 'success',
+      source: selectedSlot.source || appointmentAvailabilitySource,
+      isConnected: appointmentAvailabilityConnection?.isConnected,
+      message: `${appointmentAvailabilitySource === 'google' ? 'Google Calendar sincronizado' : 'Agenda interna em uso'} · Horario selecionado: ${selectedSlot.label}`
+    })
+  }
 }
 
-window.selecionarHorarioAgendamento = function (slotValue) {
-  selectedAppointmentTime = slotValue
-  const timeInput = document.getElementById('time')
-  if (timeInput) {
-    timeInput.value = slotValue
+async function fetchBarberAvailability() {
+  const barberId = document.getElementById('barber')?.value || ''
+  const appointmentDate = getSelectedAppointmentDate()
+  const serviceIds = getSelectedServiceIds()
+  const durationMinutes = calculateSelectedServicesDuration()
+  const slotsContainer = document.getElementById('available-slots')
+
+  if (!slotsContainer) {
+    return
   }
-  renderAppointmentSlotPicker()
+
+  if (!barberId || !appointmentDate || !serviceIds.length) {
+    clearAvailableSlots('Selecione barbeiro, servicos e data para ver horarios.')
+    return
+  }
+
+  appointmentSlotsCache = []
+  selectedAppointmentTime = ''
+  const hiddenInput = document.getElementById('selected-slot-value')
+  if (hiddenInput) {
+    hiddenInput.value = ''
+  }
+  slotsContainer.innerHTML = '<div class="admin-empty">Carregando horarios disponiveis...</div>'
+  renderCalendarSourceStatus({ state: 'loading' })
+
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Lisbon'
+    const { data, error } = await invokePublicFunction('get-barber-availability', {
+      barberId,
+      date: appointmentDate,
+      serviceIds,
+      timezone,
+      timezoneOffsetMinutes: new Date().getTimezoneOffset()
+    })
+
+    if (error) {
+      throw error
+    }
+
+    appointmentAvailabilitySource = data?.source || 'internal'
+    appointmentAvailabilityConnection = data?.connectionStatus || null
+    appointmentSlotsCache = Array.isArray(data?.slots)
+      ? data.slots.map((slot) => ({
+        ...slot,
+        value: slot.startsAt,
+        source: data?.source || 'internal',
+        durationMinutes: data?.durationMinutes || durationMinutes || 30
+      }))
+      : []
+
+    renderAvailableSlots()
+    renderCalendarSourceStatus({
+      state: 'success',
+      source: appointmentAvailabilitySource,
+      isConnected: appointmentAvailabilityConnection?.isConnected
+    })
+  } catch (error) {
+    console.error('Erro ao consultar disponibilidade do barbeiro', error)
+    appointmentAvailabilitySource = 'internal'
+    appointmentAvailabilityConnection = null
+    appointmentSlotsCache = []
+    selectedAppointmentTime = ''
+    slotsContainer.innerHTML = '<div class="admin-empty">Nao foi possivel carregar os horarios disponiveis.</div>'
+    renderCalendarSourceStatus({ state: 'error' })
+  }
+}
+
+async function refreshAppointmentSlotPicker() {
+  await fetchBarberAvailability()
 }
 
 function renderAgendaDayPicker() {
@@ -3067,7 +3054,7 @@ function resetAppointmentForm() {
   document.getElementById('name').value = ''
   const customerPhoneInput = document.getElementById('customer-phone')
   const customerEmailInput = document.getElementById('customer-email')
-  document.getElementById('time').value = ''
+  const appointmentDateInput = document.getElementById('appointment-date')
   document.getElementById('barber').value = ''
   if (customerPhoneInput) {
     customerPhoneInput.value = ''
@@ -3079,13 +3066,16 @@ function resetAppointmentForm() {
   if (paymentProviderInput) {
     paymentProviderInput.value = 'none'
   }
+  if (appointmentDateInput) {
+    appointmentDateInput.value = ''
+  }
   clearSelectedServices()
   selectedAppointmentTime = ''
-  selectedAppointmentDay = formatDateKey(buildUpcomingDays(1)[0])
+  selectedAppointmentDay = null
   updateServiceTriggerLabel()
   updateAppointmentPaymentSummary()
   updateMinDateTime()
-  refreshAppointmentSlotPicker()
+  clearAvailableSlots()
 }
 
 // Carrega barbeiros e servicos disponiveis para os selects da tela.
@@ -3110,7 +3100,7 @@ async function carregarDados() {
 
   let servicesQuery = supabaseClient
     .from('services')
-    .select('id, name, price, barbershop_id')
+    .select('id, name, price, barbershop_id, duration_minutes')
     .order('name', { ascending: true })
 
   if (shouldFilterByBarbershop) {
@@ -3136,6 +3126,11 @@ async function carregarDados() {
     renderSelectState('barber', 'Erro ao carregar barbeiros', true)
   } else {
     populateSelect('barber', barbers, 'Selecione um barbeiro')
+    populateSelect('google-calendar-barber', barbers, 'Selecione um barbeiro')
+    const googleCalendarBarberSelect = document.getElementById('google-calendar-barber')
+    if (googleCalendarBarberSelect && selectedGoogleCalendarBarberId) {
+      googleCalendarBarberSelect.value = selectedGoogleCalendarBarberId
+    }
   }
 
   if (servicesError) {
@@ -3147,10 +3142,10 @@ async function carregarDados() {
 
   updateAppointmentPaymentSummary()
   updateMinDateTime()
-  if (!selectedAppointmentDay) {
-    selectedAppointmentDay = formatDateKey(buildUpcomingDays(1)[0])
-  }
   await refreshAppointmentSlotPicker()
+  if (selectedGoogleCalendarBarberId) {
+    await loadBarberCalendarConnectionStatus(selectedGoogleCalendarBarberId)
+  }
   if (barbershopId && !isClientPublicView()) {
     await carregarOnboarding(barbershopId)
   }
@@ -3504,10 +3499,48 @@ window.deletarAgendamento = async function (id) {
     return
   }
 
+  const { data: currentAppointment, error: currentAppointmentError } = await supabaseClient
+    .from('appointments')
+    .select('id, booking_group_id, google_event_id, barber_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (currentAppointmentError || !currentAppointment) {
+    alert(`Erro ao localizar agendamento: ${currentAppointmentError?.message || 'Registro nao encontrado.'}`)
+    return
+  }
+
+  const groupFilterColumn = currentAppointment.booking_group_id ? 'booking_group_id' : 'id'
+  const groupFilterValue = currentAppointment.booking_group_id || currentAppointment.id
+  const { data: groupedAppointments, error: groupedAppointmentsError } = await supabaseClient
+    .from('appointments')
+    .select('id, google_event_id')
+    .eq(groupFilterColumn, groupFilterValue)
+
+  if (groupedAppointmentsError) {
+    alert(`Erro ao carregar grupo do agendamento: ${groupedAppointmentsError.message}`)
+    return
+  }
+
+  const appointmentIds = (groupedAppointments || []).map((item) => item.id)
+  const googleEventId = (groupedAppointments || []).find((item) => item.google_event_id)?.google_event_id || currentAppointment.google_event_id || ''
+
+  if (googleEventId && currentAppointment.barber_id) {
+    const cancelResult = await invokePublicFunction('cancel-google-calendar-event', {
+      barberId: currentAppointment.barber_id,
+      googleEventId,
+      appointmentIds
+    })
+
+    if (cancelResult.error) {
+      console.error('Erro ao cancelar evento Google Calendar', cancelResult.error)
+    }
+  }
+
   const { error: serviceSalesError } = await supabaseClient
     .from('service_sales')
     .delete()
-    .eq('appointment_id', id)
+    .in('appointment_id', appointmentIds)
 
   if (serviceSalesError) {
     console.error('Erro ao apagar service_sales do agendamento', serviceSalesError)
@@ -3518,7 +3551,7 @@ window.deletarAgendamento = async function (id) {
   const { error } = await supabaseClient
     .from('appointments')
     .delete()
-    .eq('id', id)
+    .in('id', appointmentIds)
 
   if (error) {
     console.error('Erro ao apagar agendamento', error)
@@ -4148,6 +4181,7 @@ async function init() {
 
     const emailInput = document.getElementById('email')
     const barberInput = document.getElementById('barber')
+    const appointmentDateInput = document.getElementById('appointment-date')
     if (emailInput && !emailInput.dataset.boundPortalAccess) {
       emailInput.addEventListener('input', () => {
         updateLoginPortalUi()
@@ -4157,9 +4191,24 @@ async function init() {
 
     if (barberInput && !barberInput.dataset.boundSlots) {
       barberInput.addEventListener('change', () => {
+        clearAvailableSlots()
         refreshAppointmentSlotPicker()
       })
       barberInput.dataset.boundSlots = 'true'
+    }
+
+    if (appointmentDateInput && !appointmentDateInput.dataset.boundAvailability) {
+      appointmentDateInput.addEventListener('change', () => {
+        selectedAppointmentDay = appointmentDateInput.value || null
+        clearAvailableSlots('Consultando horarios para a data selecionada...')
+        refreshAppointmentSlotPicker()
+      })
+      appointmentDateInput.dataset.boundAvailability = 'true'
+    }
+
+    const googleCalendarCallbackState = consumeGoogleCalendarCallbackParams()
+    if (googleCalendarCallbackState.barberId) {
+      selectedGoogleCalendarBarberId = googleCalendarCallbackState.barberId
     }
 
     const { data } = await supabaseClient.auth.getSession()
@@ -4273,13 +4322,131 @@ async function init() {
 
 // Define a menor data/hora permitida no input de agendamento.
 function updateMinDateTime() {
-  const timeInput = document.getElementById('time')
+  const dateInput = document.getElementById('appointment-date')
 
-  if (!timeInput) {
+  if (!dateInput) {
     return
   }
 
-  timeInput.min = getCurrentLocalDateTime()
+  dateInput.min = new Date().toISOString().slice(0, 10)
+}
+
+async function loadBarberCalendarConnectionStatus(barberId) {
+  const statusElement = document.getElementById('google-calendar-connection-status')
+  const emailElement = document.getElementById('google-calendar-connected-email')
+
+  if (!statusElement || !emailElement) {
+    return null
+  }
+
+  if (!barberId) {
+    statusElement.className = 'google-calendar-status google-calendar-status-idle'
+    statusElement.textContent = 'Nenhuma conta verificada.'
+    emailElement.textContent = 'Selecione um barbeiro para consultar a conexao.'
+    return null
+  }
+
+  statusElement.className = 'google-calendar-status google-calendar-status-loading'
+  statusElement.textContent = 'Consultando conexao Google...'
+  emailElement.textContent = 'Buscando email e calendario vinculados.'
+
+  try {
+    const { data, error } = await invokeProtectedFunction('get-google-calendar-status', { barberId })
+    if (error) {
+      throw error
+    }
+
+    const isConnected = Boolean(data?.isConnected)
+    statusElement.className = `google-calendar-status ${isConnected ? 'google-calendar-status-connected' : 'google-calendar-status-idle'}`
+    statusElement.textContent = isConnected ? 'Google Calendar conectado' : 'Agenda interna em uso'
+    emailElement.textContent = isConnected
+      ? `Conta Google: ${data?.googleEmail || 'sem email retornado'} · Calendario: ${data?.googleCalendarId || 'primary'}`
+      : 'Este barbeiro ainda nao conectou uma conta Google.'
+
+    return data || null
+  } catch (error) {
+    console.error('Erro ao carregar status do Google Calendar', error)
+    statusElement.className = 'google-calendar-status google-calendar-status-error'
+    statusElement.textContent = 'Falha ao consultar a integracao'
+    emailElement.textContent = error.message || 'Nao foi possivel validar a conexao Google deste barbeiro.'
+    return null
+  }
+}
+
+window.handleGoogleCalendarBarberChange = async function () {
+  const select = document.getElementById('google-calendar-barber')
+  selectedGoogleCalendarBarberId = select?.value || ''
+  await loadBarberCalendarConnectionStatus(selectedGoogleCalendarBarberId)
+}
+
+window.connectGoogleCalendar = async function () {
+  const barberId = selectedGoogleCalendarBarberId || document.getElementById('google-calendar-barber')?.value || document.getElementById('barber')?.value || ''
+  if (!barberId) {
+    alert('Selecione um barbeiro para conectar o Google Calendar.')
+    return
+  }
+
+  try {
+    const { data, error } = await invokeProtectedFunction('connect-google-calendar', {
+      barberId,
+      redirectTo: window.location.href
+    })
+
+    if (error || !data?.authUrl) {
+      throw error || new Error('Nao foi possivel iniciar a conexao com o Google Calendar.')
+    }
+
+    window.location.href = data.authUrl
+  } catch (error) {
+    console.error('Erro ao iniciar OAuth Google', error)
+    alert(error.message || 'Nao foi possivel iniciar a conexao com o Google Calendar.')
+  }
+}
+
+window.disconnectGoogleCalendar = async function () {
+  const barberId = selectedGoogleCalendarBarberId || document.getElementById('google-calendar-barber')?.value || ''
+  if (!barberId) {
+    alert('Selecione um barbeiro para desconectar o Google Calendar.')
+    return
+  }
+
+  if (!confirm('Deseja desconectar esta conta Google do barbeiro selecionado?')) {
+    return
+  }
+
+  try {
+    const { error } = await invokeProtectedFunction('disconnect-google-calendar', { barberId })
+    if (error) {
+      throw error
+    }
+
+    await loadBarberCalendarConnectionStatus(barberId)
+    showAppToast('Google Calendar desconectado com sucesso.', 'success')
+  } catch (error) {
+    console.error('Erro ao desconectar Google Calendar', error)
+    alert(error.message || 'Nao foi possivel desconectar o Google Calendar.')
+  }
+}
+
+function consumeGoogleCalendarCallbackParams() {
+  const url = new URL(window.location.href)
+  const status = url.searchParams.get('google_calendar')
+  const barberId = url.searchParams.get('barber_id') || ''
+
+  if (!status) {
+    return { connected: false, barberId: '' }
+  }
+
+  url.searchParams.delete('google_calendar')
+  url.searchParams.delete('barber_id')
+  window.history.replaceState({}, document.title, url.toString())
+
+  if (status === 'connected') {
+    showAppToast('Google Calendar conectado com sucesso.', 'success')
+    return { connected: true, barberId }
+  }
+
+  return { connected: false, barberId }
 }
 
 // Retorna os servicos marcados no bloco de selecao.
@@ -4331,8 +4498,8 @@ function renderServiceOptions(items) {
     .map((item) => {
       return `
         <label class="service-option">
-          <input type="checkbox" value="${item.id}" data-price="${Number(item.price || 0)}" onchange="handleServiceSelectionChange()">
-          <span>${item.name}${item.price != null ? ` · ${formatCurrency(item.price)}` : ''}</span>
+          <input type="checkbox" value="${item.id}" data-price="${Number(item.price || 0)}" data-duration="${Number(item.duration_minutes || 30)}" onchange="handleServiceSelectionChange()">
+          <span>${item.name}${item.price != null ? ` · ${formatCurrency(item.price)}` : ''}${item.duration_minutes ? ` · ${item.duration_minutes} min` : ''}</span>
         </label>
       `
     })
