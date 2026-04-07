@@ -39,23 +39,15 @@
 
       <nav class="sidebar-nav">
         <div class="nav-group" data-nav-group>
-          <span class="nav-group-label">Cliente</span>
-          <button id="nav-agendar" class="nav-button" data-icon="◫" data-screen="agendar" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('agendar')">Agendar</button>
-          <button id="nav-produtos" class="nav-button" data-icon="◧" data-screen="produtos" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('produtos')">Produtos</button>
-        </div>
-        <div class="nav-group" data-nav-group>
-          <span class="nav-group-label">Operacao</span>
-          <button id="nav-gestao" class="nav-button" data-icon="▤" data-screen="gestao" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('gestao')">Gestao</button>
-          <button id="nav-agenda" class="nav-button" data-icon="◷" data-screen="agenda" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('agenda')">Minha Agenda</button>
-          <button id="nav-cadastros" class="nav-button" data-icon="□" data-screen="cadastros" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('cadastros')">Cadastros</button>
-          <button id="nav-aprovacoes" class="nav-button" data-icon="✓" data-screen="aprovacoes" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('aprovacoes')">Aprovacoes</button>
-        </div>
-        <div class="nav-group" data-nav-group>
-          <span class="nav-group-label">Plataforma</span>
-          <button id="nav-admin-dashboard" class="nav-button" data-icon="◰" data-screen="admin-dashboard" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-dashboard')">Dashboard Admin</button>
-          <button id="nav-admin-barbershops" class="nav-button" data-icon="⌂" data-screen="admin-barbershops" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-barbershops')">Barbearias</button>
-          <button id="nav-admin-access" class="nav-button" data-icon="◎" data-screen="admin-access" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-access')">Acessos</button>
-          <button id="nav-admin-users" class="nav-button" data-icon="◌" data-screen="admin-users" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-users')">Usuarios</button>
+          <span class="nav-group-label">Portal barbeiro</span>
+          <button id="nav-barber-dashboard" class="nav-button" data-icon="◫" data-screen="barber-dashboard" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-dashboard')">Dashboard</button>
+          <button id="nav-barber-agenda" class="nav-button" data-icon="◷" data-screen="barber-agenda" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-agenda')">Minha Agenda</button>
+          <button id="nav-barber-clients" class="nav-button" data-icon="◎" data-screen="barber-clients" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-clients')">Clientes</button>
+          <button id="nav-barber-services" class="nav-button" data-icon="◧" data-screen="barber-services" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-services')">Servicos</button>
+          <button id="nav-barber-finance" class="nav-button" data-icon="▤" data-screen="barber-finance" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-finance')">Financeiro</button>
+          <button id="nav-barber-blocks" class="nav-button" data-icon="□" data-screen="barber-blocks" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-blocks')">Bloqueios</button>
+          <button id="nav-barber-google" class="nav-button" data-icon="⌁" data-screen="barber-google" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-google')">Google Calendar</button>
+          <button id="nav-barber-profile" class="nav-button" data-icon="◌" data-screen="barber-profile" data-protected="true" data-portal="barbeiro" onclick="mostrarTela('barber-profile')">Meu Perfil</button>
         </div>
       </nav>
 
@@ -156,6 +148,290 @@
           <button onclick="updatePassword()">Atualizar senha</button>
           <a class="link-button" href="index.html">Voltar para login</a>
         </div>
+      </section>
+
+      <section id="barber-dashboard" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Operacao diaria</span>
+          <h1>Dashboard do barbeiro</h1>
+          <p>Tenha em uma unica tela sua agenda do dia, proximo cliente, faturamento e espacos livres.</p>
+        </div>
+
+        <div id="barber-dashboard-warning" class="form-feedback" style="display:none;"></div>
+        <div id="barber-dashboard-kpis" class="management-summary barber-kpi-grid"></div>
+
+        <div class="management-grid barber-portal-grid barber-portal-grid-large">
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Hoje</span>
+                <h2>Agenda do dia</h2>
+              </div>
+            </div>
+            <div id="barber-dashboard-day-agenda" class="management-stack"></div>
+          </section>
+
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Fila</span>
+                <h2>Proximos atendimentos</h2>
+              </div>
+            </div>
+            <div id="barber-dashboard-upcoming" class="management-stack"></div>
+          </section>
+        </div>
+
+        <div class="management-grid barber-portal-grid">
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Financeiro</span>
+                <h2>Resumo rapido</h2>
+              </div>
+            </div>
+            <div id="barber-dashboard-finance" class="management-stack"></div>
+          </section>
+
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Disponibilidade</span>
+                <h2>Janela livre</h2>
+              </div>
+            </div>
+            <div id="barber-dashboard-free-slots" class="management-stack"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="barber-agenda" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Rotina</span>
+          <h1>Minha agenda</h1>
+          <p>Gerencie confirmacoes, finalizacao, remarcacao, cancelamentos e bloqueios do seu dia.</p>
+        </div>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Filtros</span>
+              <h2>Agenda operacional</h2>
+            </div>
+          </div>
+          <div class="access-filters-grid barber-toolbar-grid">
+            <input type="date" id="barber-agenda-date" onchange="carregarBarberPortalAgenda()">
+            <select id="barber-agenda-status-filter" onchange="carregarBarberPortalAgenda()">
+              <option value="">Todos os status</option>
+              <option value="scheduled">Agendados</option>
+              <option value="confirmed">Confirmados</option>
+              <option value="finalized">Finalizados</option>
+              <option value="cancelled">Cancelados</option>
+            </select>
+            <input type="text" id="barber-agenda-search" placeholder="Buscar cliente ou servico" oninput="carregarBarberPortalAgenda()">
+            <button type="button" class="secondary-action" onclick="mostrarTela('barber-blocks')">Bloquear horario</button>
+          </div>
+        </section>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Atendimentos</span>
+              <h2>Agenda do barbeiro</h2>
+            </div>
+          </div>
+          <div id="barber-agenda-list" class="management-stack"></div>
+        </section>
+      </section>
+
+      <section id="barber-clients" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Relacionamento</span>
+          <h1>Clientes atendidos</h1>
+          <p>Consulte historico, frequencia e observacoes dos clientes que voce ja atendeu.</p>
+        </div>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Busca</span>
+              <h2>Base de clientes</h2>
+            </div>
+          </div>
+          <div class="access-filters-grid barber-toolbar-grid">
+            <input type="text" id="barber-clients-search" placeholder="Buscar nome, telefone ou email" oninput="carregarBarberPortalClients()">
+            <div class="field-hint management-form-span-full">Os dados abaixo consideram apenas os clientes atendidos por este barbeiro.</div>
+          </div>
+          <div id="barber-clients-list" class="management-stack"></div>
+        </section>
+      </section>
+
+      <section id="barber-services" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Portifolio</span>
+          <h1>Servicos da barbearia</h1>
+          <p>Veja o catalogo disponivel, precos, duracao e volume executado por voce.</p>
+        </div>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Catalogo</span>
+              <h2>Servicos ativos</h2>
+            </div>
+          </div>
+          <div id="barber-services-list" class="management-stack"></div>
+        </section>
+      </section>
+
+      <section id="barber-finance" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Resultados</span>
+          <h1>Meu financeiro</h1>
+          <p>Acompanhe receita, ticket medio, volume de atendimentos e servicos com melhor saida.</p>
+        </div>
+
+        <div id="barber-finance-kpis" class="management-summary barber-kpi-grid"></div>
+
+        <div class="management-grid barber-portal-grid">
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Mix</span>
+                <h2>Servicos mais vendidos</h2>
+              </div>
+            </div>
+            <div id="barber-finance-top-services" class="management-stack"></div>
+          </section>
+
+          <section class="management-card">
+            <div class="management-card-header">
+              <div>
+                <span class="management-kicker">Resumo</span>
+                <h2>Quebra financeira</h2>
+              </div>
+            </div>
+            <div id="barber-finance-breakdown" class="management-stack"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="barber-blocks" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Controle</span>
+          <h1>Bloqueios de horario</h1>
+          <p>Reserve almoco, folgas, pausas e intervalos sem comprometer a agenda real do barbeiro.</p>
+        </div>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Novo bloqueio</span>
+              <h2>Criar indisponibilidade</h2>
+            </div>
+          </div>
+          <div class="management-form management-form-grid barber-block-form">
+            <input type="text" id="barber-block-title" placeholder="Ex.: Almoco, folga, reuniao">
+            <select id="barber-block-type">
+              <option value="custom">Faixa personalizada</option>
+              <option value="lunch">Almoco</option>
+              <option value="day_off">Folga</option>
+              <option value="time_off">Horario pessoal</option>
+            </select>
+            <input type="date" id="barber-block-date">
+            <label class="toggle-inline"><input type="checkbox" id="barber-block-all-day" onchange="toggleBarberBlockAllDay()">Dia inteiro</label>
+            <input type="time" id="barber-block-start-time">
+            <input type="time" id="barber-block-end-time">
+            <textarea id="barber-block-notes" placeholder="Observacoes do bloqueio"></textarea>
+            <div class="management-form-actions management-form-span-full">
+              <button type="button" onclick="criarBloqueioBarbeiro()">Salvar bloqueio</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Agenda travada</span>
+              <h2>Bloqueios ativos</h2>
+            </div>
+          </div>
+          <div id="barber-blocks-list" class="management-stack"></div>
+        </section>
+      </section>
+
+      <section id="barber-google" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Integracao</span>
+          <h1>Google Calendar</h1>
+          <p>Monitore o status da conexao da sua agenda e deixe a sincronizacao pronta para operacao real.</p>
+        </div>
+
+        <section class="management-card google-calendar-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Conexao</span>
+              <h2>Minha conta Google</h2>
+            </div>
+          </div>
+          <div class="management-form management-form-grid google-calendar-form">
+            <input type="text" id="barber-google-current-name" placeholder="Barbeiro" readonly>
+            <div id="google-calendar-connection-status" class="google-calendar-status google-calendar-status-idle">
+              Nenhuma conta verificada.
+            </div>
+            <div id="google-calendar-connected-email" class="field-hint management-form-span-full">Conecte sua conta Google para ativar a agenda externa.</div>
+            <div id="barber-google-last-sync" class="field-hint management-form-span-full">Ultimo sync: sem historico</div>
+            <select id="google-calendar-barber" style="display:none;"></select>
+            <div class="management-form-actions management-form-span-full">
+              <button type="button" onclick="connectGoogleCalendar()">Conectar Google</button>
+              <button type="button" class="secondary-action" onclick="disconnectGoogleCalendar()">Desconectar Google</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="barber-profile" class="tela tela-larga" style="display:none;">
+        <div class="screen-header barber-portal-header">
+          <span class="screen-kicker">Identidade</span>
+          <h1>Meu perfil</h1>
+          <p>Mantenha seus dados profissionais, dias de atendimento e horario de trabalho atualizados.</p>
+        </div>
+
+        <section class="management-card">
+          <div class="management-card-header">
+            <div>
+              <span class="management-kicker">Dados do barbeiro</span>
+              <h2>Perfil operacional</h2>
+            </div>
+          </div>
+          <div class="management-form management-form-grid barber-profile-form">
+            <input type="text" id="barber-profile-name" placeholder="Nome completo">
+            <input type="tel" id="barber-profile-phone" placeholder="Telefone">
+            <input type="url" id="barber-profile-photo" placeholder="URL da foto">
+            <select id="barber-profile-status">
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
+            <input type="time" id="barber-profile-work-start">
+            <input type="time" id="barber-profile-work-end">
+            <div class="management-form-span-full">
+              <span class="field-label">Dias de atendimento</span>
+              <div class="checkbox-grid barber-weekdays-grid">
+                <label><input type="checkbox" value="monday" class="barber-profile-workday">Seg</label>
+                <label><input type="checkbox" value="tuesday" class="barber-profile-workday">Ter</label>
+                <label><input type="checkbox" value="wednesday" class="barber-profile-workday">Qua</label>
+                <label><input type="checkbox" value="thursday" class="barber-profile-workday">Qui</label>
+                <label><input type="checkbox" value="friday" class="barber-profile-workday">Sex</label>
+                <label><input type="checkbox" value="saturday" class="barber-profile-workday">Sab</label>
+                <label><input type="checkbox" value="sunday" class="barber-profile-workday">Dom</label>
+              </div>
+            </div>
+            <textarea id="barber-profile-notes" class="management-form-span-full" placeholder="Observacoes internas e rotina de atendimento"></textarea>
+            <div class="management-form-actions management-form-span-full">
+              <button type="button" onclick="salvarPerfilBarbeiro()">Salvar perfil</button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <!-- Agendar -->
@@ -776,6 +1052,7 @@
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
+<script src="barber-portal.js"></script>
 
 </body>
 </html>

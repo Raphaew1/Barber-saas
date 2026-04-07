@@ -115,6 +115,10 @@ let selectedGoogleCalendarBarberId = ''
 let agendaViewMode = 'day'
 let selectedAgendaDay = null
 let customersCrmCache = []
+let currentBarberPortalRecord = null
+let barberPortalAppointmentsCache = []
+let barberPortalClientsCache = []
+let barberPortalBlocksCache = []
 let currentSubscriptionCache = null
 let adminAccessDirectoryCache = []
 let adminAccessAuditCache = []
@@ -213,6 +217,46 @@ const SCREEN_CONTEXT_MAP = {
     kicker: 'Agenda',
     title: 'Agenda operacional',
     description: 'Acompanhe os atendimentos da barbearia em uma visualizacao clara por horario.'
+  },
+  'barber-dashboard': {
+    kicker: 'Barbeiro',
+    title: 'Dashboard do barbeiro',
+    description: 'Visao diaria com agenda, produtividade, faturamento e proximos atendimentos.'
+  },
+  'barber-agenda': {
+    kicker: 'Agenda',
+    title: 'Minha agenda',
+    description: 'Confirme, finalize, remarque, cancele e acompanhe os horarios do dia.'
+  },
+  'barber-clients': {
+    kicker: 'Clientes',
+    title: 'Clientes atendidos',
+    description: 'Relacao operacional com historico, frequencia e observacoes do barbeiro.'
+  },
+  'barber-services': {
+    kicker: 'Servicos',
+    title: 'Servicos da unidade',
+    description: 'Catalogo ativo da barbearia com preco, duracao e volume realizado.'
+  },
+  'barber-finance': {
+    kicker: 'Financeiro',
+    title: 'Meu financeiro',
+    description: 'Receita diaria e semanal, ticket medio e servicos mais vendidos.'
+  },
+  'barber-blocks': {
+    kicker: 'Bloqueios',
+    title: 'Bloqueios de horario',
+    description: 'Organize almoco, folgas, indisponibilidades e faixas reservadas.'
+  },
+  'barber-google': {
+    kicker: 'Integracao',
+    title: 'Google Calendar',
+    description: 'Consulte a conexao da agenda e prepare a sincronizacao real do barbeiro.'
+  },
+  'barber-profile': {
+    kicker: 'Perfil',
+    title: 'Meu perfil',
+    description: 'Atualize dados pessoais, rotina de trabalho e disponibilidade padrao.'
   },
   cadastros: {
     kicker: 'Configuracao',
@@ -5153,7 +5197,7 @@ function getDefaultServices(barbershopId) {
 
 // Mostra apenas a tela solicitada e oculta as demais.
 function showScreen(screenId) {
-  const screenIds = ['login', 'signup', 'agendar', 'agenda', 'cadastros', 'produtos', 'gestao', 'aprovacoes', 'admin-dashboard', 'admin-barbershops', 'admin-access', 'admin-users', 'reset-password']
+  const screenIds = ['login', 'signup', 'agendar', 'agenda', 'cadastros', 'produtos', 'gestao', 'aprovacoes', 'barber-dashboard', 'barber-agenda', 'barber-clients', 'barber-services', 'barber-finance', 'barber-blocks', 'barber-google', 'barber-profile', 'admin-dashboard', 'admin-barbershops', 'admin-access', 'admin-users', 'reset-password']
   currentVisibleScreenId = screenId
   closeMobileMenu()
 
@@ -7058,7 +7102,7 @@ function updatePortalNavigation() {
 // Define a tela inicial padrao do portal selecionado.
 function getDefaultScreenForPortal() {
   if (currentPortal === 'barbeiro') {
-    return 'agenda'
+    return 'barber-dashboard'
   }
 
   if (currentPortal === 'admin') {
@@ -7088,7 +7132,7 @@ function isScreenAllowedForPortal(screenId) {
 
   const portalPermissions = {
     cliente: ['agendar', 'produtos'],
-    barbeiro: ['gestao', 'agenda', 'cadastros'],
+    barbeiro: ['barber-dashboard', 'barber-agenda', 'barber-clients', 'barber-services', 'barber-finance', 'barber-blocks', 'barber-google', 'barber-profile'],
     admin: ['agendar', 'produtos', 'gestao', 'agenda', 'cadastros', 'admin-dashboard', 'admin-barbershops', 'admin-access', 'aprovacoes', 'admin-users']
   }
 
@@ -7097,6 +7141,46 @@ function isScreenAllowedForPortal(screenId) {
 
 // Dispara o carregamento dos dados necessarios para cada tela.
 async function carregarPortalData(screenId) {
+  if (screenId === 'barber-dashboard') {
+    await carregarBarberPortalDashboard()
+    return
+  }
+
+  if (screenId === 'barber-agenda') {
+    await carregarBarberPortalAgenda()
+    return
+  }
+
+  if (screenId === 'barber-clients') {
+    await carregarBarberPortalClients()
+    return
+  }
+
+  if (screenId === 'barber-services') {
+    await carregarBarberPortalServices()
+    return
+  }
+
+  if (screenId === 'barber-finance') {
+    await carregarBarberPortalFinance()
+    return
+  }
+
+  if (screenId === 'barber-blocks') {
+    await carregarBarberPortalBlocks()
+    return
+  }
+
+  if (screenId === 'barber-google') {
+    await carregarBarberPortalGoogle()
+    return
+  }
+
+  if (screenId === 'barber-profile') {
+    await carregarBarberPortalProfile()
+    return
+  }
+
   if (screenId === 'agendar') {
     await carregarDados()
     if (currentPortal === 'cliente' && !isClientPublicView()) {
