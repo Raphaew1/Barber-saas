@@ -1825,6 +1825,11 @@ button:disabled {
   gap: 16px;
 }
 
+.cadastro-grid.cadastro-grid-wide {
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  align-items: start;
+}
+
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -2205,6 +2210,9 @@ button:disabled {
 }
 
 .cadastro-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
   padding: 20px;
   border-radius: 24px;
   background:
@@ -2215,7 +2223,7 @@ button:disabled {
 }
 
 .cadastro-card h2 {
-  margin-bottom: 12px;
+  margin-bottom: 0;
   font-size: 16px;
 }
 
@@ -2227,7 +2235,7 @@ button:disabled {
 
 .admin-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
@@ -2243,7 +2251,8 @@ button:disabled {
 
 .admin-item strong,
 .admin-item span {
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .admin-item strong {
@@ -2261,10 +2270,12 @@ button:disabled {
 
 .admin-actions {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  min-width: 112px;
+  min-width: 0;
 }
 
 .user-management-row {
@@ -2339,10 +2350,11 @@ button:disabled {
 }
 
 .admin-item button {
-  width: 100%;
+  width: auto;
   min-width: 96px;
   margin-top: 0;
   padding: 9px 12px;
+  white-space: nowrap;
 }
 
 .admin-actions button:last-child {
@@ -2656,6 +2668,10 @@ button:disabled {
   }
 
   .cadastro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cadastro-grid.cadastro-grid-wide {
     grid-template-columns: 1fr;
   }
 
