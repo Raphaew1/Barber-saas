@@ -513,14 +513,14 @@
 
         <div id="admin-access-kpis" class="management-summary"></div>
 
-        <section class="management-card">
+        <section class="management-card admin-access-grant-card">
           <div class="management-card-header">
             <div>
               <span class="management-kicker">Novo acesso</span>
               <h2>Conceder acesso ao portal</h2>
             </div>
           </div>
-          <div class="management-form management-form-grid management-form-compact">
+          <div class="management-form management-form-grid management-form-compact admin-access-grant-form">
             <input type="email" id="admin-access-new-email" placeholder="Email para liberar acesso">
             <select id="admin-access-new-portal" onchange="handleAdminAccessPortalChange()">
               <option value="cliente">Portal Cliente</option>
@@ -535,21 +535,28 @@
             <select id="admin-access-new-barbershop" style="display:none;">
               <option value="">Selecione a barbearia</option>
             </select>
-            <div id="admin-access-new-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
-            <div class="management-form-actions management-form-span-2">
+            <div id="admin-access-new-feedback" class="form-feedback management-form-span-full" style="display:none;"></div>
+            <div class="management-form-actions admin-access-grant-actions">
               <button type="button" onclick="criarAcessoAdmin()">Adicionar acesso</button>
             </div>
           </div>
         </section>
 
-        <section class="management-card">
-          <div class="management-card-header">
+        <section class="management-card admin-access-directory-card">
+          <div class="management-card-header admin-access-directory-header">
             <div>
               <span class="management-kicker">Filtros</span>
-              <h2>Busca e segmentacao</h2>
+              <h2>Usuarios cadastrados</h2>
             </div>
+            <span id="admin-access-directory-counter" class="management-badge">0 usuarios</span>
           </div>
-          <div class="access-filters-grid">
+          <div id="admin-access-quick-tabs" class="access-quick-tabs" role="tablist" aria-label="Perfis de acesso">
+            <button type="button" class="access-quick-tab is-active" data-role-filter="all" onclick="selecionarFiltroRapidoAdminAccess('all')">Todos</button>
+            <button type="button" class="access-quick-tab" data-role-filter="admin" onclick="selecionarFiltroRapidoAdminAccess('admin')">Admins</button>
+            <button type="button" class="access-quick-tab" data-role-filter="barbeiro" onclick="selecionarFiltroRapidoAdminAccess('barbeiro')">Barbeiros</button>
+            <button type="button" class="access-quick-tab" data-role-filter="cliente" onclick="selecionarFiltroRapidoAdminAccess('cliente')">Clientes</button>
+          </div>
+          <div class="access-filters-grid access-filters-grid-compact">
             <input type="text" id="admin-access-search" placeholder="Buscar por email ou nome" oninput="filtrarAdminAcessos()">
             <select id="admin-access-status-filter" onchange="filtrarAdminAcessos()">
               <option value="">Todos os status</option>
@@ -568,15 +575,6 @@
             </select>
           </div>
           <div id="admin-access-results-info" class="field-hint">Carregando acessos...</div>
-        </section>
-
-        <section class="management-card">
-          <div class="management-card-header">
-            <div>
-              <span class="management-kicker">Diretorio</span>
-              <h2>Usuarios cadastrados</h2>
-            </div>
-          </div>
           <div id="admin-access-loading" class="admin-empty" style="display:none;">Carregando diretorio de acessos...</div>
           <div id="admin-access-list" class="management-stack"></div>
         </section>
@@ -592,17 +590,32 @@
         </section>
       </section>
 
-      <div id="admin-access-editor-modal" class="modal-overlay" style="display:none;" onclick="fecharEditorDeAcessoAdmin(event)">
-        <div class="modal-card admin-access-modal-card" onclick="event.stopPropagation()">
+      <div id="admin-access-editor-modal" class="modal-overlay admin-access-drawer-overlay" style="display:none;" onclick="fecharEditorDeAcessoAdmin(event)">
+        <div class="modal-card admin-access-modal-card admin-access-drawer-card" onclick="event.stopPropagation()">
           <div class="modal-header">
             <div>
-              <span class="screen-kicker">Editor</span>
-              <h2>Permissoes e contexto</h2>
+              <span class="screen-kicker">Detalhes</span>
+              <h2>Usuario selecionado</h2>
             </div>
             <button type="button" class="link-button" onclick="fecharEditorDeAcessoAdmin()">Fechar</button>
           </div>
 
           <div class="modal-body">
+            <div class="admin-access-drawer-summary">
+              <div class="admin-access-drawer-identity">
+                <strong id="admin-access-drawer-name">Usuario sem nome</strong>
+                <span id="admin-access-drawer-email" class="management-meta">-</span>
+              </div>
+              <div class="admin-access-drawer-badges">
+                <span id="admin-access-drawer-role" class="role-badge role-client">Cliente</span>
+                <span id="admin-access-drawer-status" class="status-badge status-pending">Pendente</span>
+              </div>
+            </div>
+            <div id="admin-access-drawer-overview" class="admin-access-drawer-overview"></div>
+            <div class="admin-access-drawer-section-head">
+              <span class="management-kicker">Administracao</span>
+              <h3>Permissoes e contexto</h3>
+            </div>
             <div class="management-form management-form-grid management-form-compact">
               <input type="text" id="admin-access-editor-name" placeholder="Nome do usuario">
               <input type="email" id="admin-access-editor-email" placeholder="Email" disabled>

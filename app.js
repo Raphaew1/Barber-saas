@@ -119,6 +119,7 @@ let adminPendingApprovalsCache = []
 let selectedAdminAccessKey = null
 let adminAccessFilteredCache = []
 let adminAccessCurrentPage = 1
+let adminAccessQuickFilter = 'all'
 let openAdminAccessActionKey = null
 let currentVisibleScreenId = ''
 let platformContextCache = null
@@ -7956,6 +7957,34 @@ function renderAdminAccessKpis(items = []) {
   `).join('')
 }
 
+function renderAdminAccessQuickTabs(items = []) {
+  const container = document.getElementById('admin-access-quick-tabs')
+  if (!container) {
+    return
+  }
+
+  const counts = {
+    all: items.length,
+    admin: items.filter((item) => getAdminAccessEffectiveRole(item) === ADMIN_ROLE).length,
+    barbeiro: items.filter((item) => getAdminAccessEffectiveRole(item) === BARBER_ROLE).length,
+    cliente: items.filter((item) => getAdminAccessEffectiveRole(item) === CUSTOMER_ROLE).length
+  }
+
+  container.querySelectorAll('.access-quick-tab').forEach((button) => {
+    const roleFilter = button.dataset.roleFilter || 'all'
+    const baseLabel = roleFilter === 'all'
+      ? 'Todos'
+      : roleFilter === 'admin'
+        ? 'Admins'
+        : roleFilter === 'barbeiro'
+          ? 'Barbeiros'
+          : 'Clientes'
+
+    button.classList.toggle('is-active', roleFilter === adminAccessQuickFilter)
+    button.innerHTML = `${baseLabel}<span>${counts[roleFilter] || 0}</span>`
+  })
+}
+
 function renderAdminAccessAuditLog() {
   const container = document.getElementById('admin-access-audit-log')
   if (!container) {
@@ -7970,12 +7999,13 @@ function renderAdminAccessAuditLog() {
   container.innerHTML = adminAccessAuditCache
     .slice(0, 10)
     .map((item) => `
-      <div class="management-row">
-        <div>
+      <div class="management-row access-audit-row">
+        <div class="access-audit-main">
           <strong>${item.action || 'Atualizacao de acesso'}</strong>
-          <span class="management-meta">${item.target_email || '-'} | por ${item.performed_by_email || ADMIN_EMAIL} | ${formatAdminDate(item.created_at)}</span>
+          <span class="management-meta">${item.target_email || '-'}</span>
+          <span class="management-meta">por ${item.performed_by_email || ADMIN_EMAIL} · ${formatAdminDate(item.created_at)}</span>
         </div>
-        <span class="management-badge">${item.details || 'Auditoria'}</span>
+        <span class="management-badge access-audit-badge">${item.details || 'Auditoria'}</span>
       </div>
     `)
     .join('')
@@ -8442,7 +8472,7 @@ function renderAdminBarbershopsList(items, subscriptions = []) {
 
 function buildAdminAccessTableRow(item) {
   const statusMeta = getAccessStatusMeta(item.status)
-  const roleMeta = getRoleBadgeMeta(item.role)
+  const roleMeta = getRoleBadgeMeta(getAdminAccessEffectiveRole(item))
   const email = item.email || '-'
   const name = item.name || item.email || 'Usuario sem nome'
   const isBlocked = item.status === 'blocked'
@@ -8468,11 +8498,11 @@ function buildAdminAccessTableRow(item) {
       <td class="access-col-created">${formatCompactAdminDate(item.created_at || item.approved_at)}</td>
       <td class="access-col-actions" onclick="event.stopPropagation()">
         <div class="access-actions-menu-wrap">
-          <button type="button" class="secondary-action access-actions-trigger" onclick="toggleAdminAccessActionMenu(event, '${item.accessKey}')">Acoes</button>
+          <button type="button" class="secondary-action access-actions-trigger access-actions-icon-trigger" aria-label="Abrir acoes do usuario" onclick="toggleAdminAccessActionMenu(event, '${item.accessKey}')">...</button>
           <div class="access-actions-menu ${menuOpen ? 'is-open' : ''}">
-            <button type="button" onclick="handleAdminAccessAction(event, 'permissions', '${item.accessKey}')">Permissoes</button>
-            <button type="button" onclick="handleAdminAccessAction(event, 'email', '${item.accessKey}')">Alterar email</button>
-            <button type="button" onclick="handleAdminAccessAction(event, 'phone', '${item.accessKey}')">Telefone</button>
+            <button type="button" onclick="handleAdminAccessAction(event, 'details', '${item.accessKey}')">Ver detalhes</button>
+            <button type="button" onclick="handleAdminAccessAction(event, 'permissions', '${item.accessKey}')">Editar permissoes</button>
+            <button type="button" onclick="handleAdminAccessAction(event, 'phone', '${item.accessKey}')">Editar telefone</button>
             <button type="button" onclick="handleAdminAccessAction(event, 'transfer', '${item.accessKey}')">Transferir</button>
             <button type="button" onclick="handleAdminAccessAction(event, 'toggle-block', '${item.accessKey}')">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
             <button type="button" class="danger-item" onclick="handleAdminAccessAction(event, 'revoke', '${item.accessKey}')">Revogar acesso</button>
@@ -8531,7 +8561,7 @@ function renderUserTable(users) {
           <thead>
             <tr>
               <th class="access-col-user">Usuario</th>
-              <th class="access-col-role">Role</th>
+              <th class="access-col-role">Perfil</th>
               <th class="access-col-status">Status</th>
               <th class="access-col-barbershop">Barbearia</th>
               <th class="access-col-last-login">Ultimo acesso</th>
@@ -8560,82 +8590,18 @@ function renderAdminAccessList(items) {
     return
   }
 
-  const grouped = items.reduce((map, item) => {
-    const groupKey = getAdminAccessEffectiveRole(item)
-    const bucket = map.get(groupKey) || []
-    bucket.push(item)
-    map.set(groupKey, bucket)
-    return map
-  }, new Map())
+  const sortedItems = [...items].sort((a, b) => {
+    const roleDiff = getAdminAccessEffectiveRole(a).localeCompare(getAdminAccessEffectiveRole(b))
+    if (roleDiff !== 0) {
+      return roleDiff
+    }
 
-  const roleOrder = [ADMIN_ROLE, BARBER_ROLE, CUSTOMER_ROLE]
+    const nameA = String(a.name || a.email || '').trim().toLowerCase()
+    const nameB = String(b.name || b.email || '').trim().toLowerCase()
+    return nameA.localeCompare(nameB)
+  })
 
-  container.innerHTML = roleOrder
-    .filter((role) => grouped.has(role))
-    .map((role) => {
-      const groupItems = [...(grouped.get(role) || [])]
-        .sort((a, b) => {
-          const nameA = String(a.name || a.email || '').trim().toLowerCase()
-          const nameB = String(b.name || b.email || '').trim().toLowerCase()
-          return nameA.localeCompare(nameB)
-        })
-      const sectionMeta = getAdminAccessRoleSectionMeta(role)
-      const activeCount = groupItems.filter((item) => item.status === 'active').length
-
-      return `
-      <section class="access-group access-role-section ${sectionMeta.className}">
-        <div class="access-group-header">
-          <div>
-            <strong>${sectionMeta.title}</strong>
-            <span class="management-meta">${sectionMeta.description}</span>
-          </div>
-          <div class="access-role-summary">
-            <span class="management-badge">${groupItems.length} usuario(s)</span>
-            <span class="management-badge">${activeCount} ativo(s)</span>
-          </div>
-        </div>
-        <div class="access-group-stack">
-          ${groupItems.map((item) => {
-            const statusMeta = getAccessStatusMeta(item.status)
-            const roleMeta = getRoleBadgeMeta(getAdminAccessEffectiveRole(item))
-            const isBlocked = item.status === 'blocked'
-            return `
-              <article class="access-user-card ${selectedAdminAccessKey === item.accessKey ? 'is-selected' : ''}">
-                <div class="access-user-main access-user-main-compact">
-                  <div class="access-user-identity access-user-identity-compact">
-                    <strong>${item.name || item.email || 'Usuario sem nome'}</strong>
-                    <span class="management-meta" title="${escapeTemplateString(item.email || '-')}">${item.email || '-'}</span>
-                    <span class="access-user-role-label">Perfil: ${roleMeta.label}</span>
-                  </div>
-                  <div class="access-user-badges">
-                    <span class="role-badge ${roleMeta.className}">${roleMeta.label}</span>
-                    <span class="status-badge ${statusMeta.className}">${statusMeta.label}</span>
-                    ${item.profileStatus ? `<span class="status-badge ${getAccessStatusMeta(item.profileStatus).className}">Perfil: ${getAccessStatusMeta(item.profileStatus).label}</span>` : ''}
-                  </div>
-                  <div class="access-user-actions access-user-actions-compact">
-                    <button type="button" class="edit-button" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}')">Permissoes</button>
-                    <button type="button" class="secondary-action" onclick="editarEmailUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.email || '')}')">Email</button>
-                    <button type="button" class="secondary-action" onclick="editarTelefoneUsuario('${escapeTemplateString(item.id || '')}', '${escapeTemplateString(item.phone || '')}')">Telefone</button>
-                    <button type="button" class="secondary-action" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}', true)">Transferir</button>
-                    <button type="button" class="${isBlocked ? 'secondary-action' : 'danger-action'}" onclick="alternarBloqueioDeAcessoAdmin('${item.accessKey}')">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
-                    <button type="button" class="danger-action" onclick="revogarAcessoAdmin('${item.accessKey}')">Revogar</button>
-                  </div>
-                </div>
-                <div class="access-user-details access-user-details-compact">
-                  <span><strong>Tipo de acesso</strong>${roleMeta.label}</span>
-                  <span><strong>Barbearia</strong>${item.barbershop_name || 'Sem barbearia'}</span>
-                  <span><strong>Ultimo acesso</strong>${formatAdminDate(item.last_login_at)}</span>
-                  <span><strong>Criado</strong>${formatAdminDate(item.created_at || item.approved_at)}</span>
-                  <span><strong>Liberado por</strong>${item.approved_by_email || ADMIN_EMAIL}</span>
-                </div>
-              </article>
-            `
-          }).join('')}
-        </div>
-      </section>
-    `
-    })
-    .join('')
+  container.innerHTML = renderUserTable(sortedItems)
 }
 
 function findAdminAccessEntry(accessKey) {
@@ -8674,15 +8640,48 @@ window.abrirEditorDeAcessoAdmin = function (accessKey, focusBarbershop = false) 
   }
 
   selectedAdminAccessKey = accessKey
+  const effectiveRole = getAdminAccessEffectiveRole(entry)
+  const roleMeta = getRoleBadgeMeta(effectiveRole)
+  const statusMeta = getAccessStatusMeta(entry.status)
   document.getElementById('admin-access-editor-name').value = entry.name || ''
   document.getElementById('admin-access-editor-email').value = entry.email || ''
   document.getElementById('admin-access-editor-phone').value = entry.phone || ''
-  document.getElementById('admin-access-editor-role').value = entry.role || CUSTOMER_ROLE
+  document.getElementById('admin-access-editor-role').value = effectiveRole || CUSTOMER_ROLE
   document.getElementById('admin-access-editor-status').value = entry.status || 'active'
   document.getElementById('admin-access-editor-barbershop').value = entry.barbershop_id || ''
+  const drawerName = document.getElementById('admin-access-drawer-name')
+  const drawerEmail = document.getElementById('admin-access-drawer-email')
+  const drawerRole = document.getElementById('admin-access-drawer-role')
+  const drawerStatus = document.getElementById('admin-access-drawer-status')
+  const drawerOverview = document.getElementById('admin-access-drawer-overview')
+  if (drawerName) drawerName.textContent = entry.name || entry.email || 'Usuario sem nome'
+  if (drawerEmail) drawerEmail.textContent = entry.email || '-'
+  if (drawerRole) {
+    drawerRole.textContent = roleMeta.label
+    drawerRole.className = `role-badge ${roleMeta.className}`
+  }
+  if (drawerStatus) {
+    drawerStatus.textContent = statusMeta.label
+    drawerStatus.className = `status-badge ${statusMeta.className}`
+  }
+  if (drawerOverview) {
+    drawerOverview.innerHTML = [
+      { label: 'Perfil', value: roleMeta.label },
+      { label: 'Status', value: statusMeta.label },
+      { label: 'Barbearia', value: entry.barbershop_name || 'Sem barbearia' },
+      { label: 'Ultimo acesso', value: formatAdminDate(entry.last_login_at) },
+      { label: 'Criado em', value: formatAdminDate(entry.created_at || entry.approved_at) },
+      { label: 'Liberado por', value: entry.approved_by_email || ADMIN_EMAIL }
+    ].map((item) => `
+      <div class="admin-access-overview-item">
+        <span>${item.label}</span>
+        <strong>${item.value}</strong>
+      </div>
+    `).join('')
+  }
   modal.style.display = 'grid'
   setAdminAccessEditorFeedback('', 'info')
-  renderAdminAccessEditorPermissions(entry.role || CUSTOMER_ROLE)
+  renderAdminAccessEditorPermissions(effectiveRole || CUSTOMER_ROLE)
   filtrarAdminAcessos({ resetPage: false })
 
   if (focusBarbershop) {
@@ -8726,13 +8725,13 @@ window.handleAdminAccessAction = function (event, action, accessKey) {
     return
   }
 
-  if (action === 'permissions') {
+  if (action === 'details') {
     abrirEditorDeAcessoAdmin(accessKey)
     return
   }
 
-  if (action === 'email') {
-    editarEmailUsuario(entry.id || '', entry.email || '')
+  if (action === 'permissions') {
+    abrirEditorDeAcessoAdmin(accessKey)
     return
   }
 
@@ -8781,22 +8780,38 @@ window.filtrarAdminAcessos = function (options = {}) {
   const statusFilter = document.getElementById('admin-access-status-filter')?.value || ''
   const roleFilter = document.getElementById('admin-access-role-filter')?.value || ''
   const barbershopFilter = document.getElementById('admin-access-barbershop-filter')?.value || ''
+  const quickFilter = adminAccessQuickFilter || 'all'
 
-  const filtered = adminAccessDirectoryCache.filter((item) => {
+  const baseFiltered = adminAccessDirectoryCache.filter((item) => {
     const matchesSearch = !searchTerm || [item.name, item.email]
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(searchTerm))
     const matchesStatus = !statusFilter || item.status === statusFilter
-    const matchesRole = !roleFilter || item.role === roleFilter
+    const matchesRole = !roleFilter || getAdminAccessEffectiveRole(item) === roleFilter
     const matchesBarbershop = !barbershopFilter || item.barbershop_id === barbershopFilter
     return matchesSearch && matchesStatus && matchesRole && matchesBarbershop
   })
 
+  const filtered = quickFilter === 'all'
+    ? baseFiltered
+    : baseFiltered.filter((item) => getAdminAccessEffectiveRole(item) === quickFilter)
+
   const resultsInfo = document.getElementById('admin-access-results-info')
+  const counter = document.getElementById('admin-access-directory-counter')
   if (resultsInfo) {
+    const activeLabel = quickFilter === 'all'
+      ? 'todos os perfis'
+      : quickFilter === 'admin'
+        ? 'admins'
+        : quickFilter === 'barbeiro'
+          ? 'barbeiros'
+          : 'clientes'
     resultsInfo.textContent = filtered.length
-      ? `${filtered.length} usuario(s) encontrados.`
+      ? `${filtered.length} usuario(s) em ${activeLabel}.`
       : 'Nenhum usuario encontrado.'
+  }
+  if (counter) {
+    counter.textContent = `${filtered.length} usuario(s)`
   }
 
   adminAccessFilteredCache = filtered
@@ -8804,8 +8819,14 @@ window.filtrarAdminAcessos = function (options = {}) {
     adminAccessCurrentPage = 1
   }
   openAdminAccessActionKey = null
+  renderAdminAccessQuickTabs(baseFiltered)
   renderAdminAccessKpis(filtered)
   renderAdminAccessList(filtered)
+}
+
+window.selecionarFiltroRapidoAdminAccess = function (role) {
+  adminAccessQuickFilter = role || 'all'
+  filtrarAdminAcessos()
 }
 
 async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName, nextStatus = 'active') {
