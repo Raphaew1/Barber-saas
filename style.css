@@ -3894,6 +3894,45 @@ body.admin-premium .access-audit-row {
   align-items: flex-start;
 }
 
+body.admin-premium .admin-access-audit-card {
+  overflow: hidden;
+}
+
+body.admin-premium .admin-access-audit-toggle {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  justify-content: space-between;
+  text-align: left;
+}
+
+body.admin-premium .admin-access-audit-toggle:hover {
+  transform: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+body.admin-premium .admin-access-audit-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--admin-text);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+body.admin-premium .admin-access-audit-log {
+  margin-top: 6px;
+}
+
 body.admin-premium .access-audit-main {
   display: grid;
   gap: 2px;
@@ -3913,25 +3952,26 @@ body.admin-premium .access-audit-badge {
 }
 
 body.admin-premium .admin-access-drawer-overlay {
-  justify-items: end;
-  align-items: stretch;
-  padding: 0;
+  justify-items: center;
+  align-items: center;
+  padding: 24px;
 }
 
 body.admin-premium .admin-access-drawer-card {
-  width: min(100%, 520px);
-  height: 100vh;
-  max-height: 100vh;
+  width: min(100%, 880px);
+  max-height: min(86vh, 920px);
   margin: 0;
-  border-radius: 24px 0 0 24px;
+  border-radius: 24px;
   display: grid;
   grid-template-rows: auto 1fr;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.38);
 }
 
 body.admin-premium .admin-access-drawer-card .modal-body {
   overflow: auto;
-  gap: 14px;
+  gap: 12px;
+  padding-right: 4px;
 }
 
 body.admin-premium .admin-access-drawer-summary {
@@ -3964,15 +4004,15 @@ body.admin-premium .admin-access-drawer-badges {
 
 body.admin-premium .admin-access-drawer-overview {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 body.admin-premium .admin-access-overview-item {
   display: grid;
   gap: 4px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: rgba(15, 23, 42, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
@@ -4000,6 +4040,33 @@ body.admin-premium .admin-access-drawer-section-head h3 {
   margin: 0;
   color: var(--admin-title);
   font-size: 16px;
+}
+
+body.admin-premium .admin-access-drawer-card .management-form {
+  gap: 10px;
+}
+
+body.admin-premium .admin-access-drawer-card .management-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+body.admin-premium .admin-access-drawer-card input,
+body.admin-premium .admin-access-drawer-card select,
+body.admin-premium .admin-access-drawer-card button {
+  min-height: 40px;
+}
+
+body.admin-premium .admin-access-drawer-card #admin-access-editor-permissions {
+  gap: 8px;
+}
+
+body.admin-premium .admin-access-drawer-card #admin-access-editor-permissions .management-row {
+  padding: 10px 12px;
+}
+
+body.admin-premium .admin-access-drawer-card .management-form-actions {
+  justify-content: flex-end;
 }
 
 body.admin-premium .access-role-section {
@@ -4296,12 +4363,13 @@ body.admin-premium .approval-actions {
   }
 
   body.admin-premium .admin-access-drawer-card {
-    width: 100vw;
-    border-radius: 0;
+    width: min(100%, 96vw);
+    max-height: min(92vh, 920px);
+    border-radius: 20px;
   }
 
   body.admin-premium .admin-access-drawer-summary {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   body.admin-premium .admin-access-drawer-badges,
@@ -4312,6 +4380,10 @@ body.admin-premium .approval-actions {
   body.admin-premium .admin-access-drawer-overview,
   body.admin-premium .access-filters-grid-compact,
   body.admin-premium .admin-access-grant-form {
+    grid-template-columns: 1fr;
+  }
+
+  body.admin-premium .admin-access-drawer-card .management-form-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -579,14 +579,15 @@
           <div id="admin-access-list" class="management-stack"></div>
         </section>
 
-        <section class="management-card">
-          <div class="management-card-header">
+        <section class="management-card admin-access-audit-card is-collapsed">
+          <button type="button" class="management-card-header admin-access-audit-toggle" onclick="toggleAdminAccessAudit()">
             <div>
               <span class="management-kicker">Auditoria</span>
               <h2>Atividade recente de seguranca</h2>
             </div>
-          </div>
-          <div id="admin-access-audit-log" class="management-stack"></div>
+            <span id="admin-access-audit-toggle-icon" class="admin-access-audit-toggle-icon">+</span>
+          </button>
+          <div id="admin-access-audit-log" class="management-stack admin-access-audit-log" style="display:none;"></div>
         </section>
       </section>
 

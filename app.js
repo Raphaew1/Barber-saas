@@ -120,6 +120,7 @@ let selectedAdminAccessKey = null
 let adminAccessFilteredCache = []
 let adminAccessCurrentPage = 1
 let adminAccessQuickFilter = 'all'
+let isAdminAccessAuditExpanded = false
 let openAdminAccessActionKey = null
 let currentVisibleScreenId = ''
 let platformContextCache = null
@@ -8011,6 +8012,25 @@ function renderAdminAccessAuditLog() {
     .join('')
 }
 
+function syncAdminAccessAuditUi() {
+  const card = document.querySelector('.admin-access-audit-card')
+  const log = document.getElementById('admin-access-audit-log')
+  const icon = document.getElementById('admin-access-audit-toggle-icon')
+
+  if (card) {
+    card.classList.toggle('is-collapsed', !isAdminAccessAuditExpanded)
+    card.classList.toggle('is-expanded', isAdminAccessAuditExpanded)
+  }
+
+  if (log) {
+    log.style.display = isAdminAccessAuditExpanded ? 'grid' : 'none'
+  }
+
+  if (icon) {
+    icon.textContent = isAdminAccessAuditExpanded ? '-' : '+'
+  }
+}
+
 window.criarAcessoAdmin = async function () {
   const currentUser = await ensureAdminAccess()
   if (!currentUser) {
@@ -8827,6 +8847,11 @@ window.filtrarAdminAcessos = function (options = {}) {
 window.selecionarFiltroRapidoAdminAccess = function (role) {
   adminAccessQuickFilter = role || 'all'
   filtrarAdminAcessos()
+}
+
+window.toggleAdminAccessAudit = function () {
+  isAdminAccessAuditExpanded = !isAdminAccessAuditExpanded
+  syncAdminAccessAuditUi()
 }
 
 async function syncAdminAccessEntry(entry, nextRole, nextBarbershopId, nextName, nextStatus = 'active') {
