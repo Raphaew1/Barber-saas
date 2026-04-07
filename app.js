@@ -8773,7 +8773,7 @@ window.filtrarAdminBarbearias = function () {
 
 function buildAdminAccessTableRow(item) {
   const statusMeta = getAccessStatusMeta(item.status)
-  const roleMeta = getRoleBadgeMeta(getAdminAccessEffectiveRole(item))
+  const effectiveRole = getAdminAccessEffectiveRole(item)
   const email = item.email || '-'
   const name = item.name || item.email || 'Usuario sem nome'
   const isBlocked = item.status === 'blocked'
@@ -8789,7 +8789,16 @@ function buildAdminAccessTableRow(item) {
         </div>
       </td>
       <td class="access-col-role">
-        <span class="role-badge ${roleMeta.className}">${roleMeta.label}</span>
+        <select
+          class="access-role-select"
+          aria-label="Alterar perfil de ${escapeTemplateString(name)}"
+          onclick="event.stopPropagation()"
+          onchange="atualizarPerfilNaTabelaAdminAccess(event, '${item.accessKey}')"
+        >
+          <option value="cliente" ${effectiveRole === CUSTOMER_ROLE ? 'selected' : ''}>Cliente</option>
+          <option value="barbeiro" ${effectiveRole === BARBER_ROLE ? 'selected' : ''}>Barbeiro</option>
+          <option value="admin" ${effectiveRole === ADMIN_ROLE ? 'selected' : ''}>Admin</option>
+        </select>
       </td>
       <td class="access-col-status">
         <span class="status-badge ${statusMeta.className}">${statusMeta.label}</span>
@@ -8812,6 +8821,55 @@ function buildAdminAccessTableRow(item) {
       </td>
     </tr>
   `
+}
+
+window.atualizarPerfilNaTabelaAdminAccess = async function (event, accessKey) {
+  event?.stopPropagation?.()
+  const select = event?.target
+  const entry = findAdminAccessEntry(accessKey)
+
+  if (!select || !entry) {
+    return
+  }
+
+  const nextRole = normalizePortalRole(select.value)
+  const currentRole = getAdminAccessEffectiveRole(entry)
+
+  if (nextRole === currentRole) {
+    return
+  }
+
+  const previousValue = currentRole
+  select.disabled = true
+
+  const syncResult = await syncAdminAccessEntry(
+    entry,
+    nextRole,
+    entry.barbershop_id || '',
+    entry.name || '',
+    entry.status || 'active'
+  )
+
+  select.disabled = false
+
+  if (syncResult?.error) {
+    select.value = previousValue
+
+    if ((nextRole === BARBER_ROLE || nextRole === ADMIN_ROLE) && !entry.barbershop_id) {
+      showAppToast('Selecione uma barbearia antes de trocar este perfil.', 'error')
+      abrirEditorDeAcessoAdmin(accessKey, true)
+      return
+    }
+
+    showAppToast(`Erro ao atualizar perfil: ${syncResult.error.message}`, 'error')
+    return
+  }
+
+  showAppToast('Perfil atualizado com sucesso.', 'success')
+  await carregarAdminAcessos()
+  if (selectedAdminAccessKey === accessKey) {
+    abrirEditorDeAcessoAdmin(accessKey)
+  }
 }
 
 function renderAdminAccessPagination(totalItems, currentPage, totalPages) {
