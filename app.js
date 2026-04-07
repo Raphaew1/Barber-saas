@@ -1628,8 +1628,16 @@ function getRoleBadgeMeta(role) {
   return { label: 'Cliente', className: 'role-client' }
 }
 
+function getAdminAccessEffectiveRole(entryOrRole) {
+  if (entryOrRole && typeof entryOrRole === 'object') {
+    return normalizePortalRole(entryOrRole.accessRole || entryOrRole.role || CUSTOMER_ROLE)
+  }
+
+  return normalizePortalRole(entryOrRole || CUSTOMER_ROLE)
+}
+
 function getAdminAccessRoleSectionMeta(role) {
-  const normalizedRole = normalizePortalRole(role)
+  const normalizedRole = getAdminAccessEffectiveRole(role)
 
   if (normalizedRole === ADMIN_ROLE) {
     return {
@@ -7926,9 +7934,9 @@ function renderAdminAccessKpis(items = []) {
     return
   }
 
-  const adminUsers = items.filter((item) => normalizePortalRole(item.role) === ADMIN_ROLE).length
-  const barberUsers = items.filter((item) => normalizePortalRole(item.role) === BARBER_ROLE).length
-  const customerUsers = items.filter((item) => normalizePortalRole(item.role) === CUSTOMER_ROLE).length
+  const adminUsers = items.filter((item) => getAdminAccessEffectiveRole(item) === ADMIN_ROLE).length
+  const barberUsers = items.filter((item) => getAdminAccessEffectiveRole(item) === BARBER_ROLE).length
+  const customerUsers = items.filter((item) => getAdminAccessEffectiveRole(item) === CUSTOMER_ROLE).length
   const activeUsers = items.filter((item) => item.status === 'active').length
   const blockedUsers = items.filter((item) => item.status === 'blocked').length
   const pendingUsers = items.filter((item) => item.status === 'pending').length
@@ -8553,7 +8561,7 @@ function renderAdminAccessList(items) {
   }
 
   const grouped = items.reduce((map, item) => {
-    const groupKey = normalizePortalRole(item.role)
+    const groupKey = getAdminAccessEffectiveRole(item)
     const bucket = map.get(groupKey) || []
     bucket.push(item)
     map.set(groupKey, bucket)
@@ -8589,7 +8597,7 @@ function renderAdminAccessList(items) {
         <div class="access-group-stack">
           ${groupItems.map((item) => {
             const statusMeta = getAccessStatusMeta(item.status)
-            const roleMeta = getRoleBadgeMeta(item.role)
+            const roleMeta = getRoleBadgeMeta(getAdminAccessEffectiveRole(item))
             const isBlocked = item.status === 'blocked'
             return `
               <article class="access-user-card ${selectedAdminAccessKey === item.accessKey ? 'is-selected' : ''}">
