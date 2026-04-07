@@ -1622,10 +1622,39 @@ function getRoleBadgeMeta(role) {
   }
 
   if (normalizedRole === BARBER_ROLE) {
-    return { label: 'Barbearia', className: 'role-barber' }
+    return { label: 'Barbeiro', className: 'role-barber' }
   }
 
   return { label: 'Cliente', className: 'role-client' }
+}
+
+function getAdminAccessRoleSectionMeta(role) {
+  const normalizedRole = normalizePortalRole(role)
+
+  if (normalizedRole === ADMIN_ROLE) {
+    return {
+      key: ADMIN_ROLE,
+      title: 'Admins',
+      description: 'Usuarios com acesso ao portal administrativo.',
+      className: 'access-role-section-admin'
+    }
+  }
+
+  if (normalizedRole === BARBER_ROLE) {
+    return {
+      key: BARBER_ROLE,
+      title: 'Barbeiros',
+      description: 'Profissionais e responsaveis operando no portal da barbearia.',
+      className: 'access-role-section-barber'
+    }
+  }
+
+  return {
+    key: CUSTOMER_ROLE,
+    title: 'Clientes',
+    description: 'Usuarios finais com acesso ao portal de agendamento.',
+    className: 'access-role-section-client'
+  }
 }
 
 function formatCompactAdminDate(value) {
@@ -7897,14 +7926,18 @@ function renderAdminAccessKpis(items = []) {
     return
   }
 
+  const adminUsers = items.filter((item) => normalizePortalRole(item.role) === ADMIN_ROLE).length
+  const barberUsers = items.filter((item) => normalizePortalRole(item.role) === BARBER_ROLE).length
+  const customerUsers = items.filter((item) => normalizePortalRole(item.role) === CUSTOMER_ROLE).length
   const activeUsers = items.filter((item) => item.status === 'active').length
   const blockedUsers = items.filter((item) => item.status === 'blocked').length
   const pendingUsers = items.filter((item) => item.status === 'pending').length
-  const totalBarbershops = new Set(items.map((item) => item.barbershop_id).filter(Boolean)).size
 
   container.innerHTML = [
+    { label: 'Admins', value: String(adminUsers) },
+    { label: 'Barbeiros', value: String(barberUsers) },
+    { label: 'Clientes', value: String(customerUsers) },
     { label: 'Usuarios ativos', value: String(activeUsers) },
-    { label: 'Barbearias', value: String(totalBarbershops) },
     { label: 'Solicitacoes pendentes', value: String(pendingUsers) },
     { label: 'Usuarios bloqueados', value: String(blockedUsers) }
   ].map((card) => `
@@ -8520,21 +8553,37 @@ function renderAdminAccessList(items) {
   }
 
   const grouped = items.reduce((map, item) => {
-    const groupKey = item.barbershop_name || 'Sem barbearia'
+    const groupKey = normalizePortalRole(item.role)
     const bucket = map.get(groupKey) || []
     bucket.push(item)
     map.set(groupKey, bucket)
     return map
   }, new Map())
 
-  container.innerHTML = Array.from(grouped.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([groupName, groupItems]) => `
-      <section class="access-group">
+  const roleOrder = [ADMIN_ROLE, BARBER_ROLE, CUSTOMER_ROLE]
+
+  container.innerHTML = roleOrder
+    .filter((role) => grouped.has(role))
+    .map((role) => {
+      const groupItems = [...(grouped.get(role) || [])]
+        .sort((a, b) => {
+          const nameA = String(a.name || a.email || '').trim().toLowerCase()
+          const nameB = String(b.name || b.email || '').trim().toLowerCase()
+          return nameA.localeCompare(nameB)
+        })
+      const sectionMeta = getAdminAccessRoleSectionMeta(role)
+      const activeCount = groupItems.filter((item) => item.status === 'active').length
+
+      return `
+      <section class="access-group access-role-section ${sectionMeta.className}">
         <div class="access-group-header">
           <div>
-            <strong>${groupName}</strong>
-            <span class="management-meta">${groupItems[0]?.barbershop_location || 'Sem localizacao'} | ${groupItems.length} usuario(s)</span>
+            <strong>${sectionMeta.title}</strong>
+            <span class="management-meta">${sectionMeta.description}</span>
+          </div>
+          <div class="access-role-summary">
+            <span class="management-badge">${groupItems.length} usuario(s)</span>
+            <span class="management-badge">${activeCount} ativo(s)</span>
           </div>
         </div>
         <div class="access-group-stack">
@@ -8548,6 +8597,7 @@ function renderAdminAccessList(items) {
                   <div class="access-user-identity access-user-identity-compact">
                     <strong>${item.name || item.email || 'Usuario sem nome'}</strong>
                     <span class="management-meta" title="${escapeTemplateString(item.email || '-')}">${item.email || '-'}</span>
+                    <span class="access-user-role-label">Perfil: ${roleMeta.label}</span>
                   </div>
                   <div class="access-user-badges">
                     <span class="role-badge ${roleMeta.className}">${roleMeta.label}</span>
@@ -8564,6 +8614,7 @@ function renderAdminAccessList(items) {
                   </div>
                 </div>
                 <div class="access-user-details access-user-details-compact">
+                  <span><strong>Tipo de acesso</strong>${roleMeta.label}</span>
                   <span><strong>Barbearia</strong>${item.barbershop_name || 'Sem barbearia'}</span>
                   <span><strong>Ultimo acesso</strong>${formatAdminDate(item.last_login_at)}</span>
                   <span><strong>Criado</strong>${formatAdminDate(item.created_at || item.approved_at)}</span>
@@ -8574,7 +8625,8 @@ function renderAdminAccessList(items) {
           }).join('')}
         </div>
       </section>
-    `)
+    `
+    })
     .join('')
 }
 

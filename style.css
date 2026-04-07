@@ -3581,6 +3581,13 @@ body.admin-premium .access-group-header {
   gap: 12px;
 }
 
+body.admin-premium .access-role-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 body.admin-premium .access-group-stack {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3631,6 +3638,14 @@ body.admin-premium .access-user-identity-compact .management-meta {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 280px;
+}
+
+body.admin-premium .access-user-role-label {
+  color: var(--admin-muted-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 body.admin-premium .access-user-badges {
@@ -3689,6 +3704,32 @@ body.admin-premium .access-user-actions-compact button {
 
 body.admin-premium .admin-access-modal-card {
   width: min(100%, 760px);
+}
+
+body.admin-premium .access-role-section {
+  position: relative;
+  overflow: hidden;
+}
+
+body.admin-premium .access-role-section::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 999px;
+  opacity: 0.9;
+}
+
+body.admin-premium .access-role-section-admin::before {
+  background: #60a5fa;
+}
+
+body.admin-premium .access-role-section-barber::before {
+  background: #a78bfa;
+}
+
+body.admin-premium .access-role-section-client::before {
+  background: #94a3b8;
 }
 
 body.admin-premium .role-admin,
