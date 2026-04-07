@@ -8830,6 +8830,33 @@ function renderAdminAccessEditorPermissions(role) {
   `).join('')
 }
 
+function updateAdminAccessDrawerRoleState(nextRole) {
+  const normalizedRole = nextRole || CUSTOMER_ROLE
+  const roleMeta = getRoleBadgeMeta(normalizedRole)
+  const drawerRole = document.getElementById('admin-access-drawer-role')
+  const drawerRoleSelect = document.getElementById('admin-access-drawer-role-select')
+  const editorRoleSelect = document.getElementById('admin-access-editor-role')
+
+  if (drawerRole) {
+    drawerRole.textContent = roleMeta.label
+    drawerRole.className = `role-badge ${roleMeta.className}`
+  }
+
+  if (drawerRoleSelect && drawerRoleSelect.value !== normalizedRole) {
+    drawerRoleSelect.value = normalizedRole
+  }
+
+  if (editorRoleSelect && editorRoleSelect.value !== normalizedRole) {
+    editorRoleSelect.value = normalizedRole
+  }
+
+  renderAdminAccessEditorPermissions(normalizedRole)
+}
+
+window.syncAdminAccessEditorRole = function (nextRole) {
+  updateAdminAccessDrawerRoleState(nextRole)
+}
+
 window.abrirEditorDeAcessoAdmin = function (accessKey, focusBarbershop = false) {
   const entry = findAdminAccessEntry(accessKey)
   const modal = document.getElementById('admin-access-editor-modal')
@@ -8855,32 +8882,42 @@ window.abrirEditorDeAcessoAdmin = function (accessKey, focusBarbershop = false) 
   const drawerOverview = document.getElementById('admin-access-drawer-overview')
   if (drawerName) drawerName.textContent = entry.name || entry.email || 'Usuario sem nome'
   if (drawerEmail) drawerEmail.textContent = entry.email || '-'
-  if (drawerRole) {
-    drawerRole.textContent = roleMeta.label
-    drawerRole.className = `role-badge ${roleMeta.className}`
-  }
   if (drawerStatus) {
     drawerStatus.textContent = statusMeta.label
     drawerStatus.className = `status-badge ${statusMeta.className}`
   }
   if (drawerOverview) {
     drawerOverview.innerHTML = [
-      { label: 'Perfil', value: roleMeta.label },
+      {
+        label: 'Perfil',
+        value: `
+          <div class="admin-access-overview-inline">
+            <strong>${roleMeta.label}</strong>
+            <select id="admin-access-drawer-role-select" onchange="syncAdminAccessEditorRole(this.value)" aria-label="Alterar perfil do usuario selecionado">
+              <option value="cliente">Cliente</option>
+              <option value="barbeiro">Barbeiro</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        `,
+        className: 'is-editable',
+        rawHtml: true
+      },
       { label: 'Status', value: statusMeta.label },
       { label: 'Barbearia', value: entry.barbershop_name || 'Sem barbearia' },
       { label: 'Ultimo acesso', value: formatAdminDate(entry.last_login_at) },
       { label: 'Criado em', value: formatAdminDate(entry.created_at || entry.approved_at) },
       { label: 'Liberado por', value: entry.approved_by_email || ADMIN_EMAIL }
     ].map((item) => `
-      <div class="admin-access-overview-item">
+      <div class="admin-access-overview-item ${item.className || ''}">
         <span>${item.label}</span>
-        <strong>${item.value}</strong>
+        ${item.rawHtml ? item.value : `<strong>${item.value}</strong>`}
       </div>
     `).join('')
   }
+  updateAdminAccessDrawerRoleState(effectiveRole || CUSTOMER_ROLE)
   modal.style.display = 'grid'
   setAdminAccessEditorFeedback('', 'info')
-  renderAdminAccessEditorPermissions(effectiveRole || CUSTOMER_ROLE)
   filtrarAdminAcessos({ resetPage: false })
 
   if (focusBarbershop) {
@@ -8956,7 +8993,7 @@ window.handleAdminAccessAction = function (event, action, accessKey) {
 
 document.addEventListener('change', (event) => {
   if (event.target?.id === 'admin-access-editor-role') {
-    renderAdminAccessEditorPermissions(event.target.value)
+    updateAdminAccessDrawerRoleState(event.target.value)
   }
 })
 
