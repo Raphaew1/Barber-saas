@@ -1977,7 +1977,7 @@ async function fetchPlatformContext(forceRefresh = false) {
     } catch (_error) {
     }
 
-    platformContextCache = buildMasterAdminContext(currentSession.user, adminProfile)
+    platformContextCache = normalizePlatformContext(buildMasterAdminContext(currentSession.user, adminProfile), currentSession.user)
     return platformContextCache
   }
 
@@ -1989,7 +1989,7 @@ async function fetchPlatformContext(forceRefresh = false) {
       return await buildPlatformContextFallback()
     }
 
-    platformContextCache = data.context
+    platformContextCache = normalizePlatformContext(data.context, currentSession?.user || null)
     return platformContextCache
   } catch (_error) {
     return await buildPlatformContextFallback()
@@ -2017,7 +2017,7 @@ async function buildPlatformContextFallback() {
     }
 
     if (isAdminEmail(user.email)) {
-      const context = buildMasterAdminContext(user)
+      const context = normalizePlatformContext(buildMasterAdminContext(user), user)
       platformContextCache = context
       return context
     }
@@ -2104,6 +2104,8 @@ async function buildPlatformContextFallback() {
       name: profile?.name || '',
       global_role: profile?.global_role || (isAdminEmail(user.email) ? 'super_admin' : 'user'),
       profile_status: profile?.status || 'active',
+      role: normalizePortalRole(getActiveAccessFromContext({ access: accessRows })?.role || profile?.role || CUSTOMER_ROLE),
+      barbershop_id: getActiveAccessFromContext({ access: accessRows })?.barbershop_id || profile?.barbershop_id || null,
       access: Array.isArray(accessRows)
         ? accessRows.map((item) => ({
             barbershop_id: item.barbershop_id,
@@ -2127,6 +2129,9 @@ async function buildPlatformContextFallback() {
       })
     }
 
+    context.allowed_portals = getAllowedPortalsForContext(context, user)
+    context.primary_portal = getPrimaryPortalForContext(context, user)
+
     platformContextCache = context
     return platformContextCache
   } catch (fallbackError) {
@@ -2147,6 +2152,67 @@ function getActiveAccessFromContext(context, preferredBarbershopId = '') {
   return activeAccess[0] || null
 }
 
+function getRequestedPortalForCurrentEntry() {
+  if (isAdminEntryPage()) {
+    return ADMIN_ROLE
+  }
+
+  if (isBarberEntryPage()) {
+    return BARBER_ROLE
+  }
+
+  if (isClientEntryPage()) {
+    return CUSTOMER_ROLE
+  }
+
+  return null
+}
+
+function getAllowedPortalsForContext(context, user = null) {
+  if (canAccessAdminPortal(user || currentSession?.user || null, context)) {
+    return [ADMIN_ROLE, BARBER_ROLE, CUSTOMER_ROLE]
+  }
+
+  const normalizedRole = normalizePortalRole(context?.role || '')
+  const activeAccess = Array.isArray(context?.access)
+    ? context.access.filter((item) => String(item?.status || 'active') === 'active')
+    : []
+  const hasBarberAccess = context?.global_role === BARBER_ROLE
+    || normalizedRole === BARBER_ROLE
+    || activeAccess.some((item) => normalizePortalRole(item?.role || '') === BARBER_ROLE)
+
+  if (hasBarberAccess) {
+    return [BARBER_ROLE]
+  }
+
+  return [CUSTOMER_ROLE]
+}
+
+function getPrimaryPortalForContext(context, user = null) {
+  const allowedPortals = getAllowedPortalsForContext(context, user)
+  if (allowedPortals.includes(ADMIN_ROLE)) {
+    return ADMIN_ROLE
+  }
+
+  if (allowedPortals.includes(BARBER_ROLE)) {
+    return BARBER_ROLE
+  }
+
+  return CUSTOMER_ROLE
+}
+
+function getPortalAccessMessageForAllowedPortals(allowedPortals = []) {
+  if (allowedPortals.includes(ADMIN_ROLE)) {
+    return 'Este login admin pode acessar os portais de administrador, barbeiro e cliente.'
+  }
+
+  if (allowedPortals.includes(BARBER_ROLE)) {
+    return 'Este login tem acesso somente ao portal de barbeiro.'
+  }
+
+  return 'Este login tem acesso somente ao portal de cliente.'
+}
+
 function canAccessAdminPortal(user, context = null) {
   if (!user?.email) {
     return false
@@ -2156,7 +2222,13 @@ function canAccessAdminPortal(user, context = null) {
     return true
   }
 
+  const activeAccess = Array.isArray(context?.access)
+    ? context.access.filter((item) => String(item?.status || 'active') === 'active')
+    : []
+
   return context?.global_role === 'super_admin'
+    || normalizePortalRole(context?.role || '') === ADMIN_ROLE
+    || activeAccess.some((item) => normalizePortalRole(item?.role || '') === ADMIN_ROLE)
 }
 
 function updateAdminContextUi(barbershops = null) {
@@ -2237,10 +2309,31 @@ window.login = async function () {
     clearPlatformContextCache()
 
     const signedUser = data.user || data.session?.user
-    const resolvedPortal = isAdminEntryPage() ? 'admin' : await resolvePortalForUser(signedUser)
+    const context = await fetchPlatformContext(true)
+    const requestedPortal = getRequestedPortalForCurrentEntry()
+    let allowedPortals = context ? getAllowedPortalsForContext(context, signedUser) : []
+    const resolvedPortal = requestedPortal && allowedPortals.includes(requestedPortal)
+      ? requestedPortal
+      : await resolvePortalForUser(signedUser)
+
+    if (!allowedPortals.length && resolvedPortal) {
+      allowedPortals = [resolvedPortal]
+    }
 
     if (!resolvedPortal) {
       setAuthFeedback('Nao foi possivel identificar o tipo de acesso desta conta.', 'error')
+      return
+    }
+
+    if (requestedPortal && !allowedPortals.includes(requestedPortal)) {
+      await supabaseClient.auth.signOut()
+      currentSession = null
+      clearPlatformContextCache()
+      currentBarbershopId = null
+      updateProtectedUi(false)
+      applyPortalUi()
+      showScreen('login')
+      setAuthFeedback(getPortalAccessMessageForAllowedPortals(allowedPortals), 'error')
       return
     }
 
@@ -3844,7 +3937,8 @@ function isCurrentSessionSuperAdmin() {
 }
 
 function isCurrentSessionBarberPortalUser() {
-  return platformContextCache?.global_role === BARBER_ROLE
+  const allowedPortals = getAllowedPortalsForContext(platformContextCache, currentSession?.user || null)
+  return allowedPortals.length === 1 && allowedPortals[0] === BARBER_ROLE
 }
 
 function getGlobalRoleForPortalRole(role, currentGlobalRole = '') {
@@ -3867,8 +3961,45 @@ function buildMasterAdminContext(user, profile = null) {
     name: profile?.name || user?.user_metadata?.name || '',
     global_role: 'super_admin',
     profile_status: profile?.status || 'active',
-    access: []
+    role: ADMIN_ROLE,
+    access: [],
+    allowed_portals: [ADMIN_ROLE, BARBER_ROLE, CUSTOMER_ROLE],
+    primary_portal: ADMIN_ROLE
   }
+}
+
+function normalizePlatformContext(context = null, user = null) {
+  if (!context || typeof context !== 'object') {
+    return null
+  }
+
+  const normalizedAccess = (Array.isArray(context.access) ? context.access : Array.isArray(context.access_list) ? context.access_list : [])
+    .map((item) => ({
+      ...item,
+      role: normalizeAccessRole(item?.role || CUSTOMER_ROLE),
+      status: String(item?.status || 'active').trim().toLowerCase(),
+      barbershop_name: item?.barbershop_name || item?.barbershops?.name || item?.barbershop?.name || '',
+      barbershop_status: item?.barbershop_status || item?.barbershops?.status || item?.barbershop?.status || 'active',
+      plan_code: item?.plan_code || item?.barbershops?.plan_code || item?.barbershop?.plan_code || 'free'
+    }))
+
+  const normalizedContext = {
+    ...context,
+    role: normalizePortalRole(context.role || getActiveAccessFromContext({ access: normalizedAccess })?.role || CUSTOMER_ROLE),
+    access: normalizedAccess,
+    access_list: normalizedAccess
+  }
+
+  normalizedContext.allowed_portals = Array.isArray(context.allowed_portals) && context.allowed_portals.length
+    ? context.allowed_portals.map((item) => normalizePortalRole(item))
+    : getAllowedPortalsForContext(normalizedContext, user)
+  normalizedContext.primary_portal = normalizePortalRole(context.primary_portal || getPrimaryPortalForContext(normalizedContext, user))
+
+  if (!normalizedContext.barbershop_id) {
+    normalizedContext.barbershop_id = getActiveAccessFromContext({ access: normalizedAccess })?.barbershop_id || null
+  }
+
+  return normalizedContext
 }
 
 async function resolvePortalForUser(user) {
@@ -3877,23 +4008,10 @@ async function resolvePortalForUser(user) {
   }
 
   const context = await fetchPlatformContext()
-  if (canAccessAdminPortal(user, context)) {
-    return 'admin'
-  }
-
-  if (context?.global_role === BARBER_ROLE) {
-    return 'barbeiro'
-  }
-
   if (context) {
-    const activeAccess = Array.isArray(context.access)
-      ? context.access.filter((item) => item?.status === 'active')
-      : []
-
-    if (activeAccess.some((item) => item.role === 'client')) {
-      return 'cliente'
-    }
+    return getPrimaryPortalForContext(context, user)
   }
+
   const { data: barberAccess, error: barberAccessError } = await supabaseClient
     .from('barber_access')
     .select('email, is_active')
@@ -3919,8 +4037,13 @@ async function resolvePortalForUser(user) {
 }
 
 async function handleUserAfterLogin(user, fallbackPortal = '') {
-  let role = ''
   const context = await fetchPlatformContext()
+  const allowedPortals = getAllowedPortalsForContext(context, user)
+  const primaryPortal = getPrimaryPortalForContext(context, user)
+  const requestedPortal = fallbackPortal || getRequestedPortalForCurrentEntry()
+  const targetPortal = requestedPortal && allowedPortals.includes(requestedPortal)
+    ? requestedPortal
+    : primaryPortal
 
   const { data: profile } = await supabaseClient
     .from('profiles')
@@ -3929,9 +4052,9 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
     .maybeSingle()
 
   const profileStatus = String(profile?.status || context?.profile_status || 'active').trim().toLowerCase()
-  const isSuperAdmin = canAccessAdminPortal(user, context)
+  const isAdminUser = canAccessAdminPortal(user, context)
 
-  if (!isSuperAdmin && profileStatus === 'pending') {
+  if (!isAdminUser && profileStatus === 'pending') {
     await supabaseClient.auth.signOut()
     currentSession = null
     clearPlatformContextCache()
@@ -3942,7 +4065,7 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
     return null
   }
 
-  if (!isSuperAdmin && profileStatus === 'blocked') {
+  if (!isAdminUser && profileStatus === 'blocked') {
     await supabaseClient.auth.signOut()
     currentSession = null
     clearPlatformContextCache()
@@ -3953,43 +4076,30 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
     return null
   }
 
-  if (isSuperAdmin) {
-    role = ADMIN_ROLE
-  } else if (context?.global_role === BARBER_ROLE) {
-    role = BARBER_ROLE
-  } else if (profile?.role) {
-    const normalizedProfileRole = normalizePortalRole(profile.role)
-    role = normalizedProfileRole === BARBER_ROLE ? CUSTOMER_ROLE : normalizedProfileRole
-  } else if (fallbackPortal) {
-    role = fallbackPortal
-  } else {
-    role = await resolvePortalForUser(user)
-  }
-
-  if (role === ADMIN_ROLE) {
+  if (targetPortal === ADMIN_ROLE) {
     setPortal('admin')
     applyPortalUi()
     if (!isAdminEntryPage()) {
       window.location.href = getAppUrl('admin.html')
-      return role
+      return ADMIN_ROLE
     }
 
     showScreen('admin-dashboard')
     await carregarPortalData('admin-dashboard')
-    return role
+    return ADMIN_ROLE
   }
 
-  if (role === BARBER_ROLE) {
+  if (targetPortal === BARBER_ROLE) {
     setPortal('barbeiro')
     applyPortalUi()
     if (!isBarberEntryPage()) {
       window.location.href = getAppUrl('barbearia.html')
-      return role
+      return BARBER_ROLE
     }
 
-    showScreen('gestao')
-    await carregarPortalData('gestao')
-    return role
+    showScreen('barber-dashboard')
+    await carregarPortalData('barber-dashboard')
+    return BARBER_ROLE
   }
 
   if (!isClientEntryPage() && !isClientPublicView()) {
@@ -4014,6 +4124,15 @@ async function validateBarberPortalAccess(user) {
   }
 
   const context = await fetchPlatformContext()
+  if (canAccessAdminPortal(user, context)) {
+    const preferredAccess = getActiveAccessFromContext(
+      context,
+      getCurrentBarbershopContextId() || currentBarbershopId || getAdminBarbershopContext()
+    )
+    currentBarbershopId = preferredAccess?.barbershop_id || getCurrentBarbershopContextId() || currentBarbershopId
+    return { allowed: true }
+  }
+
   if (context?.global_role !== BARBER_ROLE) {
     return {
       allowed: false,
@@ -4113,7 +4232,7 @@ async function validateAdminPortalAccess(user) {
   if (!canAccessAdminPortal(user, context)) {
     return {
       allowed: false,
-      message: 'Somente usuarios com regra global super_admin podem acessar o portal do administrador.'
+      message: 'Somente usuarios com perfil admin podem acessar o portal do administrador.'
     }
   }
 
@@ -4255,9 +4374,18 @@ async function init() {
       return
     } else {
       if (sessionState.session?.user) {
+        const context = await fetchPlatformContext(true)
+        const requestedPortal = getRequestedPortalForCurrentEntry()
+        const allowedPortals = context ? getAllowedPortalsForContext(context, sessionState.session.user) : []
+
+        if (context && requestedPortal && !allowedPortals.includes(requestedPortal)) {
+          redirectToPortalEntry(getPrimaryPortalForContext(context, sessionState.session.user))
+          return
+        }
+
         updateProtectedUi(true)
         applyPortalUi()
-        await handleUserAfterLogin(sessionState.session.user)
+        await handleUserAfterLogin(sessionState.session.user, requestedPortal || '')
         return
       }
 
@@ -7057,7 +7185,7 @@ function updateLoginPortalUi() {
     loginDescription.textContent = isPortalLanding
       ? ''
       : isAdminEntryPage()
-      ? 'Somente o email master autorizado pode acessar esta area.'
+      ? 'Use um login com perfil admin para acessar esta area.'
       : isClientEntryPage()
         ? 'Use seu email e senha para acessar somente agendamentos e produtos.'
       : isBarberEntryPage()
@@ -7431,7 +7559,7 @@ async function ensureAdminAccess() {
     return currentUser
   }
 
-  alert('Somente o administrador principal pode acessar essa area.')
+  alert('Somente usuarios com perfil admin podem acessar essa area.')
   return null
 }
 
