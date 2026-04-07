@@ -440,14 +440,16 @@
           <p>Somente o administrador cria novas barbearias, define o responsavel e acompanha o status de cada unidade.</p>
         </div>
 
-        <section class="management-card">
+        <div id="admin-barbershops-kpis" class="management-summary"></div>
+
+        <section class="management-card admin-barbershops-create-card">
           <div class="management-card-header">
             <div>
               <span class="management-kicker">Nova unidade</span>
               <h2>Criar barbearia</h2>
             </div>
           </div>
-          <div class="management-form management-form-grid management-form-compact">
+          <div class="management-form management-form-grid management-form-compact admin-barbershops-create-form">
             <input type="text" id="admin-new-barbershop-name" placeholder="Nome da barbearia">
             <input type="tel" id="admin-new-barbershop-phone" placeholder="Telefone da barbearia">
             <input type="email" id="admin-new-barbershop-email" placeholder="Email da barbearia">
@@ -458,13 +460,13 @@
               <option value="pro">Plano Pro</option>
               <option value="premium">Plano Premium</option>
             </select>
-            <div class="management-form-actions management-form-span-2">
+            <div class="management-form-actions management-form-span-full admin-barbershops-create-actions">
               <button type="button" onclick="criarBarbeariaAdmin()">Criar barbearia</button>
             </div>
           </div>
         </section>
 
-        <section class="management-card">
+        <section class="management-card admin-barbershops-edit-card">
           <div class="management-card-header">
             <div>
               <span class="management-kicker">Edicao</span>
@@ -493,13 +495,24 @@
           </div>
         </section>
 
-        <section class="management-card">
-          <div class="management-card-header">
+        <section class="management-card admin-barbershops-directory-card">
+          <div class="management-card-header admin-barbershops-directory-header">
             <div>
-              <span class="management-kicker">Unidades</span>
+              <span class="management-kicker">Diretorio</span>
               <h2>Barbearias cadastradas</h2>
             </div>
+            <span id="admin-barbershops-directory-counter" class="management-badge">0 unidades</span>
           </div>
+          <div class="access-filters-grid access-filters-grid-compact admin-barbershops-filters">
+            <input type="text" id="admin-barbershops-search" placeholder="Buscar por nome, email ou slug" oninput="filtrarAdminBarbearias()">
+            <select id="admin-barbershops-plan-filter" onchange="filtrarAdminBarbearias()">
+              <option value="">Todos os planos</option>
+              <option value="free">Plano Free</option>
+              <option value="pro">Plano Pro</option>
+              <option value="premium">Plano Premium</option>
+            </select>
+          </div>
+          <div id="admin-barbershops-results-info" class="field-hint">Carregando barbearias...</div>
           <div id="admin-barbershops-list" class="management-stack"></div>
         </section>
       </section>

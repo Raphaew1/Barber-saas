@@ -3949,6 +3949,115 @@ body.admin-premium .admin-access-directory-card {
   border-radius: 20px;
 }
 
+body.admin-premium #admin-barbershops-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+body.admin-premium #admin-barbershops-kpis .metric-card {
+  min-height: 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+body.admin-premium #admin-barbershops-kpis .metric-label {
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+body.admin-premium #admin-barbershops-kpis .metric-value {
+  font-size: 24px;
+}
+
+body.admin-premium .admin-barbershops-create-card,
+body.admin-premium .admin-barbershops-edit-card,
+body.admin-premium .admin-barbershops-directory-card {
+  border-radius: 20px;
+}
+
+body.admin-premium .admin-barbershops-create-form {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: center;
+}
+
+body.admin-premium .admin-barbershops-create-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+body.admin-premium .admin-barbershops-directory-header {
+  align-items: flex-end;
+}
+
+body.admin-premium .admin-barbershops-filters {
+  grid-template-columns: minmax(320px, 1.45fr) minmax(180px, 0.6fr);
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+body.admin-premium .admin-barbershops-table-shell {
+  gap: 10px;
+}
+
+body.admin-premium .admin-barbershops-table-wrapper {
+  max-height: none;
+  border-radius: 18px;
+  border-color: rgba(255, 255, 255, 0.04);
+  background: rgba(8, 13, 23, 0.72);
+}
+
+body.admin-premium .admin-barbershops-table thead th {
+  padding: 11px 14px;
+  background: rgba(8, 13, 23, 0.96);
+  color: #7f8da6;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+body.admin-premium .admin-barbershops-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+}
+
+body.admin-premium .admin-barbershops-table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
+
+body.admin-premium .barbershop-col-name {
+  width: 28%;
+}
+
+body.admin-premium .barbershop-col-contact {
+  width: 22%;
+}
+
+body.admin-premium .barbershop-col-plan,
+body.admin-premium .barbershop-col-owner {
+  white-space: nowrap;
+}
+
+body.admin-premium .barbershop-col-actions {
+  width: 190px;
+}
+
+body.admin-premium .barbershop-contact-stack {
+  display: grid;
+  gap: 3px;
+}
+
+body.admin-premium .barbershop-contact-stack span:first-child {
+  color: var(--admin-text);
+  font-size: 12px;
+}
+
+body.admin-premium .admin-barbershops-table .management-badge.is-success {
+  color: #d1fae5;
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
 body.admin-premium .admin-access-grant-form {
   grid-template-columns: minmax(240px, 1.4fr) repeat(3, minmax(0, 0.8fr)) auto;
   align-items: center;
@@ -4496,17 +4605,22 @@ body.admin-premium .approval-actions {
 
 @media (max-width: 980px) {
   body.admin-premium .admin-access-grant-form,
-  body.admin-premium .access-filters-grid-compact {
+  body.admin-premium .access-filters-grid-compact,
+  body.admin-premium .admin-barbershops-create-form,
+  body.admin-premium .admin-barbershops-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  body.admin-premium .admin-access-grant-actions {
+  body.admin-premium .admin-access-grant-actions,
+  body.admin-premium .admin-barbershops-create-actions {
     justify-content: stretch;
     grid-column: 1 / -1;
   }
 
   body.admin-premium .access-col-last-login,
-  body.admin-premium .access-col-barbershop {
+  body.admin-premium .access-col-barbershop,
+  body.admin-premium .barbershop-col-contact,
+  body.admin-premium .barbershop-col-slug {
     display: none;
   }
 

@@ -123,6 +123,8 @@ let currentSubscriptionCache = null
 let adminAccessDirectoryCache = []
 let adminAccessAuditCache = []
 let adminPendingApprovalsCache = []
+let adminBarbershopsDirectoryCache = []
+let adminBarbershopsSubscriptionsCache = []
 let selectedAdminAccessKey = null
 let adminAccessFilteredCache = []
 let adminAccessCurrentPage = 1
@@ -7769,8 +7771,11 @@ async function carregarAdminBarbearias() {
     resetAdminBarbershopEditor()
   }
 
+  adminBarbershopsDirectoryCache = data || []
+  adminBarbershopsSubscriptionsCache = normalizedSubscriptions
   updateAdminContextUi(data || [])
-  renderAdminBarbershopsList(data || [], normalizedSubscriptions)
+  renderAdminBarbershopsKpis(data || [], normalizedSubscriptions)
+  filtrarAdminBarbearias()
 }
 
 async function carregarAdminAcessos() {
@@ -8631,6 +8636,39 @@ function renderAdminAppointments(items) {
     .join('')
 }
 
+function renderAdminBarbershopsKpis(items, subscriptions = []) {
+  const container = document.getElementById('admin-barbershops-kpis')
+  if (!container) {
+    return
+  }
+
+  const total = items.length
+  const withOwner = items.filter((item) => item.owner_id).length
+  const withoutOwner = total - withOwner
+  const subscriptionMap = new Map((subscriptions || []).map((item) => [item.barbershop_id, normalizePlanCode(item.plan_code || 'free')]))
+  const planCounts = items.reduce((accumulator, item) => {
+    const planCode = subscriptionMap.get(item.id) || 'free'
+    accumulator[planCode] = (accumulator[planCode] || 0) + 1
+    return accumulator
+  }, {})
+
+  const cards = [
+    { label: 'Unidades', value: String(total) },
+    { label: 'Com responsavel', value: String(withOwner) },
+    { label: 'Pendentes', value: String(withoutOwner) },
+    { label: 'Plano Free', value: String(planCounts.free || 0) },
+    { label: 'Plano Pro', value: String(planCounts.pro || 0) },
+    { label: 'Plano Premium', value: String(planCounts.premium || 0) }
+  ]
+
+  container.innerHTML = cards.map((card) => `
+    <article class="metric-card">
+      <span class="metric-label">${card.label}</span>
+      <strong class="metric-value">${card.value}</strong>
+    </article>
+  `).join('')
+}
+
 function renderAdminBarbershopsList(items, subscriptions = []) {
   const container = document.getElementById('admin-barbershops-list')
   if (!container) {
@@ -8642,31 +8680,95 @@ function renderAdminBarbershopsList(items, subscriptions = []) {
     return
   }
 
-  container.innerHTML = items
-    .map((item) => {
-      const subscription = (subscriptions || []).find((entry) => entry.barbershop_id === item.id)
-      const plan = getPlanDefinition(subscription?.plan_code)
-      return `
-      <div class="management-row">
-        <div>
-          <strong>${item.name}</strong>
-          <span class="management-meta">${[
-            `ID da unidade: ${item.id}`,
-            `Plano: ${plan.label}`,
-            item.slug ? `Slug: ${item.slug}` : null,
-            formatOptionalContactLine('Telefone', item.phone),
-            formatOptionalContactLine('Email', item.email)
-          ].filter(Boolean).join(' | ')}</span>
-        </div>
-        <div class="admin-actions">
-          <span class="management-badge">${item.owner_id ? buildPlanBadge(plan.code) : 'Aguardando responsavel'}</span>
-          <button type="button" class="edit-button" onclick="editarBarbeariaAdmin('${item.id}')">Editar</button>
-          <button type="button" class="edit-button" onclick="selecionarContextoAdminDaBarbearia('${item.id}')">Abrir operacao</button>
-        </div>
+  const subscriptionMap = new Map((subscriptions || []).map((entry) => [entry.barbershop_id, entry]))
+
+  container.innerHTML = `
+    <div class="access-table-shell admin-barbershops-table-shell">
+      <div class="access-table-wrapper admin-barbershops-table-wrapper">
+        <table class="access-table admin-barbershops-table">
+          <thead>
+            <tr>
+              <th class="barbershop-col-name">Barbearia</th>
+              <th class="barbershop-col-contact">Contato</th>
+              <th class="barbershop-col-slug">Slug</th>
+              <th class="barbershop-col-plan">Plano</th>
+              <th class="barbershop-col-owner">Responsavel</th>
+              <th class="barbershop-col-actions">Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((item) => {
+              const subscription = subscriptionMap.get(item.id)
+              const plan = getPlanDefinition(subscription?.plan_code)
+              const hasOwner = Boolean(item.owner_id)
+              return `
+                <tr class="access-table-row" onclick="editarBarbeariaAdmin('${item.id}')">
+                  <td class="barbershop-col-name">
+                    <div class="access-table-user">
+                      <strong>${item.name || 'Barbearia sem nome'}</strong>
+                      <span class="access-table-email" title="${escapeTemplateString(item.id || '')}">${item.id || '-'}</span>
+                    </div>
+                  </td>
+                  <td class="barbershop-col-contact">
+                    <div class="barbershop-contact-stack">
+                      <span>${item.email || 'Sem email'}</span>
+                      <span class="management-meta">${item.phone || 'Sem telefone'}</span>
+                    </div>
+                  </td>
+                  <td class="barbershop-col-slug">${item.slug || 'Sem slug'}</td>
+                  <td class="barbershop-col-plan"><span class="management-badge">${plan.label}</span></td>
+                  <td class="barbershop-col-owner">
+                    <span class="management-badge ${hasOwner ? 'is-success' : ''}">${hasOwner ? 'Responsavel vinculado' : 'Aguardando responsavel'}</span>
+                  </td>
+                  <td class="barbershop-col-actions" onclick="event.stopPropagation()">
+                    <div class="admin-actions">
+                      <button type="button" class="edit-button" onclick="editarBarbeariaAdmin('${item.id}')">Editar</button>
+                      <button type="button" class="edit-button" onclick="selecionarContextoAdminDaBarbearia('${item.id}')">Abrir operacao</button>
+                    </div>
+                  </td>
+                </tr>
+              `
+            }).join('')}
+          </tbody>
+        </table>
       </div>
-    `
-    })
-    .join('')
+    </div>
+  `
+}
+
+window.filtrarAdminBarbearias = function () {
+  const searchTerm = document.getElementById('admin-barbershops-search')?.value?.trim().toLowerCase() || ''
+  const planFilter = document.getElementById('admin-barbershops-plan-filter')?.value || ''
+  const subscriptionMap = new Map((adminBarbershopsSubscriptionsCache || []).map((item) => [item.barbershop_id, normalizePlanCode(item.plan_code || 'free')]))
+
+  const filtered = (adminBarbershopsDirectoryCache || []).filter((item) => {
+    const searchable = [
+      item.name || '',
+      item.email || '',
+      item.phone || '',
+      item.slug || '',
+      item.id || ''
+    ].join(' ').toLowerCase()
+    const itemPlan = subscriptionMap.get(item.id) || 'free'
+    const matchesSearch = !searchTerm || searchable.includes(searchTerm)
+    const matchesPlan = !planFilter || itemPlan === planFilter
+    return matchesSearch && matchesPlan
+  })
+
+  const counter = document.getElementById('admin-barbershops-directory-counter')
+  const resultsInfo = document.getElementById('admin-barbershops-results-info')
+
+  if (counter) {
+    counter.textContent = `${filtered.length} unidade(s)`
+  }
+
+  if (resultsInfo) {
+    resultsInfo.textContent = filtered.length === adminBarbershopsDirectoryCache.length
+      ? `${filtered.length} barbearia(s) carregada(s)`
+      : `${filtered.length} resultado(s) para os filtros aplicados`
+  }
+
+  renderAdminBarbershopsList(filtered, adminBarbershopsSubscriptionsCache)
 }
 
 function buildAdminAccessTableRow(item) {
