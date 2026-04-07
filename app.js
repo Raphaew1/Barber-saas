@@ -429,80 +429,8 @@ function redirectToPortalEntry(portal) {
   window.location.href = getAppUrl(target)
 }
 
-window.voltarParaTelaInicial = async function () {
-  if (isClientPublicView()) {
-    currentPortal = 'cliente'
-    applyPortalUi()
-    showScreen('agendar')
-    await carregarPortalData('agendar')
-    return
-  }
-
-  if (isSignupEntryPage()) {
-    window.location.href = getAppUrl('index.html')
-    return
-  }
-
-  if (isClientEntryPage()) {
-    const isLoggedIn = await hasActiveSession()
-
-    if (!isLoggedIn) {
-      setPortal('cliente')
-      applyPortalUi()
-      showScreen('login')
-      return
-    }
-
-    setPortal('cliente')
-    applyPortalUi()
-    showScreen('agendar')
-    await carregarPortalData('agendar')
-    return
-  }
-
-  if (isBarberEntryPage()) {
-    const isLoggedIn = await hasActiveSession()
-
-    if (!isLoggedIn) {
-      setPortal('barbeiro')
-      applyPortalUi()
-      showScreen('login')
-      return
-    }
-
-    setPortal('barbeiro')
-    applyPortalUi()
-    showScreen('gestao')
-    await carregarPortalData('gestao')
-    return
-  }
-
-  if (isAdminEntryPage()) {
-    const isLoggedIn = await hasActiveSession()
-
-    if (!isLoggedIn) {
-      showScreen('login')
-      return
-    }
-
-    showScreen('admin-dashboard')
-    await carregarPortalData('admin-dashboard')
-    return
-  }
-
-  const isLoggedIn = await hasActiveSession()
-
-  if (!isLoggedIn) {
-    currentPortal = null
-    localStorage.removeItem(PORTAL_STORAGE_KEY)
-    applyPortalUi()
-    showScreen('login')
-    return
-  }
-
-  const homeScreen = getDefaultScreenForPortal()
-  showScreen(homeScreen)
-  await carregarPortalData(homeScreen)
+window.voltarParaTelaInicial = function () {
+  window.location.href = getAppUrl('index.html')
 }
 
 function isMissingColumnError(error, columnNames = []) {
