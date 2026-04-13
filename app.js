@@ -1097,37 +1097,6 @@ async function fetchAdminSubscriptionsSummary() {
 }
 
 async function getSessionAccessToken() {
-  if (currentSession?.access_token) {
-    return {
-      accessToken: String(currentSession.access_token).trim(),
-      error: null
-    }
-  }
-
-  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession()
-  if (sessionError) {
-    return {
-      accessToken: '',
-      error: new Error(`Nao foi possivel validar sua sessao: ${sessionError.message}`)
-    }
-  }
-
-  if (sessionData?.session?.access_token) {
-    currentSession = sessionData.session
-    lastAuthAccessToken = String(sessionData.session.access_token).trim()
-    return {
-      accessToken: lastAuthAccessToken,
-      error: null
-    }
-  }
-
-  if (lastAuthAccessToken) {
-    return {
-      accessToken: String(lastAuthAccessToken).trim(),
-      error: null
-    }
-  }
-
   const sessionState = await ensureValidSessionState()
   if (sessionState.error && !sessionState.session) {
     return {
@@ -1137,7 +1106,12 @@ async function getSessionAccessToken() {
   }
 
   return {
-    accessToken: String(sessionState.session?.access_token || currentSession?.access_token || '').trim(),
+    accessToken: String(
+      sessionState.session?.access_token ||
+      currentSession?.access_token ||
+      lastAuthAccessToken ||
+      ''
+    ).trim(),
     error: null
   }
 }
