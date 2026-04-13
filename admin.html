@@ -102,13 +102,13 @@
 
       <section id="login" class="tela" style="display:none;">
         <div class="screen-header">
-          <span class="screen-kicker">Portal master</span>
+          <span id="login-kicker" class="screen-kicker">Portal master</span>
           <h1 id="login-title">Portal do administrador</h1>
           <p id="login-description">Acesso liberado para todos os usuários criarem barbearias.</p>
         </div>
 
-        <div class="form-block">
-          <div class="login-mode-chip">
+        <div id="login-form-panel" class="form-block">
+          <div id="login-mode-chip" class="login-mode-chip">
             <span id="selected-portal-label">Portal selecionado: Administrador.</span>
             <a class="link-button" href="index.html">Ir para o portal principal</a>
           </div>
@@ -117,6 +117,10 @@
             <a class="portal-shortcut" href="barbearia.html">Login de barbearia</a>
           </div>
           <div id="auth-feedback" class="form-feedback" style="display:none;"></div>
+          <input type="email" id="email" placeholder="Email">
+          <input type="password" id="password" placeholder="Senha">
+          <button id="login-submit" type="button" onclick="login()">Entrar</button>
+          <button type="button" class="link-button" onclick="resetPassword()">Esqueci minha senha?</button>
           <p>Acesso automático concedido. Redirecionando...</p>
         </div>
       </section>
