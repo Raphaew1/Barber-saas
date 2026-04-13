@@ -8969,6 +8969,7 @@ function buildAdminAccessTableRow(item) {
             <button type="button" onclick="handleAdminAccessAction(event, 'phone', '${item.accessKey}')">Editar telefone</button>
             <button type="button" onclick="handleAdminAccessAction(event, 'transfer', '${item.accessKey}')">Transferir</button>
             <button type="button" onclick="handleAdminAccessAction(event, 'toggle-block', '${item.accessKey}')">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
+            <button type="button" class="danger-item" onclick="handleAdminAccessAction(event, 'delete', '${item.accessKey}')">Excluir usuario</button>
             <button type="button" class="danger-item" onclick="handleAdminAccessAction(event, 'revoke', '${item.accessKey}')">Revogar acesso</button>
           </div>
         </div>
@@ -9297,6 +9298,11 @@ window.handleAdminAccessAction = function (event, action, accessKey) {
 
   if (action === 'toggle-block') {
     alternarBloqueioDeAcessoAdmin(accessKey)
+    return
+  }
+
+  if (action === 'delete') {
+    excluirUsuarioAdmin(accessKey)
     return
   }
 
@@ -9689,6 +9695,72 @@ window.revogarAcessoAdmin = async function (accessKey) {
   })
 
   showAppToast('Acesso revogado com sucesso.', 'success')
+  await carregarAdminAcessos()
+}
+
+window.excluirUsuarioAdmin = async function (accessKey) {
+  const entry = findAdminAccessEntry(accessKey)
+  const currentUser = await ensureAdminAccess()
+  if (!entry || !currentUser) {
+    return
+  }
+
+  const entryEmail = String(entry.email || '').trim().toLowerCase()
+  const currentUserEmail = String(currentUser.email || '').trim().toLowerCase()
+
+  if (!entry.id || entry.id === entry.accessKey) {
+    showAppToast('Nao foi possivel identificar o cadastro completo deste usuario para exclusao.', 'error')
+    return
+  }
+
+  if (!entryEmail) {
+    showAppToast('Nao foi possivel identificar o email deste usuario.', 'error')
+    return
+  }
+
+  if (entryEmail === String(ADMIN_EMAIL || '').trim().toLowerCase()) {
+    showAppToast('O usuario master admin nao pode ser excluido por esta tela.', 'error')
+    return
+  }
+
+  if (entry.id === currentUser.id || entryEmail === currentUserEmail) {
+    showAppToast('Voce nao pode excluir o proprio usuario.', 'error')
+    return
+  }
+
+  const displayName = entry.name || entry.email || 'este usuario'
+  const confirmed = window.confirm(`Tem certeza que deseja excluir o usuario "${displayName}"? Esta acao remove o cadastro definitivamente.`)
+
+  if (!confirmed) {
+    return
+  }
+
+  showAppToast('Excluindo usuario...', 'info')
+
+  const { data, error } = await invokeProtectedFunction('admin-delete-user', {
+    userId: entry.id,
+    email: entry.email
+  }, {
+    authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para excluir o usuario.'
+  })
+
+  if (error) {
+    showAppToast(`Erro ao excluir usuario: ${await extractFunctionErrorMessage(error)}`, 'error')
+    return
+  }
+
+  addAdminAccessAuditEntry({
+    action: 'Usuario excluido',
+    target_email: entry.email,
+    performed_by_email: currentUser.email,
+    details: data?.deletedUserId || entry.id
+  })
+
+  if (selectedAdminAccessKey === accessKey) {
+    fecharEditorDeAcessoAdmin()
+  }
+
+  showAppToast('Usuario excluido com sucesso.', 'success')
   await carregarAdminAcessos()
 }
 
