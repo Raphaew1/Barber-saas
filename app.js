@@ -15,6 +15,27 @@ const supabaseClient = supabaseLib.createClient(
   SUPABASE_ANON_KEY
 )
 const statelessSupabaseClientsByToken = new Map()
+const STATELESS_SUPABASE_STORAGE = {
+  getItem() {
+    return null
+  },
+  setItem() {
+  },
+  removeItem() {
+  }
+}
+
+function buildStatelessSupabaseStorageKey(accessToken) {
+  const normalizedToken = String(accessToken || '').trim()
+  let hash = 0
+
+  for (let index = 0; index < normalizedToken.length; index += 1) {
+    hash = ((hash << 5) - hash) + normalizedToken.charCodeAt(index)
+    hash |= 0
+  }
+
+  return `sb-stateless-${Math.abs(hash)}-${normalizedToken.length}`
+}
 
 document.body?.classList.add('app-loading')
 
@@ -32,7 +53,8 @@ function getActiveSupabaseClient(preferredAccessToken = '') {
           persistSession: false,
           autoRefreshToken: false,
           detectSessionInUrl: false,
-          storageKey: `sb-stateless-${accessToken.slice(0, 12)}`
+          storage: STATELESS_SUPABASE_STORAGE,
+          storageKey: buildStatelessSupabaseStorageKey(accessToken)
         }
       }))
     }
