@@ -10,7 +10,8 @@ function isMissingResourceError(error: { message?: string } | null | undefined, 
   const normalizedName = String(resourceName || "").toLowerCase();
   return message.includes(`relation "public.${normalizedName}" does not exist`) ||
     message.includes(`relation "${normalizedName}" does not exist`) ||
-    message.includes(`column ${normalizedName} does not exist`);
+    message.includes(`column ${normalizedName} does not exist`) ||
+    message.includes(`could not find the table 'public.${normalizedName}' in the schema cache`);
 }
 
 async function ignoreMissingResource(
