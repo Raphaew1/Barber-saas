@@ -517,7 +517,8 @@ function isMissingTableError(error, tableName) {
     message.includes(`relation "public.${normalizedTableName}" does not exist`) ||
     message.includes(`relation "${normalizedTableName}" does not exist`) ||
     message.includes(`could not find the table '${normalizedTableName}'`) ||
-    message.includes(`could not find the table 'public.${normalizedTableName}'`)
+    message.includes(`could not find the table 'public.${normalizedTableName}'`) ||
+    message.includes(`in the schema cache`)
   )
 }
 

@@ -24,6 +24,19 @@ async function ignoreMissingResource(
   }
 }
 
+async function attemptCleanup(
+  promise: Promise<{ error: { message?: string } | null }>,
+  resourceName: string,
+  warnings: string[],
+) {
+  const result = await promise;
+  if (!result.error || isMissingResourceError(result.error, resourceName)) {
+    return;
+  }
+
+  warnings.push(`${resourceName}: ${result.error.message || "falha ao limpar registro relacionado"}`);
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return preflightResponse();
@@ -76,17 +89,19 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: "Os dados do usuario nao conferem. Atualize a lista e tente novamente." }, 409);
     }
 
-    await ignoreMissingResource(authResult.serviceClient.from("audit_logs").delete().eq("target_user_id", userId), "audit_logs");
-    await ignoreMissingResource(authResult.serviceClient.from("audit_logs").delete().eq("actor_id", userId), "audit_logs");
-    await ignoreMissingResource(authResult.serviceClient.from("user_access").delete().eq("user_id", userId), "user_access");
-    await ignoreMissingResource(authResult.serviceClient.from("profiles").delete().eq("id", userId), "profiles");
-    await ignoreMissingResource(authResult.serviceClient.from("barber_access").delete().eq("email", email), "barber_access");
-    await ignoreMissingResource(authResult.serviceClient.from("invitations").delete().eq("email", email), "invitations");
-    await ignoreMissingResource(authResult.serviceClient.from("invitations").delete().eq("invited_by", userId), "invitations");
-    await ignoreMissingResource(authResult.serviceClient.from("access_audit_logs").delete().eq("target_email", email), "access_audit_logs");
-    await ignoreMissingResource(authResult.serviceClient.from("access_audit_logs").delete().eq("performed_by_email", email), "access_audit_logs");
-    await ignoreMissingResource(authResult.serviceClient.from("appointments").update({ customer_user_id: null }).eq("customer_user_id", userId), "appointments");
-    await ignoreMissingResource(authResult.serviceClient.from("barbershops").update({ owner_user_id: null }).eq("owner_user_id", userId), "barbershops");
+    const warnings: string[] = [];
+
+    await attemptCleanup(authResult.serviceClient.from("audit_logs").delete().eq("target_user_id", userId), "audit_logs", warnings);
+    await attemptCleanup(authResult.serviceClient.from("audit_logs").delete().eq("actor_id", userId), "audit_logs", warnings);
+    await attemptCleanup(authResult.serviceClient.from("user_access").delete().eq("user_id", userId), "user_access", warnings);
+    await attemptCleanup(authResult.serviceClient.from("profiles").delete().eq("id", userId), "profiles", warnings);
+    await attemptCleanup(authResult.serviceClient.from("barber_access").delete().eq("email", email), "barber_access", warnings);
+    await attemptCleanup(authResult.serviceClient.from("invitations").delete().eq("email", email), "invitations", warnings);
+    await attemptCleanup(authResult.serviceClient.from("invitations").delete().eq("invited_by", userId), "invitations", warnings);
+    await attemptCleanup(authResult.serviceClient.from("access_audit_logs").delete().eq("target_email", email), "access_audit_logs", warnings);
+    await attemptCleanup(authResult.serviceClient.from("access_audit_logs").delete().eq("performed_by_email", email), "access_audit_logs", warnings);
+    await attemptCleanup(authResult.serviceClient.from("appointments").update({ customer_user_id: null }).eq("customer_user_id", userId), "appointments", warnings);
+    await attemptCleanup(authResult.serviceClient.from("barbershops").update({ owner_user_id: null }).eq("owner_user_id", userId), "barbershops", warnings);
 
     const { error: deleteAuthError } = await authResult.serviceClient.auth.admin.deleteUser(userId);
     if (deleteAuthError) {
@@ -106,6 +121,7 @@ Deno.serve(async (request) => {
       success: true,
       deletedUserId: userId,
       deletedEmail: email,
+      warnings,
     });
   } catch (error) {
     return jsonResponse({ error: error.message }, 500);
