@@ -1,4 +1,4 @@
-import { insertAuditLog, jsonResponse, methodNotAllowedResponse, preflightResponse, requireSuperAdmin } from "../_shared/supabase.ts";
+import { jsonResponse, methodNotAllowedResponse, preflightResponse, requireSuperAdmin } from "../_shared/supabase.ts";
 
 type DeleteUserPayload = {
   userId?: string;
@@ -12,16 +12,6 @@ function isMissingResourceError(error: { message?: string } | null | undefined, 
     message.includes(`relation "${normalizedName}" does not exist`) ||
     message.includes(`column ${normalizedName} does not exist`) ||
     message.includes(`could not find the table 'public.${normalizedName}' in the schema cache`);
-}
-
-async function ignoreMissingResource(
-  promise: Promise<{ error: { message?: string } | null }>,
-  resourceName: string,
-) {
-  const result = await promise;
-  if (result.error && !isMissingResourceError(result.error, resourceName)) {
-    throw new Error(result.error.message || `Falha ao acessar ${resourceName}.`);
-  }
 }
 
 async function attemptCleanup(
@@ -107,15 +97,6 @@ Deno.serve(async (request) => {
     if (deleteAuthError) {
       return jsonResponse({ error: `Falha ao excluir usuario no Auth: ${deleteAuthError.message}` }, 400);
     }
-
-    await insertAuditLog(authResult.serviceClient, {
-      action: "admin_delete_user",
-      actor_id: authResult.profile.id,
-      target_user_id: userId,
-      metadata: {
-        email,
-      },
-    });
 
     return jsonResponse({
       success: true,
