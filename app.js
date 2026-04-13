@@ -1232,41 +1232,21 @@ async function invokeProtectedFunction(functionName, body, options = {}) {
   const { authErrorMessage = 'Sua sessao expirou. Faca login novamente.', headers = {} } = options
   const executeInvoke = async (accessToken) => {
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${accessToken}`,
-          ...headers
-        },
-        body: JSON.stringify(body || {})
+      const client = getActiveSupabaseClient(accessToken)
+      const { data, error } = await client.functions.invoke(functionName, {
+        body: body || {},
+        headers
       })
 
-      const responseText = await response.text()
-      let payload = null
-
-      try {
-        payload = responseText ? JSON.parse(responseText) : null
-      } catch (_parseError) {
-        payload = null
-      }
-
-      if (!response.ok) {
-        const functionError = new Error(
-          String(payload?.error || payload?.message || response.statusText || 'Edge Function returned a non-2xx status code')
-        )
-        functionError.status = response.status
-        functionError.payload = payload
-        functionError.responseText = responseText
+      if (error) {
         return {
           data: null,
-          error: functionError
+          error
         }
       }
 
       return {
-        data: payload,
+        data,
         error: null
       }
     } catch (networkError) {
