@@ -1252,10 +1252,9 @@ async function ensureValidSessionState() {
 
 async function invokeProtectedFunction(functionName, body, options = {}) {
   const { authErrorMessage = 'Sua sessao expirou. Faca login novamente.', headers = {} } = options
-  const executeInvoke = async (accessToken) => {
+  const executeInvoke = async () => {
     try {
-      const client = getActiveSupabaseClient(accessToken)
-      const { data, error } = await client.functions.invoke(functionName, {
+      const { data, error } = await supabaseClient.functions.invoke(functionName, {
         body: body || {},
         headers
       })
@@ -1305,7 +1304,7 @@ async function invokeProtectedFunction(functionName, body, options = {}) {
     }
   }
 
-  let result = await executeInvoke(accessToken)
+  let result = await executeInvoke()
 
   if (!result.error || !isInvalidJwtFunctionError(result.error)) {
     return result
@@ -1320,7 +1319,7 @@ async function invokeProtectedFunction(functionName, body, options = {}) {
     }
   }
 
-  result = await executeInvoke(retryTokenResult.accessToken)
+  result = await executeInvoke()
   if (result.error && isInvalidJwtFunctionError(result.error)) {
     await resetInvalidSession(authErrorMessage)
     return {
