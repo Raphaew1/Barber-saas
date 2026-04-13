@@ -1277,7 +1277,17 @@ async function invokeProtectedFunction(functionName, body, options = {}) {
     }
   }
 
-  let { accessToken, error: tokenError } = await getSessionAccessToken()
+  let accessToken = ''
+  let tokenError = null
+
+  const refreshedTokenResult = await refreshSessionAccessToken()
+  if (!refreshedTokenResult.error && refreshedTokenResult.accessToken) {
+    accessToken = refreshedTokenResult.accessToken
+  } else {
+    const currentTokenResult = await getSessionAccessToken()
+    accessToken = currentTokenResult.accessToken
+    tokenError = currentTokenResult.error
+  }
 
   if (tokenError) {
     return {
@@ -1299,16 +1309,16 @@ async function invokeProtectedFunction(functionName, body, options = {}) {
     return result
   }
 
-  const refreshedTokenResult = await refreshSessionAccessToken()
-  if (refreshedTokenResult.error || !refreshedTokenResult.accessToken) {
+  const retryTokenResult = await refreshSessionAccessToken()
+  if (retryTokenResult.error || !retryTokenResult.accessToken) {
     await resetInvalidSession(authErrorMessage)
     return {
       data: null,
-      error: refreshedTokenResult.error || new Error(authErrorMessage)
+      error: retryTokenResult.error || new Error(authErrorMessage)
     }
   }
 
-  result = await executeInvoke(refreshedTokenResult.accessToken)
+  result = await executeInvoke(retryTokenResult.accessToken)
   if (result.error && isInvalidJwtFunctionError(result.error)) {
     await resetInvalidSession(authErrorMessage)
     return {
