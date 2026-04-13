@@ -292,11 +292,20 @@ export async function insertAuditLog(serviceClient: ReturnType<typeof createServ
   target_barbershop_id?: string | null;
   metadata?: Record<string, unknown>;
 }) {
-  await serviceClient.from("audit_logs").insert([{
+  const { error } = await serviceClient.from("audit_logs").insert([{
     action: payload.action,
     actor_id: payload.actor_id ?? null,
     target_user_id: payload.target_user_id ?? null,
     target_barbershop_id: payload.target_barbershop_id ?? null,
     metadata: payload.metadata ?? {}
   }]);
+
+  const message = String(error?.message || "").toLowerCase();
+  const isMissingAuditLogsTable = message.includes(`relation "public.audit_logs" does not exist`) ||
+    message.includes(`relation "audit_logs" does not exist`) ||
+    message.includes("schema cache");
+
+  if (error && !isMissingAuditLogsTable) {
+    throw error;
+  }
 }
