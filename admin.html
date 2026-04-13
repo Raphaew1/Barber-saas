@@ -112,6 +112,13 @@
             <span id="selected-portal-label">Portal selecionado: Administrador.</span>
             <a class="link-button" href="index.html">Ir para o portal principal</a>
           </div>
+          <div class="currency-preference">
+            <label class="field-label" for="portal-currency-selector-admin">Moeda dos precos</label>
+            <select id="portal-currency-selector-admin" data-currency-selector onchange="setAppCurrency(this.value)">
+              <option value="BRL">Real brasileiro</option>
+              <option value="EUR">Euro</option>
+            </select>
+          </div>
           <div class="portal-shortcuts">
             <a class="portal-shortcut" href="cliente.html">Login de cliente</a>
             <a class="portal-shortcut" href="barbearia.html">Login de barbearia</a>

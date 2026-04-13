@@ -179,8 +179,10 @@ const ACCESS_ROLE_MAP = {
 const THEME_STORAGE_KEY = 'barber-saas-theme'
 const PORTAL_STORAGE_KEY = 'barber-saas-portal'
 const ADMIN_BARBERSHOP_CONTEXT_KEY = 'barber-saas-admin-context'
+const CURRENCY_STORAGE_KEY = 'barber-saas-currency'
 const ADMIN_ACCESS_PAGE_SIZE = 12
 const APP_ENTRY_MODE = document.body?.dataset?.appEntry || 'main'
+let currentCurrency = 'BRL'
 const SAAS_PLAN_DEFINITIONS = {
   free: {
     code: 'free',
@@ -4230,6 +4232,7 @@ async function validateAdminPortalAccess(user) {
 // Faz a inicializacao da pagina ao abrir a aplicacao.
 async function init() {
   try {
+    applySavedCurrency()
     applySavedTheme()
     if (warnIfRunningFromFileProtocol()) {
       return
@@ -5765,7 +5768,7 @@ function renderProductsCatalog(items, stockSupported = false) {
         ? `<span class="catalog-meta">${item.description}</span>`
         : '<span class="catalog-meta">Produto sem descricao cadastrada.</span>'
       const price = item.price != null
-        ? `<strong class="catalog-price">R$ ${Number(item.price).toFixed(2)}</strong>`
+        ? `<strong class="catalog-price">${formatCurrency(item.price)}</strong>`
         : '<strong class="catalog-price">Consulte no local</strong>'
       const stockLabel = stockSupported
         ? `<span class="catalog-stock">Estoque: ${item.stock_quantity ?? 0} unidade(s)</span>`
@@ -5900,7 +5903,7 @@ function renderAppointmentCards(containerId, items, emptyMessage) {
         ? `<span class="agenda-meta">${item.services.description}</span>`
         : ''
       const servicePrice = item.services?.price != null
-        ? `<span class="agenda-meta">Preco: R$ ${Number(item.services.price).toFixed(2)}</span>`
+        ? `<span class="agenda-meta">Preco: ${formatCurrency(item.services.price)}</span>`
         : ''
       const appointmentDate = `<span class="agenda-meta">${new Date(item.appointment_time).toLocaleString()}</span>`
       const statusChip = item.status
@@ -6863,11 +6866,80 @@ function sumProductSalesRevenue(items) {
   return (items || []).reduce((total, item) => total + Number(item.total_amount || 0), 0)
 }
 
-// Formata qualquer valor numerico em moeda brasileira.
+function getCurrencyConfig(currencyCode = currentCurrency) {
+  return currencyCode === 'EUR'
+    ? {
+        code: 'EUR',
+        locale: 'pt-PT',
+        label: 'Euro'
+      }
+    : {
+        code: 'BRL',
+        locale: 'pt-BR',
+        label: 'Real brasileiro'
+      }
+}
+
+function updateCurrencySelectors() {
+  document.querySelectorAll('[data-currency-selector]').forEach((select) => {
+    if (select.value !== currentCurrency) {
+      select.value = currentCurrency
+    }
+  })
+}
+
+function updateStaticCurrencyLabels() {
+  const purchaseUnitPrice = document.getElementById('purchase-unit-price')
+  const purchaseTotalPrice = document.getElementById('purchase-total-price')
+
+  if (purchaseUnitPrice && !purchaseUnitPrice.dataset.dynamicValue) {
+    purchaseUnitPrice.textContent = formatCurrency(0)
+  }
+
+  if (purchaseTotalPrice && !purchaseTotalPrice.dataset.dynamicValue) {
+    purchaseTotalPrice.textContent = formatCurrency(0)
+  }
+}
+
+async function refreshCurrencyDependentUi() {
+  updateCurrencySelectors()
+  updateStaticCurrencyLabels()
+
+  if (!currentVisibleScreenId || currentVisibleScreenId === 'login' || currentVisibleScreenId === 'reset-password') {
+    return
+  }
+
+  const visibleScreen = document.getElementById(currentVisibleScreenId)
+  if (!visibleScreen || visibleScreen.style.display === 'none') {
+    return
+  }
+
+  try {
+    await carregarPortalData(currentVisibleScreenId)
+  } catch (_error) {
+  }
+}
+
+window.setAppCurrency = async function (currencyCode) {
+  const nextCurrency = currencyCode === 'EUR' ? 'EUR' : 'BRL'
+  currentCurrency = nextCurrency
+  localStorage.setItem(CURRENCY_STORAGE_KEY, nextCurrency)
+  await refreshCurrencyDependentUi()
+}
+
+function applySavedCurrency() {
+  const savedCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY)
+  currentCurrency = savedCurrency === 'EUR' ? 'EUR' : 'BRL'
+  updateCurrencySelectors()
+  updateStaticCurrencyLabels()
+}
+
+// Formata qualquer valor numerico na moeda selecionada.
 function formatCurrency(value) {
-  return new Intl.NumberFormat('pt-BR', {
+  const currencyConfig = getCurrencyConfig()
+  return new Intl.NumberFormat(currencyConfig.locale, {
     style: 'currency',
-    currency: 'BRL'
+    currency: currencyConfig.code
   }).format(Number(value || 0))
 }
 
@@ -7022,7 +7094,7 @@ function buildMetaText(description, price) {
   }
 
   if (price != null && price !== '') {
-    parts.push(`R$ ${Number(price).toFixed(2)}`)
+    parts.push(formatCurrency(price))
   }
 
   return parts.join(' | ')
@@ -7049,6 +7121,8 @@ function applyPortalUi() {
   updateClientPublicViewUi()
   updateTopbarScreenContext(currentVisibleScreenId || getDefaultScreenForPortal())
   updatePortalLandingUi()
+  updateCurrencySelectors()
+  updateStaticCurrencyLabels()
   syncMobileMenuUi()
 }
 

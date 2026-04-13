@@ -1882,6 +1882,16 @@ button:disabled {
   font-size: 20px;
 }
 
+.currency-preference {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.currency-preference select {
+  width: 100%;
+}
+
 .catalog-action {
   margin-top: 12px;
 }

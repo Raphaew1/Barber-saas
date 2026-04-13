@@ -133,6 +133,13 @@
           <div id="login-mode-chip" class="login-mode-chip">
             <span id="selected-portal-label">Entre com seu email e o sistema identifica automaticamente seu portal.</span>
           </div>
+          <div class="currency-preference">
+            <label class="field-label" for="portal-currency-selector-client">Moeda dos precos</label>
+            <select id="portal-currency-selector-client" data-currency-selector onchange="setAppCurrency(this.value)">
+              <option value="BRL">Real brasileiro</option>
+              <option value="EUR">Euro</option>
+            </select>
+          </div>
           <div id="auth-feedback" class="form-feedback" style="display:none;"></div>
           <input type="email" id="email" placeholder="Email">
           <input type="password" id="password" placeholder="Senha">
