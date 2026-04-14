@@ -3219,6 +3219,7 @@ body.admin-premium .topbar-main {
   gap: 8px;
   width: min(100%, 440px);
   max-width: 440px;
+  min-height: 148px;
   padding: 14px 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
 }
@@ -3258,6 +3259,7 @@ body.admin-premium .admin-context-switcher {
   width: min(100%, 440px);
   min-width: 0;
   max-width: 440px;
+  min-height: 148px;
   gap: 6px;
   padding: 14px 16px;
 }
