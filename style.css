@@ -4418,6 +4418,32 @@ body.admin-premium .access-quick-tab.is-active {
   color: #eef2ff;
 }
 
+body.admin-premium:not(.dark-mode) .access-quick-tab {
+  border-color: transparent;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+body.admin-premium:not(.dark-mode) .access-quick-tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+body.admin-premium:not(.dark-mode) .access-quick-tab span {
+  color: #334155;
+  opacity: 1;
+}
+
+body.admin-premium:not(.dark-mode) .access-quick-tab.is-active {
+  border-color: #c7d2fe;
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+body.admin-premium:not(.dark-mode) .access-quick-tab.is-active span {
+  color: #4338ca;
+}
+
 body.admin-premium .access-filters-grid-compact {
   grid-template-columns: minmax(260px, 1.45fr) repeat(3, minmax(0, 0.75fr));
   gap: 10px;
