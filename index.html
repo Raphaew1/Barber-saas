@@ -102,31 +102,72 @@
 
       <!-- Login -->
       <section id="login" class="tela">
-        <div class="portal-entry-brand">
-          <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
-          <div class="portal-entry-brand-copy">
-            <strong class="brand-name">CorteFacil</strong>
+        <div class="portal-landing-shell">
+          <div class="portal-landing-hero">
+            <div class="portal-entry-brand">
+              <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
+              <div class="portal-entry-brand-copy">
+                <span class="portal-landing-badge">Plataforma de gestao e agendamento</span>
+                <strong class="brand-name">CorteFacil</strong>
+              </div>
+            </div>
+            <div class="screen-header portal-landing-header">
+              <span id="login-kicker" class="screen-kicker">Acesso premium</span>
+              <h1 id="login-title">Escolha como deseja entrar na plataforma</h1>
+              <p id="login-description">Acesse sua area como cliente, gestao da barbearia ou administracao da plataforma com uma experiencia elegante, segura e organizada.</p>
+            </div>
+            <div class="portal-landing-summary">
+              <div class="portal-landing-summary-card">
+                <span class="portal-landing-summary-label">Experiencia unificada</span>
+                <strong>Fluxos separados, identidade unica</strong>
+                <p>Organize agendamentos, operacao e administracao em um unico produto com navegacao clara desde o primeiro clique.</p>
+              </div>
+              <div class="portal-landing-summary-metrics">
+                <div class="portal-landing-metric">
+                  <span>Cliente</span>
+                  <strong>Agendamentos e historico</strong>
+                </div>
+                <div class="portal-landing-metric">
+                  <span>Barbearia</span>
+                  <strong>Agenda, equipe e operacao</strong>
+                </div>
+                <div class="portal-landing-metric">
+                  <span>Admin</span>
+                  <strong>Controle total da plataforma</strong>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="screen-header">
-          <span id="login-kicker" class="screen-kicker">Portal</span>
-          <h1 id="login-title">Entrar no portal</h1>
-          <p id="login-description">Escolha como deseja acessar a plataforma.</p>
-        </div>
 
-        <div id="portal-entry-actions" class="portal-entry-actions">
-          <a class="portal-entry-button" href="cliente.html">
-            <span class="portal-entry-button-label">Portal cliente</span>
-            <strong>Entrar no portal</strong>
-          </a>
-          <a class="portal-entry-button" href="barbearia.html">
-            <span class="portal-entry-button-label">Portal barbearia</span>
-            <strong>Entrar no portal</strong>
-          </a>
-          <a class="portal-entry-button" href="admin.html">
-            <span class="portal-entry-button-label">Portal admin</span>
-            <strong>Entrar no portal</strong>
-          </a>
+          <div id="portal-entry-actions" class="portal-entry-actions portal-entry-grid">
+            <a class="portal-entry-button portal-access-card portal-access-card-client" href="cliente.html">
+              <span class="portal-access-icon" aria-hidden="true">CL</span>
+              <div class="portal-entry-button-copy">
+                <span class="portal-entry-button-label">Cliente</span>
+                <strong>Agende, acompanhe e compre</strong>
+                <p>Agende horarios, acompanhe historico e compre produtos com uma jornada simples e premium.</p>
+              </div>
+              <span class="portal-entry-button-link">Entrar como cliente</span>
+            </a>
+            <a class="portal-entry-button portal-access-card portal-access-card-barber" href="barbearia.html">
+              <span class="portal-access-icon" aria-hidden="true">BR</span>
+              <div class="portal-entry-button-copy">
+                <span class="portal-entry-button-label">Barbearia</span>
+                <strong>Gerencie a operacao do seu negocio</strong>
+                <p>Organize agenda, equipe, servicos, vendas e cadastros com foco total na rotina da unidade.</p>
+              </div>
+              <span class="portal-entry-button-link">Entrar na gestao</span>
+            </a>
+            <a class="portal-entry-button portal-access-card portal-access-card-admin" href="admin.html">
+              <span class="portal-access-icon" aria-hidden="true">AD</span>
+              <div class="portal-entry-button-copy">
+                <span class="portal-entry-button-label">Portal Admin</span>
+                <strong>Controle completo da plataforma</strong>
+                <p>Administre acessos, cadastros, barbearias e o contexto operacional com visao centralizada.</p>
+              </div>
+              <span class="portal-entry-button-link">Entrar no admin</span>
+            </a>
+          </div>
         </div>
 
         <div id="login-form-panel" class="form-block" style="display:none;">

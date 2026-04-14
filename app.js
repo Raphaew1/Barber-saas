@@ -7178,7 +7178,7 @@ function updateLoginPortalUi() {
 
   if (loginKicker) {
     loginKicker.textContent = isPortalLanding
-      ? 'Portal'
+      ? 'Acesso premium'
       : isAdminEntryPage()
         ? 'Portal master'
         : isClientEntryPage()
@@ -7226,7 +7226,7 @@ function updateLoginPortalUi() {
 
   if (loginTitle) {
     loginTitle.textContent = isPortalLanding
-      ? 'Entrar no portal'
+      ? 'Escolha como deseja entrar na plataforma'
       : isAdminEntryPage()
       ? 'Entrar no portal do administrador'
       : isClientEntryPage()
@@ -7244,7 +7244,7 @@ function updateLoginPortalUi() {
 
   if (loginDescription) {
     loginDescription.textContent = isPortalLanding
-      ? ''
+      ? 'Acesse sua area como cliente, gestao da barbearia ou administracao da plataforma com uma experiencia elegante, segura e organizada.'
       : isAdminEntryPage()
       ? 'Use um login com perfil admin para acessar esta area.'
       : isClientEntryPage()
@@ -7260,8 +7260,7 @@ function updateLoginPortalUi() {
         : currentPortal === CUSTOMER_ROLE
             ? 'Use seu email e senha para acessar agendamentos, compras e historico como cliente.'
       : 'Use seu email e senha. O sistema redireciona automaticamente para cliente, barbearia ou administrador.'
-
-    loginDescription.style.display = isPortalLanding ? 'none' : 'block'
+    loginDescription.style.display = 'block'
   }
 }
 
