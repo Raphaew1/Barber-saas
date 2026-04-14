@@ -3037,7 +3037,20 @@ body.admin-premium .sidebar-brand {
 }
 
 body.admin-premium:not(.dark-mode) .sidebar-brand {
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 12px;
   border-bottom-color: var(--admin-border);
+  border-radius: 0 0 18px 18px;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.06), rgba(255, 255, 255, 0));
+}
+
+body.admin-premium:not(.dark-mode) .sidebar-brand > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
 }
 
 body.admin-premium .brand-badge {
@@ -3051,11 +3064,18 @@ body.admin-premium .brand-badge {
 }
 
 body.admin-premium:not(.dark-mode) .brand-badge {
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(224, 231, 255, 0.95));
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid rgba(99, 102, 241, 0.12);
   color: var(--admin-primary);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.1);
+}
+
+body.admin-premium:not(.dark-mode) .brand-badge img {
+  width: 19px;
+  height: 19px;
 }
 
 body.admin-premium .sidebar-kicker,
@@ -3084,6 +3104,21 @@ body.admin-premium .modal-header h2 {
 
 body.admin-premium .sidebar h2 {
   font-size: 24px;
+}
+
+body.admin-premium:not(.dark-mode) .sidebar-kicker {
+  margin-bottom: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #7c86a3;
+}
+
+body.admin-premium:not(.dark-mode) .sidebar h2 {
+  font-size: 16px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 body.admin-premium .content-topbar h3 {
