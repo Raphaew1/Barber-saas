@@ -4548,6 +4548,77 @@ body.admin-premium .access-table-footer {
   padding-inline: 4px;
 }
 
+body.admin-premium:not(.dark-mode) .access-table-wrapper {
+  border-color: #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+}
+
+body.admin-premium:not(.dark-mode) .access-table thead th {
+  background: #f8fafc;
+  color: #64748b;
+  border-bottom-color: #e2e8f0;
+}
+
+body.admin-premium:not(.dark-mode) .access-table tbody td {
+  background: #ffffff;
+  border-bottom-color: #e2e8f0;
+  color: #334155;
+}
+
+body.admin-premium:not(.dark-mode) .access-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+body.admin-premium:not(.dark-mode) .access-table-row.is-selected {
+  background: #eef2ff;
+  box-shadow: inset 2px 0 0 rgba(99, 102, 241, 0.7);
+}
+
+body.admin-premium:not(.dark-mode) .access-table-user strong {
+  color: #0f172a;
+}
+
+body.admin-premium:not(.dark-mode) .access-table-email {
+  color: #64748b;
+}
+
+body.admin-premium:not(.dark-mode) .access-role-select {
+  border-color: #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+body.admin-premium:not(.dark-mode) .access-role-select:focus {
+  border-color: rgba(99, 102, 241, 0.38);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
+body.admin-premium:not(.dark-mode) .access-actions-icon-trigger {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+}
+
+body.admin-premium:not(.dark-mode) .access-actions-icon-trigger:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+body.admin-premium:not(.dark-mode) .access-actions-menu {
+  border-color: #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+}
+
+body.admin-premium:not(.dark-mode) .access-actions-menu button {
+  color: #334155;
+}
+
+body.admin-premium:not(.dark-mode) .access-actions-menu button:hover {
+  background: #f1f5f9;
+}
+
 body.admin-premium .access-pagination button {
   min-height: 30px;
   min-width: 30px;
@@ -4795,10 +4866,22 @@ body.admin-premium .access-table .role-admin {
   color: #93c5fd;
 }
 
+body.admin-premium:not(.dark-mode) .role-admin,
+body.admin-premium:not(.dark-mode) .access-table .role-admin {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 body.admin-premium .role-barber,
 body.admin-premium .access-table .role-barber {
   background: rgba(99, 102, 241, 0.14);
   color: #c7d2fe;
+}
+
+body.admin-premium:not(.dark-mode) .role-barber,
+body.admin-premium:not(.dark-mode) .access-table .role-barber {
+  background: #e0e7ff;
+  color: #4338ca;
 }
 
 body.admin-premium .role-client,
@@ -4807,10 +4890,22 @@ body.admin-premium .access-table .role-client {
   color: #cbd5e1;
 }
 
+body.admin-premium:not(.dark-mode) .role-client,
+body.admin-premium:not(.dark-mode) .access-table .role-client {
+  background: #e2e8f0;
+  color: #475569;
+}
+
 body.admin-premium .status-active,
 body.admin-premium .access-table .status-active {
   background: rgba(34, 197, 94, 0.12);
   color: #86efac;
+}
+
+body.admin-premium:not(.dark-mode) .status-active,
+body.admin-premium:not(.dark-mode) .access-table .status-active {
+  background: #dcfce7;
+  color: #15803d;
 }
 
 body.admin-premium .status-blocked {
@@ -4818,10 +4913,21 @@ body.admin-premium .status-blocked {
   color: #fca5a5;
 }
 
+body.admin-premium:not(.dark-mode) .status-blocked {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 body.admin-premium .status-pending,
 body.admin-premium .access-table .status-pending {
   background: rgba(245, 158, 11, 0.14);
   color: #fcd34d;
+}
+
+body.admin-premium:not(.dark-mode) .status-pending,
+body.admin-premium:not(.dark-mode) .access-table .status-pending {
+  background: #fef3c7;
+  color: #b45309;
 }
 
 body.admin-premium .modal-overlay {
