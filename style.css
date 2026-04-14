@@ -3038,10 +3038,10 @@ body.admin-premium .sidebar-brand {
 
 body.admin-premium:not(.dark-mode) .sidebar-brand {
   align-items: center;
-  gap: 10px;
-  padding: 10px 10px 12px;
+  gap: 12px;
+  padding: 12px 14px;
   border-bottom-color: var(--admin-border);
-  border-radius: 0 0 18px 18px;
+  border-radius: 0 0 14px 14px;
   background: linear-gradient(180deg, rgba(99, 102, 241, 0.06), rgba(255, 255, 255, 0));
 }
 
@@ -3064,18 +3064,18 @@ body.admin-premium .brand-badge {
 }
 
 body.admin-premium:not(.dark-mode) .brand-badge {
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  height: 42px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(224, 231, 255, 0.95));
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid rgba(99, 102, 241, 0.12);
   color: var(--admin-primary);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
 }
 
 body.admin-premium:not(.dark-mode) .brand-badge img {
-  width: 19px;
-  height: 19px;
+  width: 24px;
+  height: 24px;
 }
 
 body.admin-premium .sidebar-kicker,
@@ -3110,13 +3110,14 @@ body.admin-premium:not(.dark-mode) .sidebar-kicker {
   margin-bottom: 0;
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  line-height: 1;
+  letter-spacing: 0.16em;
   color: #7c86a3;
 }
 
 body.admin-premium:not(.dark-mode) .sidebar h2 {
-  font-size: 16px;
-  line-height: 1.05;
+  font-size: 18px;
+  line-height: 1.1;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
