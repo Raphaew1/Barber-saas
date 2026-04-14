@@ -3221,7 +3221,6 @@ body.admin-premium .topbar-main {
   max-width: 440px;
   min-height: 148px;
   padding: 14px 16px;
-  justify-content: center;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
 }
 
@@ -3263,20 +3262,6 @@ body.admin-premium .admin-context-switcher {
   min-height: 148px;
   gap: 6px;
   padding: 14px 16px;
-  justify-content: center;
-}
-
-body.admin-premium .admin-context-switcher .screen-kicker {
-  margin-bottom: 2px;
-}
-
-body.admin-premium .admin-context-switcher select,
-body.admin-premium .admin-context-switcher .link-button {
-  min-height: 44px;
-}
-
-body.admin-premium .admin-context-switcher .field-hint {
-  line-height: 1.35;
 }
 
 body.admin-premium .tela {
