@@ -7244,7 +7244,7 @@ function updateLoginPortalUi() {
 
   if (loginDescription) {
     loginDescription.textContent = isPortalLanding
-      ? 'Acesse sua area como cliente, gestao da barbearia ou administracao da plataforma com uma experiencia elegante, segura e organizada.'
+      ? 'Acesse sua area como cliente, gestao da barbearia ou administracao.'
       : isAdminEntryPage()
       ? 'Use um login com perfil admin para acessar esta area.'
       : isClientEntryPage()
