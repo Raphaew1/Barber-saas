@@ -1882,7 +1882,7 @@ function getCurrentTopbarContextLabel() {
     return 'Conta do cliente'
   }
 
-  return 'Sem contexto'
+  return 'Contexto livre'
 }
 
 function updateTopbarScreenContext(screenId = '') {
@@ -2279,7 +2279,7 @@ function updateAdminContextUi(barbershops = null) {
       const appointmentsCount = adminContextStatsCache.appointmentsByBarbershop.get(selectedContext) || 0
       details.textContent = `${selectedBarbershop?.name || 'Barbearia selecionada'} · ${usersCount} usuario(s) · ${appointmentsCount} agendamento(s).`
     } else {
-      details.textContent = 'Sem contexto ativo. Escolha uma barbearia para abrir agenda, gestao, produtos e cadastros.'
+      details.textContent = 'Escolha uma barbearia para abrir agenda, gestao, produtos e cadastros.'
     }
   }
 
@@ -7200,7 +7200,7 @@ function updateLoginPortalUi() {
       : isAdminEntryPage()
         ? 'Portal master'
         : isClientEntryPage()
-          ? 'Portal cliente'
+          ? 'Area cliente'
           : isBarberEntryPage()
             ? 'Portal barbearia'
         : isSignupEntryPage()
