@@ -19,87 +19,8 @@
 </button>
 
 <div class="app-shell">
-  <button id="mobile-menu-toggle" class="mobile-menu-toggle" type="button" onclick="toggleMobileMenu()" aria-label="Abrir menu" aria-expanded="false">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
-  <div id="mobile-menu-overlay" class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
   <div class="app">
-
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <button type="button" class="sidebar-brand sidebar-brand-button" onclick="voltarParaTelaInicial()">
-        <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
-        <div>
-          <span class="sidebar-kicker">Barber control</span>
-          <h2>CorteFacil</h2>
-        </div>
-      </button>
-
-      <nav class="sidebar-nav">
-        <div class="nav-group" data-nav-group>
-          <span class="nav-group-label">Cliente</span>
-          <button id="nav-agendar" class="nav-button" data-icon="◫" data-screen="agendar" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('agendar')">Agendar</button>
-          <button id="nav-produtos" class="nav-button" data-icon="◧" data-screen="produtos" data-protected="true" data-portal="cliente,admin" onclick="mostrarTela('produtos')">Produtos</button>
-        </div>
-        <div class="nav-group" data-nav-group>
-          <span class="nav-group-label">Operacao</span>
-          <button id="nav-gestao" class="nav-button" data-icon="▤" data-screen="gestao" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('gestao')">Gestao</button>
-          <button id="nav-agenda" class="nav-button" data-icon="◷" data-screen="agenda" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('agenda')">Minha Agenda</button>
-          <button id="nav-cadastros" class="nav-button" data-icon="□" data-screen="cadastros" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('cadastros')">Cadastros</button>
-          <button id="nav-aprovacoes" class="nav-button" data-icon="✓" data-screen="aprovacoes" data-protected="true" data-portal="barbeiro,admin" onclick="mostrarTela('aprovacoes')">Aprovacoes</button>
-        </div>
-        <div class="nav-group" data-nav-group>
-          <span class="nav-group-label">Plataforma</span>
-          <button id="nav-admin-dashboard" class="nav-button" data-icon="◰" data-screen="admin-dashboard" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-dashboard')">Dashboard Admin</button>
-          <button id="nav-admin-barbershops" class="nav-button" data-icon="⌂" data-screen="admin-barbershops" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-barbershops')">Barbearias</button>
-          <button id="nav-admin-access" class="nav-button" data-icon="◎" data-screen="admin-access" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-access')">Acessos</button>
-          <button id="nav-admin-users" class="nav-button" data-icon="◌" data-screen="admin-users" data-protected="true" data-portal="admin" onclick="mostrarTela('admin-users')">Usuarios</button>
-        </div>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div id="sidebar-user-identity" class="sidebar-user-identity" style="display:none;">
-          <span class="sidebar-user-avatar">CF</span>
-          <div class="sidebar-user-content">
-            <strong id="sidebar-user-value">Conta</strong>
-            <small id="sidebar-user-meta">Sem sessao</small>
-          </div>
-        </div>
-        <button id="nav-sair" class="sidebar-logout-button" data-protected="true" onclick="logout()">Sair</button>
-      </div>
-    </aside>
-
-    <!-- Conteudo -->
     <main class="content">
-      <div class="content-topbar">
-        <div class="topbar-main">
-          <div id="topbar-user-identity" class="topbar-user-identity" style="display:none;">
-            <span class="topbar-user-label">User</span>
-            <div class="topbar-user-content">
-              <strong id="topbar-user-value">-</strong>
-              <small id="topbar-user-meta" class="topbar-user-meta"></small>
-            </div>
-          </div>
-          <span id="topbar-screen-kicker" class="screen-kicker">Studio dashboard</span>
-          <h3 id="topbar-screen-title">Gestao elegante para sua barbearia</h3>
-          <p id="topbar-screen-description" class="topbar-screen-description">Navegacao organizada por portal, contexto e etapa de operacao.</p>
-          <div class="topbar-status-pills">
-            <span id="topbar-portal-badge" class="topbar-status-pill">Acesso direto</span>
-            <span id="topbar-context-badge" class="topbar-status-pill">Portais distintos</span>
-          </div>
-        </div>
-        <div id="admin-context-switcher" class="admin-context-switcher" style="display:none;">
-          <span class="screen-kicker">Contexto admin</span>
-          <select id="admin-active-barbershop" onchange="onAdminBarbershopContextChange()">
-            <option value="">Selecione a barbearia</option>
-          </select>
-          <button type="button" class="link-button" onclick="limparContextoAdmin()">Limpar</button>
-          <small id="admin-context-details" class="field-hint">Selecione uma barbearia.</small>
-        </div>
-      </div>
-
       <!-- Login -->
       <section id="login" class="tela">
         <div class="portal-landing-shell">
