@@ -182,6 +182,13 @@ const ADMIN_BARBERSHOP_CONTEXT_KEY = 'barber-saas-admin-context'
 const CURRENCY_STORAGE_KEY = 'barber-saas-currency'
 const ADMIN_ACCESS_PAGE_SIZE = 12
 const APP_ENTRY_MODE = document.body?.dataset?.appEntry || 'main'
+const APP_ROUTE_MAP = {
+  'index.html': '/',
+  'cliente.html': '/login/cliente/',
+  'barbearia.html': '/login/barbearia/',
+  'admin.html': '/login/admin/',
+  'signup.html': '/signup.html'
+}
 let currentCurrency = 'BRL'
 const SAAS_PLAN_DEFINITIONS = {
   free: {
@@ -356,7 +363,12 @@ function isMainPortalLanding() {
 }
 
 function getAppUrl(fileName = 'index.html') {
-  return new URL(fileName, window.location.href).href
+  const normalizedFileName = String(fileName || 'index.html').trim() || 'index.html'
+  const mappedPath = APP_ROUTE_MAP[normalizedFileName] || (normalizedFileName.startsWith('/')
+    ? normalizedFileName
+    : `/${normalizedFileName.replace(/^\/+/, '')}`)
+
+  return new URL(mappedPath, `${window.location.origin}/`).href
 }
 
 function getPortalHintFromUrl() {
@@ -372,7 +384,13 @@ function getPortalHintFromUrl() {
 
 function getSlugFromUrl() {
   const path = String(window.location.pathname || '').replace(/^\/+|\/+$/g, '')
-  if (!path || ['index.html', 'admin.html', 'signup.html', 'cliente.html', 'barbearia.html'].includes(path.toLowerCase())) {
+  const normalizedPath = path.toLowerCase()
+
+  if (
+    !path ||
+    ['index.html', 'admin.html', 'signup.html', 'cliente.html', 'barbearia.html'].includes(normalizedPath) ||
+    normalizedPath.startsWith('login/')
+  ) {
     return null
   }
 
@@ -7228,7 +7246,7 @@ function updateLoginPortalUi() {
     loginTitle.textContent = isPortalLanding
       ? 'Escolha como deseja entrar na plataforma'
       : isAdminEntryPage()
-      ? 'Entrar no portal do administrador'
+      ? 'Entrar no portal administrativo'
       : isClientEntryPage()
         ? 'Entrar no portal do cliente'
       : isBarberEntryPage()

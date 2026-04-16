@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b1220">
-  <title>CorteFacil | Plataforma para barbearias</title>
+  <title>CorteFacil | Login cliente</title>
+  <base href="/">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='none' stroke='%23d6a54b' stroke-width='2'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='24' font-weight='700' fill='%23f7efe0'%3ECF%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 
-<body data-app-entry="main" class="portal-landing">
+<body data-app-entry="client">
 <div class="ambient ambient-left"></div>
 <div class="ambient ambient-right"></div>
 <div class="ambient ambient-bottom"></div>
@@ -102,41 +103,51 @@
 
       <!-- Login -->
       <section id="login" class="tela">
-        <div class="portal-landing-shell">
-          <div class="portal-landing-hero">
-            <div class="portal-entry-brand">
-              <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
-              <div class="portal-entry-brand-copy">
-                <span class="portal-landing-badge">Plataforma de gestao e agendamento</span>
-                <strong class="brand-name">CorteFacil</strong>
-              </div>
-            </div>
-            <div class="screen-header portal-landing-header">
-              <span id="login-kicker" class="screen-kicker">Acesso premium</span>
-              <h1 id="login-title">Escolha como deseja entrar na plataforma</h1>
-              <p id="login-description">Acesse sua area como cliente, gestao da barbearia ou administracao.</p>
-            </div>
-            <div id="portal-entry-actions" class="portal-entry-actions portal-entry-grid portal-entry-cta-row">
-              <a class="portal-entry-button portal-access-card portal-access-card-client" href="/login/cliente/">
-                <span class="portal-access-icon" aria-hidden="true">CL</span>
-                <div class="portal-entry-button-copy">
-                  <strong>Login Cliente</strong>
-                </div>
-              </a>
-              <a class="portal-entry-button portal-access-card portal-access-card-barber" href="/login/barbearia/">
-                <span class="portal-access-icon" aria-hidden="true">BR</span>
-                <div class="portal-entry-button-copy">
-                  <strong>Login Barbearia</strong>
-                </div>
-              </a>
-              <a class="portal-entry-button portal-access-card portal-access-card-admin" href="/login/admin/">
-                <span class="portal-access-icon" aria-hidden="true">AD</span>
-                <div class="portal-entry-button-copy">
-                  <strong>Login Admin</strong>
-                </div>
-              </a>
-            </div>
+        <div class="portal-entry-brand">
+          <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
+          <div class="portal-entry-brand-copy">
+            <strong class="brand-name">CorteFacil</strong>
           </div>
+        </div>
+        <div class="screen-header">
+          <span id="login-kicker" class="screen-kicker">Portal cliente</span>
+          <h1 id="login-title">Entrar no portal do cliente</h1>
+          <p id="login-description">Use seu email e senha para acessar seus agendamentos e produtos.</p>
+        </div>
+
+        <div id="portal-entry-actions" class="portal-entry-actions" style="display:none;">
+          <a class="portal-entry-button" href="cliente.html">
+            <span class="portal-entry-button-label">Portal cliente</span>
+            <strong>Entrar no portal</strong>
+          </a>
+          <a class="portal-entry-button" href="barbearia.html">
+            <span class="portal-entry-button-label">Portal barbearia</span>
+            <strong>Entrar no portal</strong>
+          </a>
+          <a class="portal-entry-button" href="admin.html">
+            <span class="portal-entry-button-label">Portal admin</span>
+            <strong>Entrar no portal</strong>
+          </a>
+        </div>
+
+        <div id="login-form-panel" class="form-block">
+          <div id="login-mode-chip" class="login-mode-chip">
+            <span id="selected-portal-label">Portal do cliente com acesso a agendamentos e produtos.</span>
+          </div>
+          <div class="currency-preference">
+            <label class="field-label" for="portal-currency-selector-client">Moeda dos precos</label>
+            <select id="portal-currency-selector-client" data-currency-selector onchange="setAppCurrency(this.value)">
+              <option value="BRL">Real brasileiro</option>
+              <option value="EUR">Euro</option>
+            </select>
+          </div>
+          <div id="auth-feedback" class="form-feedback" style="display:none;"></div>
+          <input type="email" id="email" placeholder="Email">
+          <input type="password" id="password" placeholder="Senha">
+          <button id="login-submit" onclick="login()">Entrar</button>
+          <a class="link-button" href="/">Voltar para a home</a>
+          <button type="button" class="link-button" onclick="resetPassword()">Esqueci minha senha?</button>
+          <button type="button" class="secondary-action" onclick="window.location.href='signup.html'">Criar conta</button>
         </div>
       </section>
 
@@ -206,16 +217,12 @@
             </div>
           </div>
           <small class="field-hint">Voce pode marcar varios servicos se desejar.</small>
-          <label class="field-label" for="appointment-date">Data</label>
-          <input type="date" id="appointment-date">
-          <div id="calendar-source-status" class="calendar-source-status calendar-source-status-idle">
-            Selecione barbeiro, servicos e data para consultar a disponibilidade.
+          <div class="field-label">Dia</div>
+          <div id="appointment-day-picker" class="slot-day-picker"></div>
+          <div class="field-label">Horario</div>
+          <div id="appointment-slot-picker" class="slot-picker">
+            <div class="admin-empty">Selecione barbeiro e servicos para ver horarios.</div>
           </div>
-          <div class="field-label">Horarios disponiveis</div>
-          <div id="available-slots" class="slot-picker availability-slot-picker">
-            <div class="admin-empty">Selecione barbeiro, servicos e data para ver horarios.</div>
-          </div>
-          <input type="hidden" id="selected-slot-value">
           <div class="payment-panel">
             <div class="management-card-header">
               <div>
@@ -231,6 +238,8 @@
             </select>
             <div id="appointment-payment-summary" class="payment-summary"></div>
           </div>
+          <input type="datetime-local" id="time" style="display:none;">
+
           <button data-protected="true" onclick="agendar()">Agendar</button>
         </div>
 
@@ -250,27 +259,6 @@
           <h1>Minha Agenda</h1>
           <p>Visualize os atendimentos, detalhes de servicos e organize o dia com clareza.</p>
         </div>
-        <section class="management-card google-calendar-card">
-          <div class="management-card-header">
-            <div>
-              <span class="management-kicker">Integracao</span>
-              <h2>Google Calendar</h2>
-            </div>
-          </div>
-          <div class="management-form management-form-grid management-form-compact google-calendar-form">
-            <select id="google-calendar-barber" onchange="handleGoogleCalendarBarberChange()">
-              <option value="">Selecione um barbeiro</option>
-            </select>
-            <div id="google-calendar-connection-status" class="google-calendar-status google-calendar-status-idle">
-              Nenhuma conta verificada.
-            </div>
-            <div id="google-calendar-connected-email" class="field-hint management-form-span-full">Selecione um barbeiro para consultar a conexao.</div>
-            <div class="management-form-actions management-form-span-full">
-              <button type="button" onclick="connectGoogleCalendar()">Conectar Google</button>
-              <button type="button" class="secondary-action" onclick="disconnectGoogleCalendar()">Desconectar Google</button>
-            </div>
-          </div>
-        </section>
         <div class="agenda-visual-toolbar">
           <div class="segmented-control">
             <button type="button" id="agenda-view-day" class="segmented-button is-active" onclick="alterarModoAgenda('day')">Dia</button>
@@ -701,7 +689,7 @@
           <p>Gerencie equipe, servicos e produtos em cards consistentes com o novo painel.</p>
         </div>
 
-        <div class="cadastro-grid cadastro-grid-wide">
+        <div class="cadastro-grid">
           <section class="cadastro-card">
             <h2>Clientes</h2>
             <input type="text" id="new-customer-name" placeholder="Nome do cliente">
