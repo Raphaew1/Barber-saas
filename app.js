@@ -352,14 +352,14 @@ function isBarberEntryPage() {
   return APP_ENTRY_MODE === 'barber'
 }
 
-function isMainPortalLanding() {
-  return !isAdminEntryPage()
-    && !isClientEntryPage()
-    && !isBarberEntryPage()
-    && !isSignupEntryPage()
+function isPublicHomeEntryPage() {
+  return APP_ENTRY_MODE === 'main'
     && !getPortalHintFromUrl()
-    && !currentSession
     && !currentBarbershopContext
+}
+
+function isMainPortalLanding() {
+  return isPublicHomeEntryPage()
 }
 
 function getAppUrl(fileName = 'index.html') {
@@ -1882,7 +1882,7 @@ function getCurrentTopbarContextLabel() {
     return 'Conta do cliente'
   }
 
-  return 'Contexto livre'
+  return 'Visao inicial'
 }
 
 function updateTopbarScreenContext(screenId = '') {
@@ -4338,6 +4338,22 @@ async function init() {
     }
 
     clearPlatformContextCache()
+
+    if (isMainPortalLanding()) {
+      currentPortal = null
+      localStorage.removeItem(PORTAL_STORAGE_KEY)
+      updateProtectedUi(false)
+      applyPortalUi()
+      showScreen('login')
+      renderSelectState('barber', 'Faca login para carregar', true)
+      renderServiceState('Faca login para carregar')
+      renderAdminMessage('customers-admin-list', 'Faca login para gerenciar clientes.')
+      renderAdminMessage('barbers-admin-list', 'Faca login para gerenciar barbeiros.')
+      renderAdminMessage('services-admin-list', 'Faca login para gerenciar servicos.')
+      renderAdminMessage('products-admin-list', 'Faca login para gerenciar produtos.')
+      renderCatalogMessage('Faca login para visualizar os produtos.')
+      return
+    }
 
     if (isSignupConfirmationLanding() && sessionState.session && !isAdminEntryPage()) {
       await supabaseClient.auth.signOut()
