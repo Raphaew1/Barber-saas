@@ -1,20 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
 
 :root {
-  --product-bg: #060b16;
-  --product-surface: rgba(15, 23, 42, 0.88);
-  --product-surface-strong: rgba(15, 23, 42, 0.96);
-  --product-border: rgba(129, 140, 248, 0.18);
-  --product-shadow: 0 28px 80px rgba(2, 6, 23, 0.44);
-  --product-text: #e5eefb;
-  --product-muted: #94a3b8;
-  --product-accent: #6366f1;
-  --product-accent-strong: #4f46e5;
-  --product-ink: #f8fbff;
-  --product-success: #22c55e;
-  --product-hover-surface: rgba(30, 41, 59, 0.96);
-  --product-chip-bg: rgba(99, 102, 241, 0.12);
-  --product-chip-border: rgba(129, 140, 248, 0.22);
+  --product-bg: #f5efe6;
+  --product-surface: rgba(255, 255, 255, 0.78);
+  --product-surface-strong: rgba(255, 255, 255, 0.92);
+  --product-border: rgba(25, 30, 28, 0.1);
+  --product-shadow: 0 28px 80px rgba(28, 24, 19, 0.12);
+  --product-text: #161512;
+  --product-muted: #655f56;
+  --product-accent: #b77928;
+  --product-accent-strong: #8c5314;
+  --product-ink: #122117;
+  --product-success: #0f7b52;
 }
 
 body.portal-landing,
@@ -24,10 +21,9 @@ body[data-app-entry="client"] {
 
 .portal-landing {
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 22%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 18%),
-    radial-gradient(circle at 50% 100%, rgba(79, 70, 229, 0.1), transparent 22%),
-    linear-gradient(180deg, #040814 0%, #0b1120 48%, #101827 100%);
+    radial-gradient(circle at top left, rgba(231, 187, 125, 0.26), transparent 28%),
+    radial-gradient(circle at 90% 10%, rgba(73, 121, 93, 0.18), transparent 24%),
+    linear-gradient(180deg, #f7f1e7 0%, #efe4d5 100%);
   color: var(--product-text);
 }
 
@@ -59,7 +55,6 @@ body[data-app-entry="client"] {
   border: 1px solid var(--product-border);
   border-radius: 24px;
   box-shadow: var(--product-shadow);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.82));
 }
 
 .marketing-brand,
@@ -120,69 +115,29 @@ body[data-app-entry="client"] {
   color: var(--product-muted);
 }
 
-.marketing-nav-links a:hover,
-.marketing-nav-links a:focus-visible {
-  color: var(--product-ink);
-}
-
 .marketing-primary,
 .public-cta,
 .booking-actions button:not(.secondary-action),
 .upgrade-paywall-actions button:not(.secondary-action) {
-  color: #eef2ff;
+  color: #fff8ef;
   background: linear-gradient(135deg, var(--product-accent), var(--product-accent-strong));
-  box-shadow: 0 18px 34px rgba(79, 70, 229, 0.34);
+  box-shadow: 0 18px 34px rgba(183, 121, 40, 0.28);
 }
 
 .marketing-secondary,
 .wizard-nav button,
 .booking-actions .secondary-action,
 .upgrade-paywall-actions .secondary-action {
-  color: var(--product-text);
-  background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(129, 140, 248, 0.18);
-}
-
-.marketing-nav-links a,
-.marketing-nav-actions a,
-.hero-actions a,
-.wizard-nav button,
-.public-cta,
-.booking-actions button,
-.upgrade-paywall-actions button {
-  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.22);
-}
-
-.marketing-nav-actions a:hover,
-.hero-actions a:hover,
-.wizard-nav button:hover,
-.public-cta:hover,
-.booking-actions button:hover,
-.upgrade-paywall-actions button:hover {
-  transform: translateY(-2px);
-}
-
-.marketing-primary:hover,
-.public-cta:hover,
-.booking-actions button:not(.secondary-action):hover,
-.upgrade-paywall-actions button:not(.secondary-action):hover {
-  box-shadow: 0 22px 44px rgba(79, 70, 229, 0.38);
-  filter: brightness(1.06);
-}
-
-.marketing-secondary:hover,
-.wizard-nav button:hover,
-.booking-actions .secondary-action:hover,
-.upgrade-paywall-actions .secondary-action:hover {
-  background: rgba(30, 41, 59, 0.9);
-  border-color: rgba(129, 140, 248, 0.34);
+  color: var(--product-ink);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(18, 33, 23, 0.12);
 }
 
 .marketing-hero,
 .marketing-section,
 .public-booking-shell,
 .public-booking-overview {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.82));
+  background: var(--product-surface);
   border: 1px solid var(--product-border);
   border-radius: 32px;
   box-shadow: var(--product-shadow);
@@ -240,9 +195,8 @@ body[data-app-entry="client"] {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  background: var(--product-chip-bg);
-  border: 1px solid var(--product-chip-border);
-  color: #c7d2fe;
+  background: rgba(183, 121, 40, 0.12);
+  color: var(--product-accent-strong);
 }
 
 .hero-panel,
@@ -252,8 +206,8 @@ body[data-app-entry="client"] {
 .booking-step,
 .upgrade-plan-card,
 .paywall-inline-banner {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.92));
-  border: 1px solid rgba(129, 140, 248, 0.16);
+  background: var(--product-surface-strong);
+  border: 1px solid rgba(18, 33, 23, 0.08);
   border-radius: 24px;
   padding: 20px;
 }
@@ -291,9 +245,8 @@ body[data-app-entry="client"] {
 
 .pricing-card.is-featured,
 .upgrade-plan-card.is-featured {
-  background: linear-gradient(180deg, rgba(79, 70, 229, 0.22), rgba(15, 23, 42, 0.96));
-  border-color: rgba(129, 140, 248, 0.34);
-  box-shadow: 0 22px 50px rgba(79, 70, 229, 0.18);
+  background: linear-gradient(180deg, rgba(183, 121, 40, 0.12), rgba(255, 255, 255, 0.96));
+  border-color: rgba(183, 121, 40, 0.36);
 }
 
 .pricing-price {
@@ -318,7 +271,7 @@ body[data-app-entry="client"] {
 .booking-summary-list li,
 .public-list li {
   padding: 10px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgba(18, 33, 23, 0.08);
   color: var(--product-muted);
 }
 
@@ -358,35 +311,24 @@ body[data-app-entry="client"] {
 }
 
 .booking-step.is-complete {
-  border-color: rgba(99, 102, 241, 0.28);
+  border-color: rgba(15, 123, 82, 0.22);
 }
 
 .booking-choice-card {
   width: 100%;
   text-align: left;
   cursor: pointer;
-  border: 1px solid rgba(129, 140, 248, 0.14);
+  border: 1px solid rgba(18, 33, 23, 0.08);
   border-radius: 22px;
   padding: 18px;
-  background: rgba(15, 23, 42, 0.88);
+  background: rgba(255, 255, 255, 0.88);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .booking-choice-card.is-selected,
 .slot-chip.availability-slot.is-active {
-  border-color: rgba(129, 140, 248, 0.42);
-  box-shadow: 0 14px 30px rgba(79, 70, 229, 0.22);
-  transform: translateY(-2px);
-}
-
-.marketing-card:hover,
-.pricing-card:hover,
-.hero-panel:hover,
-.public-card:hover,
-.booking-choice-card:hover {
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(30, 41, 59, 0.92));
-  border-color: rgba(129, 140, 248, 0.26);
-  box-shadow: 0 26px 58px rgba(2, 6, 23, 0.34);
+  border-color: rgba(183, 121, 40, 0.46);
+  box-shadow: 0 14px 30px rgba(183, 121, 40, 0.16);
   transform: translateY(-2px);
 }
 
@@ -444,7 +386,7 @@ body[data-app-entry="client"] {
   min-height: 88px;
   justify-content: space-between;
   align-items: flex-start;
-  background: rgba(15, 23, 42, 0.94);
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .booking-summary-list li strong {
@@ -456,7 +398,7 @@ body[data-app-entry="client"] {
   margin: 16px 0 22px;
   height: 10px;
   border-radius: 999px;
-  background: rgba(51, 65, 85, 0.5);
+  background: rgba(18, 33, 23, 0.08);
   overflow: hidden;
 }
 
@@ -464,7 +406,7 @@ body[data-app-entry="client"] {
   display: block;
   height: 100%;
   width: var(--wizard-progress, 12%);
-  background: linear-gradient(135deg, var(--product-accent), #7c3aed);
+  background: linear-gradient(135deg, var(--product-accent), var(--product-success));
   transition: width 0.22s ease;
 }
 
@@ -473,16 +415,16 @@ body[data-app-entry="client"] {
 }
 
 .wizard-nav button.is-active {
-  background: rgba(79, 70, 229, 0.18);
-  border-color: rgba(129, 140, 248, 0.34);
-  color: #c7d2fe;
+  background: rgba(183, 121, 40, 0.16);
+  border-color: rgba(183, 121, 40, 0.3);
+  color: var(--product-accent-strong);
 }
 
 .public-cta-inline {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #c7d2fe;
+  color: var(--product-accent-strong);
   font-weight: 800;
 }
 
@@ -509,7 +451,7 @@ body[data-app-entry="client"] {
 .upgrade-paywall-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(2, 6, 23, 0.72);
+  background: rgba(16, 16, 18, 0.56);
 }
 
 .upgrade-paywall-card {
@@ -517,10 +459,10 @@ body[data-app-entry="client"] {
   width: min(760px, calc(100vw - 24px));
   margin: 8vh auto 0;
   padding: 28px;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+  background: rgba(255, 249, 239, 0.96);
   border-radius: 28px;
-  border: 1px solid rgba(129, 140, 248, 0.18);
-  box-shadow: 0 34px 80px rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(18, 33, 23, 0.12);
+  box-shadow: 0 34px 80px rgba(0, 0, 0, 0.22);
   z-index: 1;
 }
 
@@ -534,8 +476,7 @@ body[data-app-entry="client"] {
 .upgrade-paywall-usage div {
   padding: 14px;
   border-radius: 18px;
-  background: rgba(30, 41, 59, 0.72);
-  border: 1px solid rgba(129, 140, 248, 0.14);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .upgrade-paywall-usage span,
@@ -548,14 +489,200 @@ body[data-app-entry="client"] {
   flex: 1 1 180px;
 }
 
-.portal-landing .theme-toggle {
+body.dark-mode .portal-landing,
+body.dark-mode[data-app-entry="client"] {
+  --product-surface: rgba(15, 23, 42, 0.88);
+  --product-surface-strong: rgba(15, 23, 42, 0.96);
+  --product-border: rgba(129, 140, 248, 0.18);
+  --product-shadow: 0 28px 80px rgba(2, 6, 23, 0.44);
+  --product-text: #e5eefb;
+  --product-muted: #94a3b8;
+  --product-accent: #6366f1;
+  --product-accent-strong: #4f46e5;
+  --product-ink: #f8fbff;
+  --product-success: #22c55e;
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 22%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 18%),
+    radial-gradient(circle at 50% 100%, rgba(79, 70, 229, 0.1), transparent 22%),
+    linear-gradient(180deg, #040814 0%, #0b1120 48%, #101827 100%);
+}
+
+body.dark-mode .marketing-nav {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.82));
+}
+
+body.dark-mode .marketing-nav-links a:hover,
+body.dark-mode .marketing-nav-links a:focus-visible {
+  color: var(--product-ink);
+}
+
+body.dark-mode .marketing-primary,
+body.dark-mode .public-cta,
+body.dark-mode .booking-actions button:not(.secondary-action),
+body.dark-mode .upgrade-paywall-actions button:not(.secondary-action) {
+  color: #eef2ff;
+  box-shadow: 0 18px 34px rgba(79, 70, 229, 0.34);
+}
+
+body.dark-mode .marketing-secondary,
+body.dark-mode .wizard-nav button,
+body.dark-mode .booking-actions .secondary-action,
+body.dark-mode .upgrade-paywall-actions .secondary-action {
+  color: var(--product-text);
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(129, 140, 248, 0.18);
+}
+
+body.dark-mode .marketing-nav-links a,
+body.dark-mode .marketing-nav-actions a,
+body.dark-mode .hero-actions a,
+body.dark-mode .wizard-nav button,
+body.dark-mode .public-cta,
+body.dark-mode .booking-actions button,
+body.dark-mode .upgrade-paywall-actions button {
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.22);
+}
+
+body.dark-mode .marketing-nav-actions a:hover,
+body.dark-mode .hero-actions a:hover,
+body.dark-mode .wizard-nav button:hover,
+body.dark-mode .public-cta:hover,
+body.dark-mode .booking-actions button:hover,
+body.dark-mode .upgrade-paywall-actions button:hover {
+  transform: translateY(-2px);
+}
+
+body.dark-mode .marketing-primary:hover,
+body.dark-mode .public-cta:hover,
+body.dark-mode .booking-actions button:not(.secondary-action):hover,
+body.dark-mode .upgrade-paywall-actions button:not(.secondary-action):hover {
+  box-shadow: 0 22px 44px rgba(79, 70, 229, 0.38);
+  filter: brightness(1.06);
+}
+
+body.dark-mode .marketing-secondary:hover,
+body.dark-mode .wizard-nav button:hover,
+body.dark-mode .booking-actions .secondary-action:hover,
+body.dark-mode .upgrade-paywall-actions .secondary-action:hover {
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(129, 140, 248, 0.28);
+}
+
+body.dark-mode .marketing-hero,
+body.dark-mode .marketing-section,
+body.dark-mode .public-booking-shell,
+body.dark-mode .public-booking-overview {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.82));
+}
+
+body.dark-mode .hero-kicker,
+body.dark-mode .section-kicker,
+body.dark-mode .booking-step-index,
+body.dark-mode .public-pill,
+body.dark-mode .pricing-badge,
+body.dark-mode .upgrade-paywall-kicker {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(129, 140, 248, 0.22);
+  color: #c7d2fe;
+}
+
+body.dark-mode .hero-panel,
+body.dark-mode .marketing-card,
+body.dark-mode .pricing-card,
+body.dark-mode .public-card,
+body.dark-mode .booking-step,
+body.dark-mode .upgrade-plan-card,
+body.dark-mode .paywall-inline-banner {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.92));
+  border: 1px solid rgba(129, 140, 248, 0.16);
+}
+
+body.dark-mode .pricing-card.is-featured,
+body.dark-mode .upgrade-plan-card.is-featured {
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.22), rgba(15, 23, 42, 0.96));
+  border-color: rgba(129, 140, 248, 0.34);
+  box-shadow: 0 22px 50px rgba(79, 70, 229, 0.18);
+}
+
+body.dark-mode .pricing-list li,
+body.dark-mode .hero-proof li,
+body.dark-mode .booking-summary-list li,
+body.dark-mode .public-list li {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+body.dark-mode .booking-step.is-complete {
+  border-color: rgba(99, 102, 241, 0.28);
+}
+
+body.dark-mode .booking-choice-card {
+  border: 1px solid rgba(129, 140, 248, 0.14);
+  background: rgba(15, 23, 42, 0.88);
+}
+
+body.dark-mode .booking-choice-card.is-selected,
+body.dark-mode .slot-chip.availability-slot.is-active {
+  border-color: rgba(129, 140, 248, 0.42);
+  box-shadow: 0 14px 30px rgba(79, 70, 229, 0.22);
+}
+
+body.dark-mode .marketing-card:hover,
+body.dark-mode .pricing-card:hover,
+body.dark-mode .hero-panel:hover,
+body.dark-mode .public-card:hover,
+body.dark-mode .booking-choice-card:hover {
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(30, 41, 59, 0.92));
+  border-color: rgba(129, 140, 248, 0.26);
+  box-shadow: 0 26px 58px rgba(2, 6, 23, 0.34);
+  transform: translateY(-2px);
+}
+
+body.dark-mode .slot-chip.availability-slot {
+  background: rgba(15, 23, 42, 0.94);
+}
+
+body.dark-mode .wizard-progress {
+  background: rgba(51, 65, 85, 0.5);
+}
+
+body.dark-mode .wizard-progress > span {
+  background: linear-gradient(135deg, var(--product-accent), #7c3aed);
+}
+
+body.dark-mode .wizard-nav button.is-active {
+  background: rgba(79, 70, 229, 0.18);
+  border-color: rgba(129, 140, 248, 0.34);
+  color: #c7d2fe;
+}
+
+body.dark-mode .public-cta-inline {
+  color: #c7d2fe;
+}
+
+body.dark-mode .upgrade-paywall-backdrop {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+body.dark-mode .upgrade-paywall-card {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+  border: 1px solid rgba(129, 140, 248, 0.18);
+  box-shadow: 0 34px 80px rgba(2, 6, 23, 0.5);
+}
+
+body.dark-mode .upgrade-paywall-usage div {
+  background: rgba(30, 41, 59, 0.72);
+  border: 1px solid rgba(129, 140, 248, 0.14);
+}
+
+body.dark-mode .portal-landing .theme-toggle {
   border-color: rgba(129, 140, 248, 0.18);
   background: rgba(15, 23, 42, 0.88);
   color: var(--product-text);
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32);
 }
 
-.portal-landing .theme-toggle:hover {
+body.dark-mode .portal-landing .theme-toggle:hover {
   background: rgba(30, 41, 59, 0.96);
   border-color: rgba(129, 140, 248, 0.28);
 }
