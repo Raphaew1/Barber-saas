@@ -176,7 +176,6 @@ const ACCESS_ROLE_MAP = {
   barber: BARBER_ROLE,
   client: CUSTOMER_ROLE
 }
-const THEME_STORAGE_KEY = 'barber-saas-theme'
 const PORTAL_STORAGE_KEY = 'barber-saas-portal'
 const ADMIN_BARBERSHOP_CONTEXT_KEY = 'barber-saas-admin-context'
 const CURRENCY_STORAGE_KEY = 'barber-saas-currency'
@@ -7693,32 +7692,8 @@ async function carregarPortalData(screenId) {
 }
 
 // Alterna entre o tema gelo claro e gelo dark.
-window.toggleTheme = function () {
-  const isDarkMode = document.body.classList.toggle('dark-mode')
-  const nextTheme = isDarkMode ? 'dark' : 'light'
-
-  localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-  updateThemeToggleLabel(isDarkMode)
-}
-
-// Aplica o tema salvo no navegador ao iniciar a pagina.
 function applySavedTheme() {
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
-  const isDarkMode = savedTheme === 'dark'
-
-  document.body.classList.toggle('dark-mode', isDarkMode)
-  updateThemeToggleLabel(isDarkMode)
-}
-
-// Atualiza o texto do botao de tema.
-function updateThemeToggleLabel(isDarkMode) {
-  const toggleButton = document.getElementById('theme-toggle')
-
-  if (!toggleButton) {
-    return
-  }
-
-  toggleButton.textContent = isDarkMode ? 'Light' : 'Dark'
+  document.body.classList.remove('dark-mode')
 }
 
 window.addEventListener('resize', () => {

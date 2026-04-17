@@ -11,8 +11,6 @@
   <link rel="stylesheet" href="/product.css">
 </head>
 <body class="portal-landing" data-app-entry="main">
-  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Alternar tema">Dark</button>
-
   <main class="product-site">
     <nav class="marketing-nav">
       <div class="marketing-brand">
@@ -181,32 +179,5 @@
       </div>
     </section>
   </main>
-
-  <script>
-    (function () {
-      const THEME_STORAGE_KEY = 'barber-saas-theme';
-      const toggleButton = document.getElementById('theme-toggle');
-
-      function updateThemeToggleLabel(isDarkMode) {
-        if (!toggleButton) return;
-        toggleButton.textContent = isDarkMode ? 'Light' : 'Dark';
-      }
-
-      function applySavedTheme() {
-        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-        const isDarkMode = savedTheme === 'dark';
-        document.body.classList.toggle('dark-mode', isDarkMode);
-        updateThemeToggleLabel(isDarkMode);
-      }
-
-      toggleButton?.addEventListener('click', function () {
-        const isDarkMode = document.body.classList.toggle('dark-mode');
-        localStorage.setItem(THEME_STORAGE_KEY, isDarkMode ? 'dark' : 'light');
-        updateThemeToggleLabel(isDarkMode);
-      });
-
-      applySavedTheme();
-    }());
-  </script>
 </body>
 </html>
