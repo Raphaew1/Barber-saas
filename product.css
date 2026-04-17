@@ -491,25 +491,38 @@ body[data-app-entry="client"] {
 
 body.dark-mode .portal-landing,
 body.dark-mode[data-app-entry="client"] {
-  --product-surface: rgba(15, 23, 42, 0.88);
-  --product-surface-strong: rgba(15, 23, 42, 0.96);
-  --product-border: rgba(129, 140, 248, 0.18);
-  --product-shadow: 0 28px 80px rgba(2, 6, 23, 0.44);
-  --product-text: #e5eefb;
+  --product-surface: #111827;
+  --product-surface-strong: #0f172a;
+  --product-border: rgba(255, 255, 255, 0.06);
+  --product-shadow: 0 18px 50px rgba(2, 6, 23, 0.42);
+  --product-text: #e5e7eb;
   --product-muted: #94a3b8;
   --product-accent: #6366f1;
   --product-accent-strong: #4f46e5;
-  --product-ink: #f8fbff;
+  --product-ink: #f9fafb;
   --product-success: #22c55e;
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 22%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 18%),
-    radial-gradient(circle at 50% 100%, rgba(79, 70, 229, 0.1), transparent 22%),
-    linear-gradient(180deg, #040814 0%, #0b1120 48%, #101827 100%);
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.55), transparent 28%),
+    linear-gradient(180deg, #0b0f14, #0b0f14);
+  color: var(--product-text);
+  font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 body.dark-mode .marketing-nav {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.82));
+  background: rgba(17, 24, 39, 0.92);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .marketing-brand strong,
+body.dark-mode .public-brand strong,
+body.dark-mode .public-booking-summary h2,
+body.dark-mode .booking-step-title,
+body.dark-mode .pricing-card strong,
+body.dark-mode .public-barbershop-overview h1 {
+  font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.04em;
 }
 
 body.dark-mode .marketing-nav-links a:hover,
@@ -521,8 +534,10 @@ body.dark-mode .marketing-primary,
 body.dark-mode .public-cta,
 body.dark-mode .booking-actions button:not(.secondary-action),
 body.dark-mode .upgrade-paywall-actions button:not(.secondary-action) {
-  color: #eef2ff;
-  box-shadow: 0 18px 34px rgba(79, 70, 229, 0.34);
+  color: #f9fafb;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.34);
 }
 
 body.dark-mode .marketing-secondary,
@@ -530,8 +545,8 @@ body.dark-mode .wizard-nav button,
 body.dark-mode .booking-actions .secondary-action,
 body.dark-mode .upgrade-paywall-actions .secondary-action {
   color: var(--product-text);
-  background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(129, 140, 248, 0.18);
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode .marketing-nav-links a,
@@ -557,23 +572,40 @@ body.dark-mode .marketing-primary:hover,
 body.dark-mode .public-cta:hover,
 body.dark-mode .booking-actions button:not(.secondary-action):hover,
 body.dark-mode .upgrade-paywall-actions button:not(.secondary-action):hover {
-  box-shadow: 0 22px 44px rgba(79, 70, 229, 0.38);
-  filter: brightness(1.06);
+  box-shadow: 0 18px 34px rgba(79, 70, 229, 0.4);
+  filter: brightness(1.03);
 }
 
 body.dark-mode .marketing-secondary:hover,
 body.dark-mode .wizard-nav button:hover,
 body.dark-mode .booking-actions .secondary-action:hover,
 body.dark-mode .upgrade-paywall-actions .secondary-action:hover {
-  background: rgba(30, 41, 59, 0.96);
-  border-color: rgba(129, 140, 248, 0.28);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.14);
+  color: #f9fafb;
 }
 
 body.dark-mode .marketing-hero,
 body.dark-mode .marketing-section,
 body.dark-mode .public-booking-shell,
 body.dark-mode .public-booking-overview {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.82));
+  position: relative;
+  overflow: hidden;
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.42);
+}
+
+body.dark-mode .marketing-hero::before,
+body.dark-mode .marketing-section::before,
+body.dark-mode .public-booking-shell::before,
+body.dark-mode .public-booking-overview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.03), rgba(255, 255, 255, 0));
 }
 
 body.dark-mode .hero-kicker,
@@ -583,7 +615,7 @@ body.dark-mode .public-pill,
 body.dark-mode .pricing-badge,
 body.dark-mode .upgrade-paywall-kicker {
   background: rgba(99, 102, 241, 0.12);
-  border: 1px solid rgba(129, 140, 248, 0.22);
+  border: 1px solid rgba(99, 102, 241, 0.18);
   color: #c7d2fe;
 }
 
@@ -594,15 +626,16 @@ body.dark-mode .public-card,
 body.dark-mode .booking-step,
 body.dark-mode .upgrade-plan-card,
 body.dark-mode .paywall-inline-banner {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.92));
-  border: 1px solid rgba(129, 140, 248, 0.16);
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
 }
 
 body.dark-mode .pricing-card.is-featured,
 body.dark-mode .upgrade-plan-card.is-featured {
-  background: linear-gradient(180deg, rgba(79, 70, 229, 0.22), rgba(15, 23, 42, 0.96));
-  border-color: rgba(129, 140, 248, 0.34);
-  box-shadow: 0 22px 50px rgba(79, 70, 229, 0.18);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.12), #111827 68%);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 18px 40px rgba(79, 70, 229, 0.14);
 }
 
 body.dark-mode .pricing-list li,
@@ -617,14 +650,15 @@ body.dark-mode .booking-step.is-complete {
 }
 
 body.dark-mode .booking-choice-card {
-  border: 1px solid rgba(129, 140, 248, 0.14);
-  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #111827;
 }
 
 body.dark-mode .booking-choice-card.is-selected,
 body.dark-mode .slot-chip.availability-slot.is-active {
-  border-color: rgba(129, 140, 248, 0.42);
-  box-shadow: 0 14px 30px rgba(79, 70, 229, 0.22);
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.16);
+  box-shadow: none;
 }
 
 body.dark-mode .marketing-card:hover,
@@ -632,14 +666,14 @@ body.dark-mode .pricing-card:hover,
 body.dark-mode .hero-panel:hover,
 body.dark-mode .public-card:hover,
 body.dark-mode .booking-choice-card:hover {
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(30, 41, 59, 0.92));
-  border-color: rgba(129, 140, 248, 0.26);
-  box-shadow: 0 26px 58px rgba(2, 6, 23, 0.34);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.14);
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.42);
   transform: translateY(-2px);
 }
 
 body.dark-mode .slot-chip.availability-slot {
-  background: rgba(15, 23, 42, 0.94);
+  background: #111827;
 }
 
 body.dark-mode .wizard-progress {
@@ -652,7 +686,7 @@ body.dark-mode .wizard-progress > span {
 
 body.dark-mode .wizard-nav button.is-active {
   background: rgba(79, 70, 229, 0.18);
-  border-color: rgba(129, 140, 248, 0.34);
+  border-color: rgba(99, 102, 241, 0.18);
   color: #c7d2fe;
 }
 
@@ -665,26 +699,27 @@ body.dark-mode .upgrade-paywall-backdrop {
 }
 
 body.dark-mode .upgrade-paywall-card {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
-  border: 1px solid rgba(129, 140, 248, 0.18);
-  box-shadow: 0 34px 80px rgba(2, 6, 23, 0.5);
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.42);
 }
 
 body.dark-mode .upgrade-paywall-usage div {
-  background: rgba(30, 41, 59, 0.72);
-  border: 1px solid rgba(129, 140, 248, 0.14);
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 body.dark-mode .portal-landing .theme-toggle {
-  border-color: rgba(129, 140, 248, 0.18);
-  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(17, 24, 39, 0.9);
   color: var(--product-text);
-  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
 }
 
 body.dark-mode .portal-landing .theme-toggle:hover {
-  background: rgba(30, 41, 59, 0.96);
-  border-color: rgba(129, 140, 248, 0.28);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.14);
+  color: #f9fafb;
 }
 
 @media (max-width: 960px) {
