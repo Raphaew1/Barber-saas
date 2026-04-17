@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/barbearia/:slug",
+      "destination": "/login/cliente/?slug=:slug"
+    },
+    {
+      "source": "/barbearia/:slug/",
+      "destination": "/login/cliente/?slug=:slug"
+    }
+  ]
+}

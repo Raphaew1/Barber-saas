@@ -7,7 +7,8 @@
   <title>CorteFacil | Login cliente</title>
   <base href="/">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='none' stroke='%23d6a54b' stroke-width='2'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='24' font-weight='700' fill='%23f7efe0'%3ECF%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/product.css">
 </head>
 
 <body data-app-entry="client">
@@ -143,12 +144,150 @@
       <!-- Agendar -->
       <section id="agendar" class="tela" style="display:none;">
         <div class="screen-header">
-          <span class="screen-kicker">Atendimento</span>
-          <h1>Novo agendamento</h1>
-          <p>Monte o atendimento com barbeiro, multiplos servicos e horario em poucos cliques.</p>
+          <span class="screen-kicker">Agendamento rapido</span>
+          <h1>Reserve em poucos toques</h1>
+          <p>Escolha servico, profissional, dia e horario sem criar senha antes. O resto a plataforma resolve no backend.</p>
         </div>
 
-        <div class="form-block">
+        <div id="public-booking-flow" class="public-booking-shell">
+          <section class="public-booking-overview">
+            <div class="public-overview-grid">
+              <div>
+                <div class="public-booking-summary">
+                  <div class="public-barbershop-overview">
+                    <span id="public-barbershop-badge" class="public-pill">Agenda publica</span>
+                    <h1 id="public-barbershop-name">Sua proxima visita comeca aqui</h1>
+                    <p id="public-barbershop-description">Agendamento simples para clientes e operacao organizada para a barbearia vender mais sem friccao.</p>
+                  </div>
+                  <button type="button" class="public-cta" data-scroll-booking>Agendar agora</button>
+                </div>
+                <div class="public-header-row">
+                  <div>
+                    <span class="section-kicker">Servicos publicados</span>
+                    <h2 class="booking-step-title">Escolha o que voce quer fazer hoje</h2>
+                  </div>
+                  <span class="public-cta-inline">Sem login obrigatorio</span>
+                </div>
+                <div id="public-services-list" class="public-catalog-grid"></div>
+              </div>
+              <aside>
+                <span class="section-kicker">Equipe disponivel</span>
+                <div id="public-barbers-list" class="public-catalog-grid"></div>
+              </aside>
+            </div>
+          </section>
+
+          <div class="paywall-inline-banner" id="inline-paywall-banner"></div>
+
+          <div class="wizard-progress">
+            <span id="wizard-progress-fill"></span>
+          </div>
+
+          <div class="wizard-nav">
+            <button type="button" data-step-trigger="1" class="is-active">1. Servico</button>
+            <button type="button" data-step-trigger="2">2. Barbeiro</button>
+            <button type="button" data-step-trigger="3">3. Data</button>
+            <button type="button" data-step-trigger="4">4. Horario</button>
+            <button type="button" data-step-trigger="5">5. Confirmacao</button>
+          </div>
+
+          <div class="booking-step is-visible" data-wizard-step="1">
+            <div class="booking-step-header">
+              <div>
+                <span class="booking-step-index">Etapa 1</span>
+                <h2 class="booking-step-title">Escolha o servico</h2>
+                <p>Comece pelo atendimento desejado. Se quiser, voce pode combinar mais de um servico.</p>
+              </div>
+            </div>
+            <div id="service-options" class="booking-step-grid">
+              <div class="service-empty">Carregando servicos...</div>
+            </div>
+          </div>
+
+          <div class="booking-step" data-wizard-step="2">
+            <div class="booking-step-header">
+              <div>
+                <span class="booking-step-index">Etapa 2</span>
+                <h2 class="booking-step-title">Escolha o barbeiro</h2>
+                <p>Veja quem esta disponivel e selecione o profissional que vai realizar o atendimento.</p>
+              </div>
+            </div>
+            <select id="barber">
+              <option value="">Carregando barbeiros...</option>
+            </select>
+            <div id="barber-card-list" class="booking-step-grid"></div>
+          </div>
+
+          <div class="booking-step" data-wizard-step="3">
+            <div class="booking-step-header">
+              <div>
+                <span class="booking-step-index">Etapa 3</span>
+                <h2 class="booking-step-title">Escolha a data</h2>
+                <p>Selecione o melhor dia e acompanhe a agenda real da barbearia.</p>
+              </div>
+            </div>
+            <input type="date" id="appointment-date">
+            <div id="appointment-day-picker" class="slot-day-picker"></div>
+          </div>
+
+          <div class="booking-step" data-wizard-step="4">
+            <div class="booking-step-header">
+              <div>
+                <span class="booking-step-index">Etapa 4</span>
+                <h2 class="booking-step-title">Escolha o horario</h2>
+                <p>Mostramos apenas horarios validos para reduzir conflito e aumentar conversao.</p>
+              </div>
+            </div>
+            <div id="calendar-source-status" class="public-pill">Selecione barbeiro, servicos e data para consultar a disponibilidade.</div>
+            <input type="hidden" id="selected-slot-value">
+            <div id="available-slots" class="booking-step-grid">
+              <div class="admin-empty">Selecione servico, barbeiro e data para ver horarios.</div>
+            </div>
+          </div>
+
+          <div class="booking-step" data-wizard-step="5">
+            <div class="booking-step-header">
+              <div>
+                <span class="booking-step-index">Etapa 5</span>
+                <h2 class="booking-step-title">Confirme seus dados</h2>
+                <p>Sem login obrigatorio. Se voce ainda nao tiver conta, criamos o acesso automaticamente depois da reserva.</p>
+              </div>
+            </div>
+            <div class="booking-form-grid">
+              <input type="text" id="name" placeholder="Seu nome completo">
+              <input type="tel" id="customer-phone" placeholder="WhatsApp para confirmacoes">
+              <input type="email" id="customer-email" class="field-span-full" placeholder="Seu melhor email para acompanhar historico">
+              <div class="payment-panel field-span-full">
+                <div class="management-card-header">
+                  <div>
+                    <span class="management-kicker">Pagamento</span>
+                    <h2>Sinal do agendamento</h2>
+                  </div>
+                </div>
+                <label class="field-label" for="appointment-payment-provider">Metodo</label>
+                <select id="appointment-payment-provider" onchange="handlePaymentProviderChange()">
+                  <option value="none">Sem sinal</option>
+                  <option value="stripe">Stripe</option>
+                  <option value="mbway">MB Way</option>
+                </select>
+                <div id="appointment-payment-summary" class="payment-summary"></div>
+              </div>
+            </div>
+            <div class="public-booking-overview">
+              <div class="public-header-row">
+                <div>
+                  <span class="section-kicker">Resumo do agendamento</span>
+                  <h2 class="booking-step-title">Tudo pronto para confirmar</h2>
+                </div>
+              </div>
+              <ul id="booking-summary-list" class="booking-summary-list"></ul>
+            </div>
+            <div class="booking-actions">
+              <button type="button" data-booking-submit onclick="agendar()">Confirmar agendamento</button>
+              <button type="button" class="secondary-action" onclick="window.location.href='/login/cliente/'">Entrar na minha conta</button>
+            </div>
+          </div>
+
           <div id="appointment-onboarding" class="onboarding-card" style="display:none;">
             <div class="onboarding-header">
               <div>
@@ -163,57 +302,7 @@
             <p id="onboarding-step-description" class="catalog-meta">Configure sua operacao inicial para comecar rapido.</p>
             <div id="onboarding-step-list" class="management-stack"></div>
           </div>
-
-          <label class="field-label" for="name">Cliente</label>
-          <input type="text" id="name" placeholder="Seu nome">
-          <label class="field-label" for="customer-phone">Telefone</label>
-          <input type="tel" id="customer-phone" placeholder="Seu telefone">
-          <label class="field-label" for="customer-email">Email</label>
-          <input type="email" id="customer-email" placeholder="Seu email">
-          <label class="field-label" for="barber">Barbeiro</label>
-          <select id="barber">
-            <option value="">Faca login para carregar</option>
-          </select>
-          <div class="field-label">Servicos</div>
-          <div id="service-picker" class="service-picker">
-            <button
-              type="button"
-              id="service-trigger"
-              class="service-trigger"
-              onclick="toggleServicePicker()"
-              aria-expanded="false"
-            >
-              Selecione os servicos
-            </button>
-            <div id="service-options" class="service-options" style="display:none;">
-              <div class="service-empty">Faca login para carregar</div>
-            </div>
-          </div>
-          <small class="field-hint">Voce pode marcar varios servicos se desejar.</small>
-          <div class="field-label">Dia</div>
-          <div id="appointment-day-picker" class="slot-day-picker"></div>
-          <div class="field-label">Horario</div>
-          <div id="appointment-slot-picker" class="slot-picker">
-            <div class="admin-empty">Selecione barbeiro e servicos para ver horarios.</div>
-          </div>
-          <div class="payment-panel">
-            <div class="management-card-header">
-              <div>
-                <span class="management-kicker">Pagamento</span>
-                <h2>Sinal do agendamento</h2>
-              </div>
-            </div>
-            <label class="field-label" for="appointment-payment-provider">Metodo</label>
-            <select id="appointment-payment-provider" onchange="handlePaymentProviderChange()">
-              <option value="none">Sem sinal</option>
-              <option value="stripe">Stripe</option>
-              <option value="mbway">MB Way</option>
-            </select>
-            <div id="appointment-payment-summary" class="payment-summary"></div>
-          </div>
           <input type="datetime-local" id="time" style="display:none;">
-
-          <button data-protected="true" onclick="agendar()">Agendar</button>
         </div>
 
         <div class="inline-history">
@@ -757,8 +846,9 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="app.js"></script>
-<script src="barber-portal.js"></script>
+<script src="/app.js"></script>
+<script src="/product.js"></script>
+<script src="/barber-portal.js"></script>
 
 </body>
 </html>

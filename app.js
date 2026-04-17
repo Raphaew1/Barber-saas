@@ -383,8 +383,18 @@ function getPortalHintFromUrl() {
 }
 
 function getSlugFromUrl() {
+  const slugFromQuery = new URLSearchParams(window.location.search).get('slug')
+  if (slugFromQuery) {
+    return slugFromQuery
+  }
+
   const path = String(window.location.pathname || '').replace(/^\/+|\/+$/g, '')
   const normalizedPath = path.toLowerCase()
+  const segments = path.split('/').filter(Boolean)
+
+  if (normalizedPath.startsWith('barbearia/') && segments[1]) {
+    return segments[1]
+  }
 
   if (
     !path ||
@@ -747,6 +757,82 @@ function showAppToast(message, type = 'info') {
     toast.remove()
   }, 3600)
 }
+
+function closeUpgradePrompt() {
+  const existingPrompt = document.getElementById('upgrade-paywall-modal')
+  if (existingPrompt) {
+    existingPrompt.remove()
+  }
+}
+
+window.closeUpgradePrompt = closeUpgradePrompt
+
+function showUpgradePrompt(options = {}) {
+  closeUpgradePrompt()
+
+  const {
+    title = 'Seu plano chegou ao limite',
+    message = 'Faça upgrade para continuar usando os recursos premium do CorteFacil.',
+    usage = null
+  } = options
+
+  const usageSummary = usage
+    ? `
+      <div class="upgrade-paywall-usage">
+        <div>
+          <span>Plano atual</span>
+          <strong>${usage.plan?.label || 'Plano atual'}</strong>
+        </div>
+        <div>
+          <span>Agendamentos no mes</span>
+          <strong>${usage.appointmentsCount || 0}/${usage.plan?.maxAppointmentsPerMonth || '-'}</strong>
+        </div>
+        <div>
+          <span>Barbeiros ativos</span>
+          <strong>${usage.barbersCount || 0}/${usage.plan?.maxBarbers || '-'}</strong>
+        </div>
+      </div>
+    `
+    : ''
+
+  const modal = document.createElement('div')
+  modal.id = 'upgrade-paywall-modal'
+  modal.className = 'upgrade-paywall-modal'
+  modal.innerHTML = `
+    <div class="upgrade-paywall-backdrop" onclick="closeUpgradePrompt()"></div>
+    <div class="upgrade-paywall-card">
+      <span class="upgrade-paywall-kicker">Monetizacao</span>
+      <h3>${title}</h3>
+      <p>${message}</p>
+      ${usageSummary}
+      <div class="upgrade-paywall-plans">
+        <article class="upgrade-plan-card">
+          <strong>Free</strong>
+          <span>R$ 0/mes</span>
+          <small>50 agendamentos e 2 barbeiros</small>
+        </article>
+        <article class="upgrade-plan-card is-featured">
+          <strong>Pro</strong>
+          <span>R$ 39/mes</span>
+          <small>400 agendamentos, 8 barbeiros e operacao completa</small>
+        </article>
+        <article class="upgrade-plan-card">
+          <strong>Premium</strong>
+          <span>R$ 99/mes</span>
+          <small>Escala multiunidade, limites altos e recursos premium</small>
+        </article>
+      </div>
+      <div class="upgrade-paywall-actions">
+        <button type="button" onclick="window.location.href='${getAppUrl('barbearia.html')}'">Fazer upgrade</button>
+        <button type="button" class="secondary-action" onclick="closeUpgradePrompt()">Continuar depois</button>
+      </div>
+    </div>
+  `
+
+  document.body.appendChild(modal)
+}
+
+window.showUpgradePrompt = showUpgradePrompt
 
 function setAuthFeedback(message = '', type = 'info') {
   const feedback = document.getElementById('auth-feedback')
@@ -2689,6 +2775,79 @@ async function createAppointmentPaymentRecords(appointments, paymentData) {
     error: error || null
   }
 }
+
+async function maybeCreateInvisibleCustomerAccount({ email, name, phone }) {
+  const normalizedEmail = String(email || '').trim().toLowerCase()
+  if (!normalizedEmail) {
+    return { skipped: true }
+  }
+
+  const { data: existingProfiles, error: existingProfileError } = await supabaseClient
+    .from('profiles')
+    .select('id, email')
+    .eq('email', normalizedEmail)
+    .limit(1)
+
+  if (!existingProfileError && Array.isArray(existingProfiles) && existingProfiles.length > 0) {
+    return { skipped: true, reason: 'existing_profile' }
+  }
+
+  const generatedPassword = `${crypto.randomUUID()}Aa1!`
+
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: normalizedEmail,
+      password: generatedPassword,
+      options: {
+        emailRedirectTo: getAppUrl('cliente.html')
+      }
+    })
+
+    if (error) {
+      const formattedMessage = formatAuthErrorMessage(error, { email: normalizedEmail })
+      const alreadyExists = formattedMessage.toLowerCase().includes('ja existe uma conta')
+      return {
+        skipped: alreadyExists,
+        error: alreadyExists ? null : error,
+        message: alreadyExists ? '' : formattedMessage
+      }
+    }
+
+    if (data?.user?.id) {
+      const { error: profileError } = await upsertProfileRecord({
+        id: data.user.id,
+        email: normalizedEmail,
+        role: CUSTOMER_ROLE,
+        global_role: CUSTOMER_ROLE,
+        name,
+        phone,
+        status: 'pending'
+      })
+
+      if (profileError) {
+        return { skipped: false, error: profileError, message: profileError.message }
+      }
+    }
+
+    if (data?.session) {
+      await supabaseClient.auth.signOut()
+      currentSession = null
+      clearPlatformContextCache()
+      updateProtectedUi(false)
+    }
+
+    return {
+      skipped: false,
+      created: true
+    }
+  } catch (error) {
+    return {
+      skipped: false,
+      error,
+      message: error.message || 'Nao foi possivel criar a conta automaticamente.'
+    }
+  }
+}
 // Processo principal de criacao do agendamento.
 window.agendar = async function () {
   const name = document.getElementById('name').value.trim()
@@ -2744,7 +2903,10 @@ window.agendar = async function () {
   const planCheck = await canCreateAppointment(barbershopId, serviceIds.length)
 
   if (!planCheck.allowed) {
-    alert(planCheck.message)
+    showUpgradePrompt({
+      message: planCheck.message,
+      usage: planCheck.usage
+    })
     return
   }
 
@@ -2790,9 +2952,34 @@ window.agendar = async function () {
       showAppToast(`Agendamento salvo, mas a sincronizacao com Google falhou: ${serverSideResult.syncError}`, 'warning')
     }
 
+    if (!currentUser) {
+      const accountResult = await maybeCreateInvisibleCustomerAccount({
+        email: customerEmail,
+        name,
+        phone
+      })
+
+      if (accountResult?.created) {
+        showAppToast('Agendamento confirmado. Tambem preparamos seu acesso para acompanhar historico e retornar mais rapido.', 'success')
+      } else if (accountResult?.message) {
+        showAppToast(`Agendamento confirmado. Conta automatica: ${accountResult.message}`, 'info')
+      }
+    }
+
     showSuccess()
     resetAppointmentForm()
     await sincronizarAgendamentos()
+    window.dispatchEvent(new CustomEvent('appointment:created', {
+      detail: {
+        customerName: name,
+        customerEmail,
+        customerPhone: phone,
+        barbershopId,
+        startsAt,
+        serviceIds,
+        barberId
+      }
+    }))
     return
   }
 
@@ -2803,7 +2990,7 @@ window.agendar = async function () {
 // Exibe um aviso visual curto apos agendar com sucesso.
 function showSuccess() {
   const msg = document.createElement('div')
-  msg.innerText = 'Agendado com sucesso!'
+  msg.innerText = 'Agendamento confirmado com sucesso!'
   msg.className = 'toast-success'
 
   document.body.appendChild(msg)
@@ -2989,6 +3176,13 @@ function renderAvailableSlots() {
       </button>
     `)
     .join('')
+
+  window.dispatchEvent(new CustomEvent('appointment:slots-updated', {
+    detail: {
+      slots: appointmentSlotsCache,
+      selectedSlot: getSelectedSlot()
+    }
+  }))
 }
 
 window.selectAvailableSlot = function (slotValue) {
@@ -3213,6 +3407,15 @@ async function carregarDados() {
   } else {
     renderServiceOptions(services)
   }
+
+  window.dispatchEvent(new CustomEvent('public:barbershop-data', {
+    detail: {
+      context: currentBarbershopContext,
+      barbers: Array.isArray(barbers) ? barbers : [],
+      services: Array.isArray(services) ? services : [],
+      publicView: isClientPublicView()
+    }
+  }))
 
   updateAppointmentPaymentSummary()
   updateMinDateTime()
@@ -4632,6 +4835,11 @@ function renderServiceOptions(items) {
     .join('')
 
   updateServiceTriggerLabel()
+  window.dispatchEvent(new CustomEvent('appointment:services-loaded', {
+    detail: {
+      services: validItems
+    }
+  }))
 }
 
 function getSelectedServiceRecords() {
@@ -4766,7 +4974,10 @@ window.cadastrarBarbeiro = async function () {
 
   const planCheck = await canCreateBarber(barbershopId)
   if (!planCheck.allowed) {
-    alert(planCheck.message)
+    showUpgradePrompt({
+      message: planCheck.message,
+      usage: planCheck.usage
+    })
     return
   }
 
@@ -5425,6 +5636,14 @@ function populateSelect(selectId, items, placeholder) {
   validItems.forEach((item) => {
     select.innerHTML += `<option value="${item.id}">${item.name}</option>`
   })
+
+  if (selectId === 'barber') {
+    window.dispatchEvent(new CustomEvent('appointment:barbers-loaded', {
+      detail: {
+        barbers: validItems
+      }
+    }))
+  }
 }
 
 function buildCustomerFrequencyLabel(totalAppointments) {
@@ -6099,6 +6318,9 @@ async function renderPlanUsage(barbershopId) {
   }
 
   renderManagementRows('plan-usage-list', rows, 'Nenhum plano encontrado.')
+  window.dispatchEvent(new CustomEvent('plan:usage-updated', {
+    detail: usage
+  }))
 }
 
 function renderReturnAlerts(customers) {

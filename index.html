@@ -1,70 +1,186 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b1220">
-  <title>CorteFacil | Plataforma para barbearias</title>
+  <title>CorteFacil | SaaS de agendamento para barbearias</title>
+  <meta name="description" content="Plataforma de agendamento e gestao para barbearias com foco em agenda rapida, retencao e monetizacao.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Crect x='6' y='6' width='52' height='52' rx='14' fill='none' stroke='%23d6a54b' stroke-width='2'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='24' font-weight='700' fill='%23f7efe0'%3ECF%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/product.css">
 </head>
 <body class="portal-landing" data-app-entry="main">
-  <div class="ambient ambient-left"></div>
-  <div class="ambient ambient-right"></div>
-  <div class="ambient ambient-bottom"></div>
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Alternar tema">Dark</button>
 
-  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Alternar tema">
-    Dark
-  </button>
+  <main class="product-site">
+    <nav class="marketing-nav">
+      <div class="marketing-brand">
+        <img src="/assets/barbearia-logo.svg" alt="Logo CorteFacil">
+        <div>
+          <span class="hero-kicker">CorteFacil</span>
+          <strong>Agenda e gestao para barbearias</strong>
+        </div>
+      </div>
+      <div class="marketing-nav-links">
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#planos">Planos</a>
+        <a href="#agenda-publica">Agenda publica</a>
+      </div>
+      <div class="marketing-nav-actions">
+        <a class="marketing-secondary" href="/login/cliente/">Ver agenda</a>
+        <a class="marketing-primary" href="/login/barbearia/">Comecar gratis</a>
+      </div>
+    </nav>
 
-  <div class="app-shell">
-    <div class="app">
-      <main class="content">
-        <section id="login" class="tela">
-          <div class="portal-landing-shell">
-            <div class="portal-landing-hero">
-              <div class="portal-entry-brand">
-                <span class="brand-badge"><img src="assets/barbearia-logo.svg" alt="Logo Barbearia"></span>
-                <div class="portal-entry-brand-copy">
-                  <span class="portal-landing-badge">Plataforma de gestao e agendamento</span>
-                  <strong class="brand-name">CorteFacil</strong>
-                </div>
-              </div>
-
-              <div class="screen-header portal-landing-header">
-                <span class="screen-kicker">Acesso rapido</span>
-                <h1>Escolha o portal que deseja acessar</h1>
-                <p>Entre direto no ambiente de cliente, operacao da barbearia ou administracao da plataforma.</p>
-              </div>
-
-              <div class="portal-entry-actions portal-entry-grid portal-entry-cta-row">
-                <a class="portal-entry-button portal-access-card portal-access-card-client" href="/login/cliente/">
-                  <span class="portal-access-icon" aria-hidden="true">CL</span>
-                  <div class="portal-entry-button-copy">
-                    <strong>Login Cliente</strong>
-                  </div>
-                </a>
-
-                <a class="portal-entry-button portal-access-card portal-access-card-barber" href="/login/barbearia/">
-                  <span class="portal-access-icon" aria-hidden="true">BR</span>
-                  <div class="portal-entry-button-copy">
-                    <strong>Login Barbearia</strong>
-                  </div>
-                </a>
-
-                <a class="portal-entry-button portal-access-card portal-access-card-admin" href="/login/admin/">
-                  <span class="portal-access-icon" aria-hidden="true">AD</span>
-                  <div class="portal-entry-button-copy">
-                    <strong>Login Admin</strong>
-                  </div>
-                </a>
-              </div>
-            </div>
+    <section class="marketing-hero">
+      <div class="hero-layout">
+        <div>
+          <span class="hero-kicker">SaaS vertical para barbearias</span>
+          <h1>Pare de perder clientes entre o WhatsApp, o caderno e a correria do dia.</h1>
+          <p>CorteFacil transforma sua barbearia em uma operacao premium com agenda publica, confirmacao rapida, controle do time e uma experiencia de reserva que converte no celular.</p>
+          <div class="hero-actions">
+            <a class="marketing-primary" href="/login/barbearia/">Comecar gratis</a>
+            <a class="marketing-secondary" href="#agenda-publica">Ver agenda</a>
           </div>
-        </section>
-      </main>
-    </div>
-  </div>
+          <ul class="hero-proof">
+            <li>Agenda em etapas para reservar em menos de 1 minuto</li>
+            <li>Planos Free, Pro e Premium com gatilhos claros de upgrade</li>
+            <li>Historico, lembretes e incentivo de retorno para aumentar recorrencia</li>
+          </ul>
+        </div>
+        <aside class="hero-panel">
+          <span class="section-kicker">Prova social</span>
+          <strong>Barbearias que testam a agenda online tendem a reduzir faltas e aumentar a ocupacao.</strong>
+          <p>Mock de resultado comercial:</p>
+          <div class="marketing-strip">
+            <article class="marketing-card">
+              <strong>+31%</strong>
+              <small>mais reservas fora do horario comercial</small>
+            </article>
+            <article class="marketing-card">
+              <strong>-22%</strong>
+              <small>menos friccao antes do primeiro agendamento</small>
+            </article>
+            <article class="marketing-card">
+              <strong>3x</strong>
+              <small>mais clareza para vender upgrade no plano certo</small>
+            </article>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="funcionalidades" class="marketing-section">
+      <span class="section-kicker">Funcionalidades</span>
+      <div class="marketing-grid">
+        <article class="marketing-card">
+          <strong>Agendamento ultra simples</strong>
+          <small>Escolha servico, barbeiro, dia e horario em etapas com foco total em conversao.</small>
+        </article>
+        <article class="marketing-card">
+          <strong>Pagina publica da barbearia</strong>
+          <small>Publique sua agenda em uma URL propria com servicos, equipe e CTA direto para reservar.</small>
+        </article>
+        <article class="marketing-card">
+          <strong>Gestao sem painel poluido</strong>
+          <small>KPIs claros, agenda visual, estoque, vendas e acessos organizados por portal.</small>
+        </article>
+        <article class="marketing-card">
+          <strong>Retencao embutida</strong>
+          <small>Historico melhorado, lembretes e sinais para estimular o proximo corte.</small>
+        </article>
+        <article class="marketing-card">
+          <strong>Monetizacao nativa</strong>
+          <small>Limites de plano, paywall claro, CTA de upgrade e distribuicao de assinaturas.</small>
+        </article>
+        <article class="marketing-card">
+          <strong>Pronto para crescer</strong>
+          <small>Base multi-tenant com Supabase, portais separados e experiencia mobile-first.</small>
+        </article>
+      </div>
+    </section>
+
+    <section id="agenda-publica" class="marketing-section">
+      <span class="section-kicker">Aquisicao</span>
+      <div class="hero-layout">
+        <div>
+          <h2 class="booking-step-title">Cada barbearia ganha uma vitrine publica para vender horario.</h2>
+          <p>Compartilhe a URL da sua unidade, mostre servicos e barbeiros, e deixe o cliente confirmar o agendamento sem pedir login antes da hora.</p>
+          <ul class="public-list">
+            <li>URL pronta para divulgar em Instagram, Google e WhatsApp</li>
+            <li>Cards de servicos e profissionais com foco total no toque mobile</li>
+            <li>Conta criada automaticamente no backend quando fizer sentido</li>
+          </ul>
+        </div>
+        <div class="public-booking-overview">
+          <div class="public-header-row">
+            <div>
+              <span class="public-pill">/barbearia/{slug}</span>
+              <h2 class="booking-step-title">Agenda publica premium</h2>
+            </div>
+            <a class="public-cta" href="/login/cliente/">Ver agenda</a>
+          </div>
+          <div class="public-catalog-grid">
+            <article class="public-card">
+              <strong>Corte classico</strong>
+              <small>30 min · reserva em poucos toques</small>
+            </article>
+            <article class="public-card">
+              <strong>Barba premium</strong>
+              <small>20 min · encaixe rapido na agenda</small>
+            </article>
+            <article class="public-card">
+              <strong>Combo corte + barba</strong>
+              <small>50 min · ticket maior com menos friccao</small>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="planos" class="marketing-section">
+      <span class="section-kicker">Monetizacao</span>
+      <div class="pricing-grid">
+        <article class="pricing-card">
+          <span class="pricing-badge">Free</span>
+          <strong>Validar operacao</strong>
+          <span class="pricing-price">R$ 0</span>
+          <p>Para barbearias iniciando a agenda online.</p>
+          <ul class="pricing-list">
+            <li>Ate 50 agendamentos por mes</li>
+            <li>Ate 2 barbeiros</li>
+            <li>Agenda publica e dashboard base</li>
+          </ul>
+          <a class="marketing-secondary" href="/login/barbearia/">Entrar no Free</a>
+        </article>
+        <article class="pricing-card is-featured">
+          <span class="pricing-badge">Pro</span>
+          <strong>Crescer sem travar</strong>
+          <span class="pricing-price">R$ 39</span>
+          <p>Plano ideal para vender assinatura e ampliar a equipe.</p>
+          <ul class="pricing-list">
+            <li>Ate 400 agendamentos por mes</li>
+            <li>Ate 8 barbeiros</li>
+            <li>Paywall, notificacoes e operacao completa</li>
+          </ul>
+          <a class="marketing-primary" href="/login/barbearia/">Comecar teste</a>
+        </article>
+        <article class="pricing-card">
+          <span class="pricing-badge">Premium</span>
+          <strong>Escalar a operacao</strong>
+          <span class="pricing-price">R$ 99</span>
+          <p>Para operacoes com alto volume e visao multiunidade.</p>
+          <ul class="pricing-list">
+            <li>Ate 2000 agendamentos por mes</li>
+            <li>Ate 30 barbeiros</li>
+            <li>Gestao avancada e suporte premium</li>
+          </ul>
+          <a class="marketing-secondary" href="/login/admin/">Ver gestao</a>
+        </article>
+      </div>
+    </section>
+  </main>
 
   <script>
     (function () {
@@ -72,16 +188,13 @@
       const toggleButton = document.getElementById('theme-toggle');
 
       function updateThemeToggleLabel(isDarkMode) {
-        if (!toggleButton) {
-          return;
-        }
+        if (!toggleButton) return;
         toggleButton.textContent = isDarkMode ? 'Light' : 'Dark';
       }
 
       function applySavedTheme() {
         const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
         const isDarkMode = savedTheme === 'dark';
-
         document.body.classList.toggle('dark-mode', isDarkMode);
         updateThemeToggleLabel(isDarkMode);
       }
