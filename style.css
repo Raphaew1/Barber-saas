@@ -2709,6 +2709,9 @@ button:disabled {
     transform: translateX(-108%);
     transition: transform 0.24s ease;
     overflow-y: auto;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
     background:
       linear-gradient(180deg, rgba(8, 12, 20, 0.98), rgba(10, 17, 28, 0.94)),
       radial-gradient(circle at top left, rgba(217, 160, 65, 0.12), transparent 36%);
@@ -2723,10 +2726,17 @@ button:disabled {
 
   body.mobile-menu-open .sidebar {
     transform: translateX(0);
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.22);
   }
 
   body.app-loading .sidebar {
     transform: translateX(-108%) !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   body.portal-landing .content {
