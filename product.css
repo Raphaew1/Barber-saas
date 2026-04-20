@@ -57,6 +57,67 @@ body[data-app-entry="client"] {
   box-shadow: var(--product-shadow);
 }
 
+.portal-selector-shell {
+  margin: 0 auto 22px;
+  padding: 28px 36px;
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+  border-radius: 32px;
+  box-shadow: var(--product-shadow);
+  backdrop-filter: blur(18px);
+}
+
+.portal-selector {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.portal-selector button {
+  min-height: 78px;
+  padding: 20px 40px;
+  font-size: 18px;
+  font-weight: 800;
+  font-family: 'Space Grotesk', sans-serif;
+  border-radius: 18px;
+  border: 1px solid rgba(140, 83, 20, 0.14);
+  background: #f5f5f5;
+  color: var(--product-text);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex: 1 1 0;
+  max-width: 290px;
+  box-shadow: 0 12px 28px rgba(28, 24, 19, 0.08);
+}
+
+.portal-selector button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(28, 24, 19, 0.12);
+}
+
+.portal-selector-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.botao-barbearia {
+  background: linear-gradient(135deg, #8B5E3C, #C89B6D);
+  color: #fff;
+  border-color: rgba(139, 94, 60, 0.36);
+  box-shadow: 0 18px 38px rgba(140, 83, 20, 0.24);
+}
+
+.botao-barbearia:hover {
+  box-shadow: 0 22px 42px rgba(140, 83, 20, 0.28);
+  filter: brightness(1.02);
+}
+
 .marketing-brand,
 .public-brand {
   display: flex;
@@ -722,6 +783,30 @@ body.dark-mode .portal-landing .theme-toggle:hover {
   color: #f9fafb;
 }
 
+body.dark-mode .portal-selector-shell {
+  background: rgba(17, 24, 39, 0.88);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.42);
+}
+
+body.dark-mode .portal-selector button {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+
+body.dark-mode .portal-selector button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode .portal-selector .botao-barbearia {
+  background: linear-gradient(135deg, #8B5E3C, #C89B6D);
+  border-color: rgba(200, 155, 109, 0.3);
+  color: #fff;
+}
+
 @media (max-width: 960px) {
   .hero-layout,
   .public-overview-grid,
@@ -741,6 +826,19 @@ body.dark-mode .portal-landing .theme-toggle:hover {
   .public-booking-overview {
     padding: 22px;
     border-radius: 26px;
+  }
+
+  .portal-selector-shell {
+    padding: 22px;
+    border-radius: 26px;
+  }
+
+  .portal-selector {
+    flex-wrap: wrap;
+  }
+
+  .portal-selector button {
+    min-width: min(100%, 220px);
   }
 }
 
@@ -764,6 +862,16 @@ body.dark-mode .portal-landing .theme-toggle:hover {
   .wizard-nav,
   .upgrade-paywall-actions {
     flex-direction: column;
+  }
+
+  .portal-selector {
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .portal-selector button {
+    width: 100%;
+    max-width: none;
   }
 
   .marketing-nav-links a,

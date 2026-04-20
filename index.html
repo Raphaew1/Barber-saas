@@ -14,24 +14,22 @@
   <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Alternar tema">Dark</button>
 
   <main class="product-site">
-    <nav class="marketing-nav">
-      <div class="marketing-brand">
-        <img src="/assets/barbearia-logo.svg" alt="Logo CorteFacil">
-        <div>
-          <span class="hero-kicker">CorteFacil</span>
-          <strong>Agenda e gestao para barbearias</strong>
-        </div>
+    <section class="portal-selector-shell" aria-label="Escolha de portal">
+      <div class="portal-selector">
+        <button type="button" onclick="setPortal('cliente'); showScreen('login')">
+          <span class="portal-selector-icon" aria-hidden="true">👤</span>
+          <span>Cliente</span>
+        </button>
+        <button class="botao-barbearia" type="button" onclick="setPortal('barbeiro'); showScreen('login')">
+          <span class="portal-selector-icon" aria-hidden="true">💈</span>
+          <span>Barbearia</span>
+        </button>
+        <button type="button" onclick="setPortal('admin'); showScreen('login')">
+          <span class="portal-selector-icon" aria-hidden="true">⚙️</span>
+          <span>Admin</span>
+        </button>
       </div>
-      <div class="marketing-nav-links">
-        <a href="#funcionalidades">Funcionalidades</a>
-        <a href="#planos">Planos</a>
-        <a href="#agenda-publica">Agenda publica</a>
-      </div>
-      <div class="marketing-nav-actions">
-        <a class="marketing-secondary" href="/login/cliente/">Ver agenda</a>
-        <a class="marketing-primary" href="/login/barbearia/">Comecar gratis</a>
-      </div>
-    </nav>
+    </section>
 
     <section class="marketing-hero">
       <div class="hero-layout">
@@ -185,12 +183,29 @@
   <script>
     (function () {
       const THEME_STORAGE_KEY = 'barber-saas-theme';
+      const PORTAL_STORAGE_KEY = 'barber-saas-portal';
       const toggleButton = document.getElementById('theme-toggle');
+      const loginRouteByPortal = {
+        cliente: '/login/cliente/',
+        barbeiro: '/login/barbearia/',
+        admin: '/login/admin/'
+      };
 
       function updateThemeToggleLabel(isDarkMode) {
         if (!toggleButton) return;
         toggleButton.textContent = isDarkMode ? 'Light' : 'Dark';
       }
+
+      window.setPortal = window.setPortal || function (portal) {
+        if (!portal) return;
+        localStorage.setItem(PORTAL_STORAGE_KEY, portal);
+      };
+
+      window.showScreen = window.showScreen || function (screenId) {
+        if (screenId !== 'login') return;
+        const selectedPortal = localStorage.getItem(PORTAL_STORAGE_KEY) || 'cliente';
+        window.location.href = loginRouteByPortal[selectedPortal] || loginRouteByPortal.cliente;
+      };
 
       function applySavedTheme() {
         const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
