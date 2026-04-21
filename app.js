@@ -3624,7 +3624,7 @@ window.carregarHistoricoCliente = async function () {
 window.carregarCadastros = async function () {
   await populateBarberBarbershopSelect()
 
-  const barbershopId = await getBarbershop()
+  const barbershopId = await resolveCadastrosBarbershopId()
   if (!barbershopId) {
     renderAdminMessage('customers-admin-list', getTenantPortalMessage('Faca login para gerenciar clientes.'))
     renderAdminMessage('barbers-admin-list', getTenantPortalMessage('Faca login para gerenciar barbeiros.'))
@@ -3639,6 +3639,23 @@ window.carregarCadastros = async function () {
     carregarServicosAdmin(barbershopId),
     carregarProdutosAdmin(barbershopId)
   ])
+}
+
+async function resolveCadastrosBarbershopId() {
+  const select = document.getElementById('new-barber-barbershop')
+  const selectedBarbershopId = select?.value?.trim() || ''
+
+  if (selectedBarbershopId) {
+    if (currentPortal === 'admin') {
+      setAdminBarbershopContext(selectedBarbershopId)
+    } else {
+      currentBarbershopId = selectedBarbershopId
+    }
+
+    return selectedBarbershopId
+  }
+
+  return await getBarbershop()
 }
 
 async function populateBarberBarbershopSelect() {
@@ -3674,6 +3691,13 @@ async function populateBarberBarbershopSelect() {
 
   if (currentContextBarbershopId && items.some((item) => item.id === currentContextBarbershopId)) {
     select.value = currentContextBarbershopId
+  }
+
+  if (!select.dataset.boundCadastrosContext) {
+    select.addEventListener('change', async () => {
+      await window.carregarCadastros()
+    })
+    select.dataset.boundCadastrosContext = 'true'
   }
 
   select.disabled = items.length === 0
@@ -5097,10 +5121,22 @@ window.cadastrarBarbeiro = async function () {
     return
   }
 
-  const barbershopId = barbershopSelect?.value || await getBarbershop()
+  const selectedBarbershopId = barbershopSelect?.value?.trim() || ''
+  const barbershopId = selectedBarbershopId || await resolveCadastrosBarbershopId()
   if (!barbershopId) {
     alert('Selecione a barbearia para cadastrar o barbeiro.')
     return
+  }
+
+  if (barbershopSelect && !selectedBarbershopId) {
+    alert('Selecione uma barbearia valida antes de cadastrar o barbeiro.')
+    return
+  }
+
+  if (currentPortal === 'admin') {
+    setAdminBarbershopContext(barbershopId)
+  } else {
+    currentBarbershopId = barbershopId
   }
 
   const planCheck = await canCreateBarber(barbershopId)
@@ -5122,7 +5158,7 @@ window.cadastrarBarbeiro = async function () {
   }
 
   nameInput.value = ''
-  if (barbershopSelect && currentPortal !== 'admin') {
+  if (barbershopSelect) {
     barbershopSelect.value = barbershopId
   }
   await carregarDados()
