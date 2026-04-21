@@ -13,14 +13,24 @@
 <body class="portal-landing" data-app-entry="main">
   <main class="product-site">
     <section class="portal-selector-shell" aria-label="Escolha de portal">
+      <div class="portal-selector-header">
+        <span class="portal-selector-kicker">Escolha seu acesso</span>
+        <p>Entre como cliente para agendar ou como barbearia para gerir a operacao.</p>
+      </div>
       <div class="portal-selector">
         <button type="button" onclick="setPortal('cliente'); showScreen('login')">
           <span class="portal-selector-icon" aria-hidden="true">👤</span>
-          <span>Cliente</span>
+          <span class="portal-selector-copy">
+            <strong>Cliente</strong>
+            <small>Agendar servicos e acompanhar horarios</small>
+          </span>
         </button>
         <button class="botao-barbearia" type="button" onclick="setPortal('barbeiro'); showScreen('login')">
           <span class="portal-selector-icon" aria-hidden="true">💈</span>
-          <span>Barbearia</span>
+          <span class="portal-selector-copy">
+            <strong>Barbearia</strong>
+            <small>Painel para equipe, agenda e operacao</small>
+          </span>
         </button>
       </div>
     </section>
