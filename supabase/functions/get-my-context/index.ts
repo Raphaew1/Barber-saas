@@ -13,10 +13,34 @@ function normalizePortalFromAccessRole(role: string | null | undefined) {
   return "cliente";
 }
 
+function getPortalPermissions(profile: any, accessList: any[], userEmail: string | null | undefined) {
+  const activeAccessList = Array.isArray(accessList)
+    ? accessList.filter((item: any) => String(item?.status || "active") === "active")
+    : [];
+  const normalizedRole = String(profile?.role || "").trim().toLowerCase();
+  const normalizedGlobalRole = String(profile?.global_role || "").trim().toLowerCase();
+  const isMasterAdmin = String(userEmail || "").trim().toLowerCase() === "raphacom.web@gmail.com";
+  const clientPermission = typeof profile?.can_access_client_portal === "boolean"
+    ? profile.can_access_client_portal
+    : true;
+  const barberPermission = typeof profile?.can_access_barber_portal === "boolean"
+    ? profile.can_access_barber_portal
+    : normalizedGlobalRole === "super_admin"
+      || normalizedRole === "admin"
+      || normalizedRole === "barbeiro"
+      || activeAccessList.some((item: any) => ["admin", "barber"].includes(String(item?.role || "").trim().toLowerCase()));
+
+  return {
+    canAccessClientPortal: isMasterAdmin ? true : clientPermission,
+    canAccessBarberPortal: isMasterAdmin ? true : barberPermission
+  };
+}
+
 function getAllowedPortals(profile: any, accessList: any[], userEmail: string | null | undefined) {
   const activeAccessList = Array.isArray(accessList)
     ? accessList.filter((item: any) => String(item?.status || "active") === "active")
     : [];
+  const portalPermissions = getPortalPermissions(profile, accessList, userEmail);
   const hasAdminAccess = profile?.global_role === "super_admin"
     || String(profile?.role || "").trim().toLowerCase() === "admin"
     || String(userEmail || "").trim().toLowerCase() === "raphacom.web@gmail.com"
@@ -26,15 +50,23 @@ function getAllowedPortals(profile: any, accessList: any[], userEmail: string | 
     return ["admin", "barbeiro", "cliente"];
   }
 
-  const hasBarberAccess = String(profile?.role || "").trim().toLowerCase() === "barbeiro"
+  const hasBarberAccess = portalPermissions.canAccessBarberPortal && (
+    String(profile?.role || "").trim().toLowerCase() === "barbeiro"
     || profile?.global_role === "barbeiro"
-    || activeAccessList.some((item: any) => String(item?.role || "").trim().toLowerCase() === "barber");
+    || activeAccessList.some((item: any) => String(item?.role || "").trim().toLowerCase() === "barber")
+  );
 
-  if (hasBarberAccess) {
-    return ["barbeiro"];
+  const allowedPortals = [];
+
+  if (portalPermissions.canAccessClientPortal) {
+    allowedPortals.push("cliente");
   }
 
-  return ["cliente"];
+  if (hasBarberAccess) {
+    allowedPortals.unshift("barbeiro");
+  }
+
+  return allowedPortals.length ? allowedPortals : ["cliente"];
 }
 
 function getPrimaryPortal(allowedPortals: string[]) {
@@ -73,7 +105,7 @@ Deno.serve(async (request) => {
 
     let profileResult = await serviceClient
       .from("profiles")
-      .select("id, email, name, global_role, status, role, barbershop_id")
+      .select("id, email, name, global_role, status, role, barbershop_id, can_access_client_portal, can_access_barber_portal")
       .eq("id", authResult.user.id)
       .maybeSingle();
 
@@ -104,6 +136,7 @@ Deno.serve(async (request) => {
     const activeBarbershop = activeAccess?.barbershops || null;
     const allowedPortals = getAllowedPortals(profile, accessList, authResult.user.email);
     const primaryPortal = getPrimaryPortal(allowedPortals);
+    const portalPermissions = getPortalPermissions(profile, accessList, authResult.user.email);
 
     return jsonResponse({
       user: {
@@ -116,6 +149,8 @@ Deno.serve(async (request) => {
         email: authResult.user.email,
         global_role: profile?.global_role || null,
         status: profile?.status || null,
+        can_access_client_portal: portalPermissions.canAccessClientPortal,
+        can_access_barber_portal: portalPermissions.canAccessBarberPortal,
         role: activeAccess?.role ? normalizePortalFromAccessRole(activeAccess.role) : (profile?.role || null),
         barbershop_id: activeAccess?.barbershop_id || profile?.barbershop_id || null,
         barbershop_name: activeBarbershop?.name || null,

@@ -151,6 +151,8 @@ let selectedAdminAccessKey = null
 let adminAccessFilteredCache = []
 let adminAccessCurrentPage = 1
 let adminAccessQuickFilter = 'all'
+let adminAccessPermissionDrafts = new Map()
+let adminAccessSaveState = new Map()
 let isAdminAccessAuditExpanded = false
 let openAdminAccessActionKey = null
 let openAdminBarbershopActionKey = null
@@ -973,11 +975,19 @@ async function upsertProfileRecord(profile) {
     ...(profile.phone ? { phone: profile.phone } : {})
   }
 
+  if (typeof profile.can_access_client_portal === 'boolean') {
+    payloadWithOptionalFields.can_access_client_portal = profile.can_access_client_portal
+  }
+
+  if (typeof profile.can_access_barber_portal === 'boolean') {
+    payloadWithOptionalFields.can_access_barber_portal = profile.can_access_barber_portal
+  }
+
   let result = await client
     .from('profiles')
     .upsert([payloadWithOptionalFields], { onConflict: 'id' })
 
-  if (result.error && isMissingColumnError(result.error, ['name', 'phone', 'global_role', 'status', 'role', 'barbershop_id', 'plan_code'])) {
+  if (result.error && isMissingColumnError(result.error, ['name', 'phone', 'global_role', 'status', 'role', 'barbershop_id', 'plan_code', 'can_access_client_portal', 'can_access_barber_portal'])) {
     const fallbackPayload = {
       id: profile.id,
       email: profile.email
@@ -991,7 +1001,7 @@ async function upsertProfileRecord(profile) {
   return result
 }
 
-async function updateProfileRecordWithFallback(profileId, updatePayload, optionalColumns = ['name', 'phone', 'global_role', 'status', 'role', 'barbershop_id', 'plan_code']) {
+async function updateProfileRecordWithFallback(profileId, updatePayload, optionalColumns = ['name', 'phone', 'global_role', 'status', 'role', 'barbershop_id', 'plan_code', 'can_access_client_portal', 'can_access_barber_portal']) {
   if (!profileId) {
     return { error: new Error('Perfil nao informado.') }
   }
@@ -2117,11 +2127,11 @@ async function buildPlatformContextFallback() {
 
     let profileQuery = await client
       .from('profiles')
-      .select('id, email, name, global_role, status, role, barbershop_id')
+      .select('id, email, name, global_role, status, role, barbershop_id, can_access_client_portal, can_access_barber_portal')
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profileQuery.error && isMissingColumnError(profileQuery.error, ['global_role', 'status', 'name', 'role', 'barbershop_id'])) {
+    if (profileQuery.error && isMissingColumnError(profileQuery.error, ['global_role', 'status', 'name', 'role', 'barbershop_id', 'can_access_client_portal', 'can_access_barber_portal'])) {
       profileQuery = await client
         .from('profiles')
         .select('id, email')
@@ -2197,6 +2207,8 @@ async function buildPlatformContextFallback() {
       name: profile?.name || '',
       global_role: profile?.global_role || (isAdminEmail(user.email) ? 'super_admin' : 'user'),
       profile_status: profile?.status || 'active',
+      can_access_client_portal: typeof profile?.can_access_client_portal === 'boolean' ? profile.can_access_client_portal : true,
+      can_access_barber_portal: typeof profile?.can_access_barber_portal === 'boolean' ? profile.can_access_barber_portal : false,
       role: normalizePortalRole(getActiveAccessFromContext({ access: accessRows })?.role || profile?.role || CUSTOMER_ROLE),
       barbershop_id: getActiveAccessFromContext({ access: accessRows })?.barbershop_id || profile?.barbershop_id || null,
       access: Array.isArray(accessRows)
@@ -2266,19 +2278,29 @@ function getAllowedPortalsForContext(context, user = null) {
     return [ADMIN_ROLE, BARBER_ROLE, CUSTOMER_ROLE]
   }
 
+  const portalPermissions = getPortalPermissionState(context, user)
   const normalizedRole = normalizePortalRole(context?.role || '')
   const activeAccess = Array.isArray(context?.access)
     ? context.access.filter((item) => String(item?.status || 'active') === 'active')
     : []
-  const hasBarberAccess = context?.global_role === BARBER_ROLE
+  const hasBarberOperationalAccess = context?.global_role === BARBER_ROLE
     || normalizedRole === BARBER_ROLE
-    || activeAccess.some((item) => normalizePortalRole(item?.role || '') === BARBER_ROLE)
+    || activeAccess.some((item) => {
+      const accessRole = normalizePortalRole(item?.role || '')
+      return accessRole === BARBER_ROLE || accessRole === ADMIN_ROLE
+    })
+    || Boolean(context?.barbershop_id)
+  const allowedPortals = []
 
-  if (hasBarberAccess) {
-    return [BARBER_ROLE]
+  if (portalPermissions.canAccessBarberPortal && hasBarberOperationalAccess) {
+    allowedPortals.push(BARBER_ROLE)
   }
 
-  return [CUSTOMER_ROLE]
+  if (portalPermissions.canAccessClientPortal) {
+    allowedPortals.push(CUSTOMER_ROLE)
+  }
+
+  return allowedPortals
 }
 
 function getPrimaryPortalForContext(context, user = null) {
@@ -2291,16 +2313,28 @@ function getPrimaryPortalForContext(context, user = null) {
     return BARBER_ROLE
   }
 
-  return CUSTOMER_ROLE
+  if (allowedPortals.includes(CUSTOMER_ROLE)) {
+    return CUSTOMER_ROLE
+  }
+
+  return null
 }
 
 function getPortalAccessMessageForAllowedPortals(allowedPortals = []) {
+  if (!allowedPortals.length) {
+    return 'Sua conta nao possui permissao ativa para acessar os portais disponiveis.'
+  }
+
   if (allowedPortals.includes(ADMIN_ROLE)) {
     return 'Este login admin pode acessar os portais de administrador, barbeiro e cliente.'
   }
 
+  if (allowedPortals.includes(BARBER_ROLE) && allowedPortals.includes(CUSTOMER_ROLE)) {
+    return 'Este login pode acessar os portais de cliente e barbearia.'
+  }
+
   if (allowedPortals.includes(BARBER_ROLE)) {
-    return 'Este login tem acesso somente ao portal de barbeiro.'
+    return 'Este login tem acesso somente ao portal da barbearia.'
   }
 
   return 'Este login tem acesso somente ao portal de cliente.'
@@ -4172,9 +4206,45 @@ function buildMasterAdminContext(user, profile = null) {
     global_role: 'super_admin',
     profile_status: profile?.status || 'active',
     role: ADMIN_ROLE,
+    can_access_client_portal: true,
+    can_access_barber_portal: true,
     access: [],
     allowed_portals: [ADMIN_ROLE, BARBER_ROLE, CUSTOMER_ROLE],
     primary_portal: ADMIN_ROLE
+  }
+}
+
+function getPortalPermissionState(source = {}, user = null) {
+  const activeAccess = Array.isArray(source?.access)
+    ? source.access.filter((item) => String(item?.status || 'active').trim().toLowerCase() === 'active')
+    : []
+  const email = String(source?.email || user?.email || '').trim().toLowerCase()
+  const normalizedRole = normalizePortalRole(source?.role || '')
+  const normalizedGlobalRole = String(source?.global_role || '').trim().toLowerCase()
+  const explicitClientPermission = typeof source?.can_access_client_portal === 'boolean'
+    ? source.can_access_client_portal
+    : null
+  const explicitBarberPermission = typeof source?.can_access_barber_portal === 'boolean'
+    ? source.can_access_barber_portal
+    : null
+
+  if (isAdminEmail(email) || normalizedGlobalRole === 'super_admin' || normalizedRole === ADMIN_ROLE) {
+    return {
+      canAccessClientPortal: true,
+      canAccessBarberPortal: true
+    }
+  }
+
+  return {
+    canAccessClientPortal: explicitClientPermission ?? true,
+    canAccessBarberPortal: explicitBarberPermission ?? (
+      normalizedGlobalRole === BARBER_ROLE
+      || normalizedRole === BARBER_ROLE
+      || activeAccess.some((item) => {
+        const accessRole = normalizePortalRole(item?.role || '')
+        return accessRole === BARBER_ROLE || accessRole === ADMIN_ROLE
+      })
+    )
   }
 }
 
@@ -4200,10 +4270,14 @@ function normalizePlatformContext(context = null, user = null) {
     access_list: normalizedAccess
   }
 
-  normalizedContext.allowed_portals = Array.isArray(context.allowed_portals) && context.allowed_portals.length
-    ? context.allowed_portals.map((item) => normalizePortalRole(item))
-    : getAllowedPortalsForContext(normalizedContext, user)
-  normalizedContext.primary_portal = normalizePortalRole(context.primary_portal || getPrimaryPortalForContext(normalizedContext, user))
+  const portalPermissions = getPortalPermissionState({
+    ...normalizedContext,
+    email: normalizedContext.email || user?.email || ''
+  }, user)
+  normalizedContext.can_access_client_portal = portalPermissions.canAccessClientPortal
+  normalizedContext.can_access_barber_portal = portalPermissions.canAccessBarberPortal
+  normalizedContext.allowed_portals = getAllowedPortalsForContext(normalizedContext, user)
+  normalizedContext.primary_portal = getPrimaryPortalForContext(normalizedContext, user)
 
   if (!normalizedContext.barbershop_id) {
     normalizedContext.barbershop_id = getActiveAccessFromContext({ access: normalizedAccess })?.barbershop_id || null
@@ -4235,15 +4309,21 @@ async function resolvePortalForUser(user) {
 
   const { data: profile } = await supabaseClient
     .from('profiles')
-    .select('role, global_role')
+    .select('role, global_role, barbershop_id, can_access_client_portal, can_access_barber_portal')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (profile?.global_role === BARBER_ROLE) {
+  const portalPermissions = getPortalPermissionState(profile, user)
+
+  if (portalPermissions.canAccessBarberPortal && (profile?.global_role === BARBER_ROLE || profile?.barbershop_id)) {
     return 'barbeiro'
   }
 
-  return 'cliente'
+  if (portalPermissions.canAccessClientPortal) {
+    return 'cliente'
+  }
+
+  return null
 }
 
 async function handleUserAfterLogin(user, fallbackPortal = '') {
@@ -4263,6 +4343,17 @@ async function handleUserAfterLogin(user, fallbackPortal = '') {
 
   const profileStatus = String(profile?.status || context?.profile_status || 'active').trim().toLowerCase()
   const isAdminUser = canAccessAdminPortal(user, context)
+
+  if (!allowedPortals.length && !isAdminUser) {
+    await supabaseClient.auth.signOut()
+    currentSession = null
+    clearPlatformContextCache()
+    updateProtectedUi(false)
+    applyPortalUi()
+    showScreen('login')
+    setAuthFeedback('Sua conta nao possui permissao ativa para acessar este sistema.', 'error')
+    return null
+  }
 
   if (!isAdminUser && profileStatus === 'pending') {
     await supabaseClient.auth.signOut()
@@ -4334,6 +4425,15 @@ async function validateBarberPortalAccess(user) {
   }
 
   const context = await fetchPlatformContext()
+  const portalPermissions = getPortalPermissionState(context, user)
+
+  if (!portalPermissions.canAccessBarberPortal) {
+    return {
+      allowed: false,
+      message: 'Sua conta nao possui permissao para acessar o portal da barbearia.'
+    }
+  }
+
   if (canAccessAdminPortal(user, context)) {
     const preferredAccess = getActiveAccessFromContext(
       context,
@@ -4343,10 +4443,41 @@ async function validateBarberPortalAccess(user) {
     return { allowed: true }
   }
 
+  const preferredAccess = getActiveAccessFromContext(
+    context,
+    getCurrentBarbershopContextId() || currentBarbershopId || getAdminBarbershopContext()
+  )
+  const contextualBarbershopId = preferredAccess?.barbershop_id || context?.barbershop_id || null
+
+  if (contextualBarbershopId) {
+    const synchronizedRole = normalizePortalRole(preferredAccess?.role || context?.role || BARBER_ROLE) === ADMIN_ROLE
+      ? ADMIN_ROLE
+      : BARBER_ROLE
+    const { error: profileSyncError } = await upsertProfileRecord({
+      id: user.id,
+      email: user.email,
+      role: synchronizedRole,
+      barbershop_id: contextualBarbershopId,
+      status: 'active',
+      can_access_client_portal: portalPermissions.canAccessClientPortal,
+      can_access_barber_portal: true
+    })
+
+    if (profileSyncError) {
+      return {
+        allowed: false,
+        message: `Seu acesso foi encontrado, mas nao foi possivel sincronizar o perfil: ${profileSyncError.message}`
+      }
+    }
+
+    currentBarbershopId = contextualBarbershopId
+    return { allowed: true }
+  }
+
   if (context?.global_role !== BARBER_ROLE) {
     return {
       allowed: false,
-      message: 'Somente perfis com regra global barbeiro podem acessar o portal da barbearia.'
+      message: 'Sua conta tem permissao de portal, mas ainda nao possui contexto ativo de barbearia.'
     }
   }
 
@@ -8274,6 +8405,8 @@ async function carregarAdminAcessos() {
 
   adminAccessDirectoryCache = directory
   adminAccessAuditCache = auditLogsResult.data || []
+  adminAccessPermissionDrafts = new Map()
+  adminAccessSaveState = new Map()
   adminContextStatsCache = buildAdminContextStats(directory, appointmentsResult.data || [])
 
   updateAdminContextUi(barbershopsResult.data || [])
@@ -8287,10 +8420,10 @@ async function carregarAdminAcessos() {
 async function fetchProfilesForAdminAccess() {
   let result = await supabaseClient
     .from('profiles')
-    .select('id, email, role, global_role, name, phone, barbershop_id, status, last_login_at, created_at')
+    .select('id, email, role, global_role, name, phone, barbershop_id, status, last_login_at, created_at, can_access_client_portal, can_access_barber_portal')
     .order('email', { ascending: true })
 
-  if (result.error && isMissingColumnError(result.error, ['global_role', 'status', 'last_login_at', 'created_at'])) {
+  if (result.error && isMissingColumnError(result.error, ['global_role', 'status', 'last_login_at', 'created_at', 'can_access_client_portal', 'can_access_barber_portal'])) {
     result = await supabaseClient
       .from('profiles')
       .select('id, email, role, name, phone, barbershop_id')
@@ -8380,6 +8513,8 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       approved_at: profile.created_at || '',
       created_at: profile.created_at || '',
       last_login_at: profile.last_login_at || '',
+      can_access_client_portal: typeof profile.can_access_client_portal === 'boolean' ? profile.can_access_client_portal : true,
+      can_access_barber_portal: typeof profile.can_access_barber_portal === 'boolean' ? profile.can_access_barber_portal : false,
       source: 'profile'
     })
   })
@@ -8414,6 +8549,12 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       approved_at: access.approved_at || existing?.approved_at || '',
       created_at: access.created_at || existing?.created_at || profile?.created_at || '',
       last_login_at: existing?.last_login_at || profile?.last_login_at || '',
+      can_access_client_portal: typeof existing?.can_access_client_portal === 'boolean'
+        ? existing.can_access_client_portal
+        : (typeof profile?.can_access_client_portal === 'boolean' ? profile.can_access_client_portal : true),
+      can_access_barber_portal: typeof existing?.can_access_barber_portal === 'boolean'
+        ? existing.can_access_barber_portal
+        : (typeof profile?.can_access_barber_portal === 'boolean' ? profile.can_access_barber_portal : false),
       source: existing?.source ? `${existing.source}+user_access` : 'user_access'
     })
   })
@@ -8448,6 +8589,8 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       approved_at: access.approved_at || existing?.approved_at || '',
       created_at: access.approved_at || existing?.created_at || '',
       last_login_at: existing?.last_login_at || '',
+      can_access_client_portal: typeof existing?.can_access_client_portal === 'boolean' ? existing.can_access_client_portal : true,
+      can_access_barber_portal: typeof existing?.can_access_barber_portal === 'boolean' ? existing.can_access_barber_portal : Boolean(access.is_active),
       source: existing ? 'profile+access' : 'barber_access'
     })
   })
@@ -8470,6 +8613,8 @@ function buildAdminAccessDirectory(profiles, userAccess, barberAccess, barbersho
       approved_at: '',
       created_at: '',
       last_login_at: '',
+      can_access_client_portal: true,
+      can_access_barber_portal: true,
       source: 'system'
     })
   }
@@ -8564,17 +8709,19 @@ function renderAdminAccessKpis(items = []) {
     return
   }
 
-  const adminUsers = items.filter((item) => getAdminAccessEffectiveRole(item) === ADMIN_ROLE).length
-  const barberUsers = items.filter((item) => getAdminAccessEffectiveRole(item) === BARBER_ROLE).length
-  const customerUsers = items.filter((item) => getAdminAccessEffectiveRole(item) === CUSTOMER_ROLE).length
+  const permissionSummary = items.map((item) => getPortalPermissionState(item))
   const activeUsers = items.filter((item) => item.status === 'active').length
   const blockedUsers = items.filter((item) => item.status === 'blocked').length
   const pendingUsers = items.filter((item) => item.status === 'pending').length
+  const clientEnabledUsers = permissionSummary.filter((item) => item.canAccessClientPortal).length
+  const barberEnabledUsers = permissionSummary.filter((item) => item.canAccessBarberPortal).length
+  const dualPortalUsers = permissionSummary.filter((item) => item.canAccessClientPortal && item.canAccessBarberPortal).length
 
   container.innerHTML = [
-    { label: 'Admins', value: String(adminUsers) },
-    { label: 'Barbeiros', value: String(barberUsers) },
-    { label: 'Clientes', value: String(customerUsers) },
+    { label: 'Usuarios', value: String(items.length) },
+    { label: 'Portal cliente', value: String(clientEnabledUsers) },
+    { label: 'Portal barbearia', value: String(barberEnabledUsers) },
+    { label: 'Dois portais', value: String(dualPortalUsers) },
     { label: 'Usuarios ativos', value: String(activeUsers) },
     { label: 'Solicitacoes pendentes', value: String(pendingUsers) },
     { label: 'Usuarios bloqueados', value: String(blockedUsers) }
@@ -8594,24 +8741,62 @@ function renderAdminAccessQuickTabs(items = []) {
 
   const counts = {
     all: items.length,
-    admin: items.filter((item) => getAdminAccessEffectiveRole(item) === ADMIN_ROLE).length,
-    barbeiro: items.filter((item) => getAdminAccessEffectiveRole(item) === BARBER_ROLE).length,
-    cliente: items.filter((item) => getAdminAccessEffectiveRole(item) === CUSTOMER_ROLE).length
+    client: items.filter((item) => getPortalPermissionState(item).canAccessClientPortal).length,
+    barber: items.filter((item) => getPortalPermissionState(item).canAccessBarberPortal).length,
+    both: items.filter((item) => {
+      const permissionState = getPortalPermissionState(item)
+      return permissionState.canAccessClientPortal && permissionState.canAccessBarberPortal
+    }).length
   }
 
   container.querySelectorAll('.access-quick-tab').forEach((button) => {
-    const roleFilter = button.dataset.roleFilter || 'all'
-    const baseLabel = roleFilter === 'all'
+    const permissionFilter = button.dataset.permissionFilter || 'all'
+    const baseLabel = permissionFilter === 'all'
       ? 'Todos'
-      : roleFilter === 'admin'
-        ? 'Admins'
-        : roleFilter === 'barbeiro'
-          ? 'Barbeiros'
-          : 'Clientes'
+      : permissionFilter === 'client'
+        ? 'Cliente'
+        : permissionFilter === 'barber'
+          ? 'Barbearia'
+          : 'Dois portais'
 
-    button.classList.toggle('is-active', roleFilter === adminAccessQuickFilter)
-    button.innerHTML = `${baseLabel}<span>${counts[roleFilter] || 0}</span>`
+    button.classList.toggle('is-active', permissionFilter === adminAccessQuickFilter)
+    button.innerHTML = `${baseLabel}<span>${counts[permissionFilter] || 0}</span>`
   })
+}
+
+function getAdminAccessPermissionDraft(entry) {
+  const baseState = getPortalPermissionState(entry)
+  const draftState = adminAccessPermissionDrafts.get(entry.accessKey) || {}
+
+  return {
+    canAccessClientPortal: typeof draftState.canAccessClientPortal === 'boolean'
+      ? draftState.canAccessClientPortal
+      : baseState.canAccessClientPortal,
+    canAccessBarberPortal: typeof draftState.canAccessBarberPortal === 'boolean'
+      ? draftState.canAccessBarberPortal
+      : baseState.canAccessBarberPortal
+  }
+}
+
+function hasAdminAccessPermissionChanges(entry) {
+  const baseState = getPortalPermissionState(entry)
+  const draftState = getAdminAccessPermissionDraft(entry)
+
+  return baseState.canAccessClientPortal !== draftState.canAccessClientPortal
+    || baseState.canAccessBarberPortal !== draftState.canAccessBarberPortal
+}
+
+function getAdminAccessSaveState(accessKey) {
+  return adminAccessSaveState.get(accessKey) || {
+    status: 'idle',
+    message: ''
+  }
+}
+
+function getPortalPermissionBadgeMeta(isEnabled) {
+  return isEnabled
+    ? { label: 'Liberado', className: 'is-enabled' }
+    : { label: 'Bloqueado', className: 'is-disabled' }
 }
 
 function renderAdminAccessAuditLog() {
@@ -9242,104 +9427,85 @@ window.handleAdminBarbershopAction = function (event, action, barbershopId) {
 
 function buildAdminAccessTableRow(item) {
   const statusMeta = getAccessStatusMeta(item.status)
-  const effectiveRole = getAdminAccessEffectiveRole(item)
-  const email = item.email || '-'
-  const name = item.name || item.email || 'Usuario sem nome'
-  const isBlocked = item.status === 'blocked'
-  const isSelected = selectedAdminAccessKey === item.accessKey
-  const menuOpen = openAdminAccessActionKey === item.accessKey
+  const roleMeta = getRoleBadgeMeta(getAdminAccessEffectiveRole(item))
+  const permissionDraft = getAdminAccessPermissionDraft(item)
+  const clientMeta = getPortalPermissionBadgeMeta(permissionDraft.canAccessClientPortal)
+  const barberMeta = getPortalPermissionBadgeMeta(permissionDraft.canAccessBarberPortal)
+  const saveState = getAdminAccessSaveState(item.accessKey)
+  const isSaving = saveState.status === 'saving'
+  const isDirty = hasAdminAccessPermissionChanges(item)
+  const isLockedAdmin = isAdminEmail(item.email || '') || String(item.global_role || '').trim().toLowerCase() === 'super_admin'
+  const rowMessage = saveState.message || (
+    permissionDraft.canAccessBarberPortal && !item.barbershop_id
+      ? 'Ative uma barbearia vinculada para liberar esse portal.'
+      : item.barbershop_name || 'Sem barbearia vinculada'
+  )
 
   return `
-    <tr class="access-table-row ${isSelected ? 'is-selected' : ''}" onclick="abrirEditorDeAcessoAdmin('${item.accessKey}')">
+    <tr class="access-table-row">
       <td class="access-col-user">
-        <div class="access-table-user">
-          <strong>${name}</strong>
-          <span class="access-table-email" title="${escapeTemplateString(email)}">${email}</span>
+        <div class="access-table-user access-table-user-stack">
+          <div class="access-table-identity">
+            <strong>${item.name || item.email || 'Usuario sem nome'}</strong>
+            <span class="access-table-email" title="${escapeTemplateString(item.email || '-')}">${item.email || '-'}</span>
+          </div>
+          <div class="access-table-badges">
+            <span class="role-badge ${roleMeta.className}">${roleMeta.label}</span>
+            <span class="status-badge ${statusMeta.className}">${statusMeta.label}</span>
+          </div>
         </div>
       </td>
-      <td class="access-col-role">
-        <select
-          class="access-role-select"
-          aria-label="Alterar perfil de ${escapeTemplateString(name)}"
-          onclick="event.stopPropagation()"
-          onchange="atualizarPerfilNaTabelaAdminAccess(event, '${item.accessKey}')"
-        >
-          <option value="cliente" ${effectiveRole === CUSTOMER_ROLE ? 'selected' : ''}>Cliente</option>
-          <option value="barbeiro" ${effectiveRole === BARBER_ROLE ? 'selected' : ''}>Barbeiro</option>
-          <option value="admin" ${effectiveRole === ADMIN_ROLE ? 'selected' : ''}>Admin</option>
-        </select>
-      </td>
       <td class="access-col-status">
-        <span class="status-badge ${statusMeta.className}">${statusMeta.label}</span>
+        <span class="access-table-context" title="${escapeTemplateString(item.barbershop_name || 'Sem barbearia')}">
+          ${item.barbershop_name || 'Sem barbearia'}
+        </span>
       </td>
-      <td class="access-col-barbershop">${item.barbershop_name || 'Sem barbearia'}</td>
+      <td class="access-col-permission">
+        <label class="portal-permission-toggle ${clientMeta.className}">
+          <input
+            type="checkbox"
+            ${permissionDraft.canAccessClientPortal ? 'checked' : ''}
+            ${isSaving || isLockedAdmin ? 'disabled' : ''}
+            onchange="atualizarPermissaoPortalAdmin('${item.accessKey}', 'client', this.checked)"
+          >
+          <span class="portal-permission-toggle-ui"></span>
+          <span class="portal-permission-toggle-copy">
+            <strong>Cliente</strong>
+            <small>${clientMeta.label}</small>
+          </span>
+        </label>
+      </td>
+      <td class="access-col-permission">
+        <label class="portal-permission-toggle ${barberMeta.className}">
+          <input
+            type="checkbox"
+            ${permissionDraft.canAccessBarberPortal ? 'checked' : ''}
+            ${isSaving || isLockedAdmin ? 'disabled' : ''}
+            onchange="atualizarPermissaoPortalAdmin('${item.accessKey}', 'barber', this.checked)"
+          >
+          <span class="portal-permission-toggle-ui"></span>
+          <span class="portal-permission-toggle-copy">
+            <strong>Barbearia</strong>
+            <small>${barberMeta.label}</small>
+          </span>
+        </label>
+      </td>
       <td class="access-col-last-login">${formatCompactAdminDate(item.last_login_at)}</td>
-      <td class="access-col-created">${formatCompactAdminDate(item.created_at || item.approved_at)}</td>
-      <td class="access-col-actions" onclick="event.stopPropagation()">
-        <div class="access-actions-menu-wrap">
-          <button type="button" class="secondary-action access-actions-trigger access-actions-icon-trigger" aria-label="Abrir acoes do usuario" onclick="toggleAdminAccessActionMenu(event, '${item.accessKey}')">...</button>
-          <div class="access-actions-menu ${menuOpen ? 'is-open' : ''}">
-            <button type="button" onclick="handleAdminAccessAction(event, 'details', '${item.accessKey}')">Ver detalhes</button>
-            <button type="button" onclick="handleAdminAccessAction(event, 'permissions', '${item.accessKey}')">Editar permissoes</button>
-            <button type="button" onclick="handleAdminAccessAction(event, 'phone', '${item.accessKey}')">Editar telefone</button>
-            <button type="button" onclick="handleAdminAccessAction(event, 'transfer', '${item.accessKey}')">Transferir</button>
-            <button type="button" onclick="handleAdminAccessAction(event, 'toggle-block', '${item.accessKey}')">${isBlocked ? 'Desbloquear' : 'Bloquear'}</button>
-            <button type="button" class="danger-item" onclick="handleAdminAccessAction(event, 'delete', '${item.accessKey}')">Excluir usuario</button>
-            <button type="button" class="danger-item" onclick="handleAdminAccessAction(event, 'revoke', '${item.accessKey}')">Revogar acesso</button>
-          </div>
+      <td class="access-col-actions">
+        <div class="access-save-stack">
+          <button
+            type="button"
+            class="access-save-button ${isDirty ? 'is-dirty' : ''}"
+            onclick="salvarPermissoesPortalAdmin('${item.accessKey}')"
+            ${(!isDirty || isSaving || isLockedAdmin) ? 'disabled' : ''}
+          >
+            ${isSaving ? 'Salvando...' : isLockedAdmin ? 'Fixo' : 'Salvar'}
+          </button>
+          <span class="access-save-feedback access-save-feedback-${saveState.status || 'idle'}">${rowMessage}</span>
         </div>
       </td>
     </tr>
   `
-}
-
-window.atualizarPerfilNaTabelaAdminAccess = async function (event, accessKey) {
-  event?.stopPropagation?.()
-  const select = event?.target
-  const entry = findAdminAccessEntry(accessKey)
-
-  if (!select || !entry) {
-    return
-  }
-
-  const nextRole = normalizePortalRole(select.value)
-  const currentRole = getAdminAccessEffectiveRole(entry)
-
-  if (nextRole === currentRole) {
-    return
-  }
-
-  const previousValue = currentRole
-  select.disabled = true
-
-  const syncResult = await syncAdminAccessEntry(
-    entry,
-    nextRole,
-    entry.barbershop_id || '',
-    entry.name || '',
-    entry.status || 'active'
-  )
-
-  select.disabled = false
-
-  if (syncResult?.error) {
-    select.value = previousValue
-
-    if ((nextRole === BARBER_ROLE || nextRole === ADMIN_ROLE) && !entry.barbershop_id) {
-      showAppToast('Selecione uma barbearia antes de trocar este perfil.', 'error')
-      abrirEditorDeAcessoAdmin(accessKey, true)
-      return
-    }
-
-    showAppToast(`Erro ao atualizar perfil: ${syncResult.error.message}`, 'error')
-    return
-  }
-
-  showAppToast('Perfil atualizado com sucesso.', 'success')
-  await carregarAdminAcessos()
-  if (selectedAdminAccessKey === accessKey) {
-    abrirEditorDeAcessoAdmin(accessKey)
-  }
 }
 
 function renderAdminAccessPagination(totalItems, currentPage, totalPages) {
@@ -9390,12 +9556,11 @@ function renderUserTable(users) {
           <thead>
             <tr>
               <th class="access-col-user">Usuario</th>
-              <th class="access-col-role">Perfil</th>
-              <th class="access-col-status">Status</th>
-              <th class="access-col-barbershop">Barbearia</th>
+              <th class="access-col-status">Status e contexto</th>
+              <th class="access-col-permission">Portal cliente</th>
+              <th class="access-col-permission">Portal barbearia</th>
               <th class="access-col-last-login">Ultimo acesso</th>
-              <th class="access-col-created">Criado em</th>
-              <th class="access-col-actions">Acoes</th>
+              <th class="access-col-actions">Salvar</th>
             </tr>
           </thead>
           <tbody>
@@ -9435,6 +9600,106 @@ function renderAdminAccessList(items) {
 
 function findAdminAccessEntry(accessKey) {
   return adminAccessDirectoryCache.find((item) => item.accessKey === accessKey) || null
+}
+
+window.atualizarPermissaoPortalAdmin = function (accessKey, portal, isEnabled) {
+  const entry = findAdminAccessEntry(accessKey)
+  if (!entry) {
+    return
+  }
+
+  const draftState = getAdminAccessPermissionDraft(entry)
+  if (portal === 'client') {
+    draftState.canAccessClientPortal = Boolean(isEnabled)
+  }
+
+  if (portal === 'barber') {
+    draftState.canAccessBarberPortal = Boolean(isEnabled)
+  }
+
+  adminAccessPermissionDrafts.set(accessKey, draftState)
+  adminAccessSaveState.set(accessKey, {
+    status: hasAdminAccessPermissionChanges(entry) ? 'dirty' : 'idle',
+    message: hasAdminAccessPermissionChanges(entry)
+      ? 'Alteracoes pendentes.'
+      : (draftState.canAccessBarberPortal && !entry.barbershop_id
+        ? 'Ative uma barbearia vinculada para liberar esse portal.'
+        : 'Permissoes sincronizadas.')
+  })
+  renderAdminAccessList(adminAccessFilteredCache)
+}
+
+window.salvarPermissoesPortalAdmin = async function (accessKey) {
+  const entry = findAdminAccessEntry(accessKey)
+  if (!entry) {
+    return
+  }
+
+  if (!entry.id || entry.id === entry.accessKey) {
+    showAppToast('Nao foi possivel identificar o perfil desse usuario.', 'error')
+    return
+  }
+
+  const permissionDraft = getAdminAccessPermissionDraft(entry)
+  const currentUser = await ensureAdminAccess()
+  if (!currentUser) {
+    return
+  }
+
+  if (permissionDraft.canAccessBarberPortal && !entry.barbershop_id) {
+    adminAccessSaveState.set(accessKey, {
+      status: 'error',
+      message: 'Associe o usuario a uma barbearia antes de liberar esse portal.'
+    })
+    renderAdminAccessList(adminAccessFilteredCache)
+    return
+  }
+
+  adminAccessSaveState.set(accessKey, {
+    status: 'saving',
+    message: 'Salvando permissoes...'
+  })
+  renderAdminAccessList(adminAccessFilteredCache)
+
+  const updateResult = await updateProfileRecordWithFallback(entry.id, {
+    can_access_client_portal: permissionDraft.canAccessClientPortal,
+    can_access_barber_portal: permissionDraft.canAccessBarberPortal
+  })
+
+  if (updateResult.error) {
+    adminAccessSaveState.set(accessKey, {
+      status: 'error',
+      message: `Erro ao salvar: ${updateResult.error.message}`
+    })
+    renderAdminAccessList(adminAccessFilteredCache)
+    showAppToast(`Erro ao salvar permissoes: ${updateResult.error.message}`, 'error')
+    return
+  }
+
+  if (missingProfileColumnsCache.has('can_access_client_portal') || missingProfileColumnsCache.has('can_access_barber_portal')) {
+    adminAccessSaveState.set(accessKey, {
+      status: 'error',
+      message: 'As colunas de permissao ainda nao existem no banco. Aplique a migration do Supabase.'
+    })
+    renderAdminAccessList(adminAccessFilteredCache)
+    showAppToast('As permissoes nao foram gravadas porque a migration do banco ainda nao foi aplicada.', 'error')
+    return
+  }
+
+  addAdminAccessAuditEntry({
+    action: 'Permissoes de portal atualizadas',
+    target_email: entry.email,
+    performed_by_email: currentUser.email,
+    details: `Cliente: ${permissionDraft.canAccessClientPortal ? 'sim' : 'nao'} | Barbearia: ${permissionDraft.canAccessBarberPortal ? 'sim' : 'nao'}`
+  })
+
+  adminAccessPermissionDrafts.delete(accessKey)
+  adminAccessSaveState.set(accessKey, {
+    status: 'success',
+    message: 'Permissoes salvas.'
+  })
+  showAppToast('Permissoes atualizadas com sucesso.', 'success')
+  await carregarAdminAcessos()
 }
 
 function renderAdminAccessEditorPermissions(role) {
@@ -9673,18 +9938,33 @@ window.filtrarAdminAcessos = function (options = {}) {
 
   const filtered = quickFilter === 'all'
     ? baseFiltered
-    : baseFiltered.filter((item) => getAdminAccessEffectiveRole(item) === quickFilter)
+    : baseFiltered.filter((item) => {
+      const permissionState = getPortalPermissionState(item)
+      if (quickFilter === 'client') {
+        return permissionState.canAccessClientPortal
+      }
+
+      if (quickFilter === 'barber') {
+        return permissionState.canAccessBarberPortal
+      }
+
+      if (quickFilter === 'both') {
+        return permissionState.canAccessClientPortal && permissionState.canAccessBarberPortal
+      }
+
+      return true
+    })
 
   const resultsInfo = document.getElementById('admin-access-results-info')
   const counter = document.getElementById('admin-access-directory-counter')
   if (resultsInfo) {
     const activeLabel = quickFilter === 'all'
-      ? 'todos os perfis'
-      : quickFilter === 'admin'
-        ? 'admins'
-        : quickFilter === 'barbeiro'
-          ? 'barbeiros'
-          : 'clientes'
+      ? 'todos os usuarios'
+      : quickFilter === 'client'
+        ? 'usuarios com portal cliente'
+        : quickFilter === 'barber'
+          ? 'usuarios com portal barbearia'
+          : 'usuarios com dois portais'
     resultsInfo.textContent = filtered.length
       ? `${filtered.length} usuario(s) em ${activeLabel}.`
       : 'Nenhum usuario encontrado.'

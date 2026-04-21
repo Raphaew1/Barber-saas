@@ -520,8 +520,8 @@
       <section id="admin-access" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
           <span class="screen-kicker">Seguranca</span>
-          <h1>Controle global de acessos</h1>
-          <p>Centralize governanca, acessos, status e seguranca de usuarios em todas as unidades da plataforma.</p>
+          <h1>Painel de permissoes por portal</h1>
+          <p>Defina por usuario quem pode entrar no portal Cliente e no portal Barbearia, com impacto real no login da plataforma.</p>
         </div>
 
         <div id="admin-access-kpis" class="management-summary"></div>
@@ -529,45 +529,32 @@
         <section class="management-card admin-access-grant-card">
           <div class="management-card-header">
             <div>
-              <span class="management-kicker">Novo acesso</span>
-              <h2>Conceder acesso ao portal</h2>
+              <span class="management-kicker">Governanca</span>
+              <h2>Operacao de acessos</h2>
             </div>
           </div>
-          <div class="management-form management-form-grid management-form-compact admin-access-grant-form">
-            <input type="email" id="admin-access-new-email" placeholder="Email para liberar acesso">
-            <select id="admin-access-new-portal" onchange="handleAdminAccessPortalChange()">
-              <option value="cliente">Portal Cliente</option>
-              <option value="barbeiro">Portal Barbeiro</option>
-              <option value="admin">Portal Admin</option>
-            </select>
-            <select id="admin-access-new-status">
-              <option value="active">Ativo</option>
-              <option value="pending">Pendente</option>
-              <option value="blocked">Bloqueado</option>
-            </select>
-            <select id="admin-access-new-barbershop" style="display:none;">
-              <option value="">Selecione a barbearia</option>
-            </select>
-            <div id="admin-access-new-feedback" class="form-feedback management-form-span-full" style="display:none;"></div>
-            <div class="management-form-actions admin-access-grant-actions">
-              <button type="button" onclick="criarAcessoAdmin()">Adicionar acesso</button>
+          <div class="management-row compact-row admin-access-governance-note">
+            <div>
+              <strong>Permissoes centralizadas em profiles</strong>
+              <span class="management-meta">Use os toggles abaixo para liberar ou bloquear os portais por usuario. O portal Admin continua separado pela regra atual.</span>
             </div>
+            <span class="management-badge">Login vinculado</span>
           </div>
         </section>
 
         <section class="management-card admin-access-directory-card">
           <div class="management-card-header admin-access-directory-header">
             <div>
-              <span class="management-kicker">Filtros</span>
-              <h2>Usuarios cadastrados</h2>
+              <span class="management-kicker">Diretorio</span>
+              <h2>Usuarios e permissoes</h2>
             </div>
             <span id="admin-access-directory-counter" class="management-badge">0 usuarios</span>
           </div>
-          <div id="admin-access-quick-tabs" class="access-quick-tabs" role="tablist" aria-label="Perfis de acesso">
-            <button type="button" class="access-quick-tab is-active" data-role-filter="all" onclick="selecionarFiltroRapidoAdminAccess('all')">Todos</button>
-            <button type="button" class="access-quick-tab" data-role-filter="admin" onclick="selecionarFiltroRapidoAdminAccess('admin')">Admins</button>
-            <button type="button" class="access-quick-tab" data-role-filter="barbeiro" onclick="selecionarFiltroRapidoAdminAccess('barbeiro')">Barbeiros</button>
-            <button type="button" class="access-quick-tab" data-role-filter="cliente" onclick="selecionarFiltroRapidoAdminAccess('cliente')">Clientes</button>
+          <div id="admin-access-quick-tabs" class="access-quick-tabs" role="tablist" aria-label="Filtro rapido por permissao">
+            <button type="button" class="access-quick-tab is-active" data-permission-filter="all" onclick="selecionarFiltroRapidoAdminAccess('all')">Todos</button>
+            <button type="button" class="access-quick-tab" data-permission-filter="client" onclick="selecionarFiltroRapidoAdminAccess('client')">Cliente</button>
+            <button type="button" class="access-quick-tab" data-permission-filter="barber" onclick="selecionarFiltroRapidoAdminAccess('barber')">Barbearia</button>
+            <button type="button" class="access-quick-tab" data-permission-filter="both" onclick="selecionarFiltroRapidoAdminAccess('both')">Dois portais</button>
           </div>
           <div class="access-filters-grid access-filters-grid-compact">
             <input type="text" id="admin-access-search" placeholder="Buscar por email ou nome" oninput="filtrarAdminAcessos()">
@@ -587,8 +574,8 @@
               <option value="">Todas as barbearias</option>
             </select>
           </div>
-          <div id="admin-access-results-info" class="field-hint">Carregando acessos...</div>
-          <div id="admin-access-loading" class="admin-empty" style="display:none;">Carregando diretorio de acessos...</div>
+          <div id="admin-access-results-info" class="field-hint">Carregando permissoes...</div>
+          <div id="admin-access-loading" class="admin-empty" style="display:none;">Carregando permissoes por usuario...</div>
           <div id="admin-access-list" class="management-stack"></div>
         </section>
 
@@ -603,61 +590,6 @@
           <div id="admin-access-audit-log" class="management-stack admin-access-audit-log" style="display:none;"></div>
         </section>
       </section>
-
-      <div id="admin-access-editor-modal" class="modal-overlay admin-access-drawer-overlay" style="display:none;" onclick="fecharEditorDeAcessoAdmin(event)">
-        <div class="modal-card admin-access-modal-card admin-access-drawer-card" onclick="event.stopPropagation()">
-          <div class="modal-header">
-            <div>
-              <span class="screen-kicker">Detalhes</span>
-              <h2>Usuario selecionado</h2>
-            </div>
-            <button type="button" class="link-button" onclick="fecharEditorDeAcessoAdmin()">Fechar</button>
-          </div>
-
-          <div class="modal-body">
-            <div class="admin-access-drawer-summary">
-              <div class="admin-access-drawer-identity">
-                <strong id="admin-access-drawer-name">Usuario sem nome</strong>
-                <span id="admin-access-drawer-email" class="management-meta">-</span>
-              </div>
-              <div class="admin-access-drawer-badges">
-                <span id="admin-access-drawer-role" class="role-badge role-client">Cliente</span>
-                <span id="admin-access-drawer-status" class="status-badge status-pending">Pendente</span>
-              </div>
-            </div>
-            <div id="admin-access-drawer-overview" class="admin-access-drawer-overview"></div>
-            <div class="admin-access-drawer-section-head">
-              <span class="management-kicker">Administracao</span>
-              <h3>Permissoes e contexto</h3>
-            </div>
-            <div class="management-form management-form-grid management-form-compact">
-              <input type="text" id="admin-access-editor-name" placeholder="Nome do usuario">
-              <input type="email" id="admin-access-editor-email" placeholder="Email" disabled>
-              <input type="tel" id="admin-access-editor-phone" placeholder="Telefone do usuario">
-              <select id="admin-access-editor-role">
-                <option value="cliente">Cliente</option>
-                <option value="barbeiro">Barbeiro</option>
-                <option value="admin">Admin</option>
-              </select>
-              <select id="admin-access-editor-status">
-                <option value="active">Ativo</option>
-                <option value="pending">Pendente</option>
-                <option value="blocked">Bloqueado</option>
-              </select>
-              <select id="admin-access-editor-barbershop">
-                <option value="">Sem barbearia</option>
-              </select>
-              <div id="admin-access-editor-permissions" class="management-stack management-form-span-2"></div>
-              <div id="admin-access-editor-feedback" class="form-feedback management-form-span-2" style="display:none;"></div>
-              <div class="management-form-actions management-form-span-2">
-                <button type="button" class="secondary-action" onclick="abrirEdicaoEmailNoAcessoAdmin()">Alterar email</button>
-                <button type="button" class="secondary-action" onclick="abrirEdicaoTelefoneNoAcessoAdmin()">Alterar telefone</button>
-                <button type="button" onclick="salvarEditorDeAcessoAdmin()">Salvar alteracoes</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <section id="admin-users" class="tela tela-larga" style="display:none;">
         <div class="screen-header">
