@@ -10809,5 +10809,5 @@ window.resetPassword = async function () {
     return;
   }
 
-  setAuthFeedback('Email de recuperacao enviado. Verifique sua caixa de entrada.', 'success')
+  setAuthFeedback('Enviamos um link seguro para redefinir sua senha. Verifique sua caixa de entrada.', 'success')
 };
