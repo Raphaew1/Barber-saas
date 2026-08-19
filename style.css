@@ -3134,6 +3134,46 @@ button:disabled {
     font-size: 22px;
   }
 
+  body[data-app-entry="client"] .content {
+    padding: 10px 8px 92px;
+  }
+
+  body[data-app-entry="client"] .tela {
+    max-width: none;
+    padding: 18px 12px;
+    border-radius: 18px;
+  }
+
+  body[data-app-entry="client"] .portal-entry-brand {
+    gap: 10px;
+    margin-bottom: 18px;
+    padding-right: 58px;
+  }
+
+  body[data-app-entry="client"] .portal-entry-brand .brand-badge {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+  }
+
+  body[data-app-entry="client"] .portal-entry-brand-copy strong {
+    font-size: 20px;
+  }
+
+  body[data-app-entry="client"] .form-block {
+    width: 100%;
+    max-width: none;
+  }
+
+  body[data-app-entry="client"] .login-mode-chip {
+    line-height: 1.45;
+  }
+
+  body[data-app-entry="client"] .wizard-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .screen-header p,
   .admin-meta,
   .agenda-meta {
