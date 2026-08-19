@@ -606,7 +606,7 @@ body[data-app-entry="client"] {
   flex: 1 1 180px;
 }
 
-body.dark-mode .portal-landing,
+body.dark-mode.portal-landing,
 body.dark-mode[data-app-entry="client"] {
   --product-surface: #111827;
   --product-surface-strong: #0f172a;
