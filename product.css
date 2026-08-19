@@ -613,7 +613,7 @@ body.dark-mode[data-app-entry="client"] {
   --product-border: rgba(255, 255, 255, 0.06);
   --product-shadow: 0 18px 50px rgba(2, 6, 23, 0.42);
   --product-text: #e5e7eb;
-  --product-muted: #94a3b8;
+  --product-muted: #b8c3d4;
   --product-accent: #6366f1;
   --product-accent-strong: #4f46e5;
   --product-ink: #f9fafb;
@@ -851,7 +851,7 @@ body.dark-mode .portal-selector-kicker {
 }
 
 body.dark-mode .portal-selector-header p {
-  color: rgba(226, 232, 240, 0.78);
+  color: #dbe4f0;
 }
 
 body.dark-mode .portal-selector button {
@@ -867,7 +867,7 @@ body.dark-mode .portal-selector button:hover {
 }
 
 body.dark-mode .portal-selector .botao-barbearia {
-  background: linear-gradient(135deg, #8B5E3C, #C89B6D);
+  background: linear-gradient(135deg, #3a2418, #704625);
   border-color: rgba(200, 155, 109, 0.3);
   color: #fff;
 }
@@ -879,7 +879,7 @@ body.dark-mode .portal-selector-icon {
 
 body.dark-mode .portal-selector-copy small,
 body.dark-mode .portal-selector .botao-barbearia .portal-selector-copy small {
-  color: rgba(241, 245, 249, 0.72);
+  color: #f8fbff;
 }
 
 body:not(.dark-mode) .portal-selector .botao-barbearia .portal-selector-icon {
