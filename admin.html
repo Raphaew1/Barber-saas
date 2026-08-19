@@ -681,9 +681,12 @@
             <input type="text" id="admin-user-name" placeholder="Nome completo">
             <input type="email" id="admin-user-email" placeholder="Email">
             <input type="tel" id="admin-user-phone" placeholder="Telefone">
-            <select id="admin-user-barbershop">
-              <option value="">Selecione a barbearia</option>
-            </select>
+            <div class="management-form-field">
+              <label class="field-label" for="admin-user-barbershop">Barbearia vinculada</label>
+              <select id="admin-user-barbershop">
+                <option value="">Selecione a barbearia para vincular</option>
+              </select>
+            </div>
             <input type="password" id="admin-user-password" placeholder="Senha" autocomplete="new-password">
             <input type="password" id="admin-user-password-confirm" placeholder="Confirmar senha" autocomplete="new-password">
             <select id="admin-user-role">

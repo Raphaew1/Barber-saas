@@ -5287,6 +5287,15 @@ window.cadastrarUsuarioAdmin = async function () {
         showFormFeedback(`Conta criada, mas falha ao salvar perfil: ${profileError.message}`, 'warning', feedbackId)
         return
       }
+
+      if (barbershopId) {
+        const accessResult = await syncManagedUserAccess(userId, barbershopId, role, 'pending')
+
+        if (accessResult.error) {
+          showFormFeedback(`Conta e perfil criados, mas falha ao vincular a barbearia: ${accessResult.error.message}`, 'warning', feedbackId)
+          return
+        }
+      }
     }
 
     showFormFeedback('Usuario criado com sucesso e enviado para a fila de aprovacoes.', 'success', feedbackId)

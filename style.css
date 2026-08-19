@@ -2240,6 +2240,11 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.management-form-field {
+  display: grid;
+  gap: 6px;
+}
+
 .management-form-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
