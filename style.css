@@ -974,6 +974,15 @@ body:not(.dark-mode) .topbar-screen-description {
   max-width: 1080px;
 }
 
+body[data-app-entry="client"] #agendar.tela {
+  max-width: 1080px;
+}
+
+body[data-app-entry="client"] #agendar .public-booking-shell {
+  width: 100%;
+  min-width: 0;
+}
+
 .screen-header {
   margin-bottom: 20px;
 }
