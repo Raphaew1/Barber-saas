@@ -9155,6 +9155,7 @@ function renderAdminUsersGroup(containerId, users, emptyMessage) {
           <button type="button" class="user-action-button" onclick="editarTelefoneUsuario('${user.id}', '${escapeTemplateString(user.phone || '')}')">Editar telefone</button>
           <button type="button" class="user-action-button" onclick="editarEmailUsuario('${user.id}', '${escapeTemplateString(user.email || '')}')">Alterar email</button>
           <button type="button" class="user-action-button user-action-button-primary" onclick="redefinirSenhaUsuario('${escapeTemplateString(user.id || '')}', '${escapeTemplateString(user.email || '')}', '${escapeTemplateString(user.name || '')}', '${escapeTemplateString(user.source || 'profile')}')">Alterar senha</button>
+          ${user.source === 'system' || user.id === user.email ? '' : `<button type="button" class="user-action-button user-action-button-danger" onclick="excluirUsuarioCadastradoAdmin('${escapeTemplateString(user.id || '')}', '${escapeTemplateString(user.email || '')}', '${escapeTemplateString(user.name || '')}')">Excluir usuario</button>`}
         </div>
       </div>
     `)
@@ -10393,6 +10394,60 @@ window.excluirUsuarioAdmin = async function (accessKey) {
 
   showAppToast('Usuario excluido com sucesso.', 'success')
   await carregarAdminAcessos()
+}
+
+window.excluirUsuarioCadastradoAdmin = async function (userId, email, name = '') {
+  const currentUser = await ensureAdminAccess()
+  if (!currentUser) {
+    return
+  }
+
+  const normalizedEmail = String(email || '').trim().toLowerCase()
+  const currentUserEmail = String(currentUser.email || '').trim().toLowerCase()
+
+  if (!userId || !normalizedEmail || userId === normalizedEmail) {
+    showAppToast('Este cadastro nao possui um usuario Auth completo para exclusao.', 'error')
+    return
+  }
+
+  if (normalizedEmail === String(ADMIN_EMAIL || '').trim().toLowerCase()) {
+    showAppToast('O usuario master admin nao pode ser excluido.', 'error')
+    return
+  }
+
+  if (userId === currentUser.id || normalizedEmail === currentUserEmail) {
+    showAppToast('Voce nao pode excluir o proprio usuario.', 'error')
+    return
+  }
+
+  const displayName = name || email || 'este usuario'
+  if (!window.confirm(`Tem certeza que deseja excluir o usuario "${displayName}"? Esta acao remove o cadastro definitivamente.`)) {
+    return
+  }
+
+  showAppToast('Excluindo usuario...', 'info')
+
+  const { data, error } = await invokeProtectedFunction('admin-delete-user', {
+    userId,
+    email: normalizedEmail
+  }, {
+    authErrorMessage: 'Sua sessao de administrador expirou. Faca login novamente para excluir o usuario.'
+  })
+
+  if (error) {
+    showAppToast(`Erro ao excluir usuario: ${await extractFunctionErrorMessage(error)}`, 'error')
+    return
+  }
+
+  addAdminAccessAuditEntry({
+    action: 'Usuario excluido',
+    target_email: normalizedEmail,
+    performed_by_email: currentUser.email,
+    details: data?.deletedUserId || userId
+  })
+
+  showAppToast('Usuario excluido com sucesso.', 'success')
+  await Promise.all([carregarAdminUsuarios(), carregarAdminAcessos()])
 }
 
 window.editarTelefoneUsuario = async function (userId, currentPhone = '') {
