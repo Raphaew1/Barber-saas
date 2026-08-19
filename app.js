@@ -373,6 +373,23 @@ function getAppUrl(fileName = 'index.html') {
   return new URL(mappedPath, `${window.location.origin}/`).href
 }
 
+function getRecoveryRedirectUrl(fileName = 'cliente.html') {
+  const currentProtocol = String(window.location.protocol || '').toLowerCase()
+  const currentHost = String(window.location.hostname || '').toLowerCase()
+  const isLocalEnvironment = currentProtocol === 'file:'
+    || currentHost === 'localhost'
+    || currentHost === '127.0.0.1'
+    || currentHost === '0.0.0.0'
+
+  if (isLocalEnvironment) {
+    const normalizedFileName = String(fileName || 'cliente.html').trim() || 'cliente.html'
+    const mappedPath = APP_ROUTE_MAP[normalizedFileName] || `/${normalizedFileName.replace(/^\/+/, '')}`
+    return new URL(mappedPath, 'https://barber-saas-red.vercel.app/').href
+  }
+
+  return getAppUrl(fileName)
+}
+
 function getPortalHintFromUrl() {
   const portalHint = new URLSearchParams(window.location.search).get('portal')
   const normalized = normalizePortalRole(portalHint)
@@ -10781,10 +10798,10 @@ window.resetPassword = async function () {
 
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: isAdminEntryPage()
-      ? getAppUrl('admin.html')
+      ? getRecoveryRedirectUrl('admin.html')
       : isBarberEntryPage()
-        ? getAppUrl('barbearia.html')
-        : getAppUrl('cliente.html')
+        ? getRecoveryRedirectUrl('barbearia.html')
+        : getRecoveryRedirectUrl('cliente.html')
   });
 
   if (error) {
